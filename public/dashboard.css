@@ -1,12 +1,11 @@
-/* ======= Fuentes y Colores ======= */
-@import url('[https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Poppins:wght@300;400;600&display=swap](https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Poppins:wght@300;400;600&display=swap)');
+@import url('[https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Poppins:wght@300;400;600&family=Montserrat+Alternates:wght@500;600&display=swap](https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Poppins:wght@300;400;600&family=Montserrat+Alternates:wght@500;600&display=swap)');
 
 :root {
 --rojo: #b22222;
 --negro: #111;
 --blanco: #fff;
 --gris: #f8f8f8;
---sombra: rgba(0, 0, 0, 0.1);
+--sombra: rgba(0, 0, 0, 0.15);
 --transicion: all 0.3s ease;
 }
 
@@ -20,10 +19,15 @@
 
 body {
 font-family: 'Poppins', sans-serif;
-background-color: var(--gris);
 color: var(--negro);
 display: flex;
 min-height: 100vh;
+background: linear-gradient(
+rgba(0, 0, 0, 0.4),
+rgba(0, 0, 0, 0.4)
+),
+url('../img/fond_rest.jpg') center/cover no-repeat;
+background-attachment: fixed;
 }
 
 /* ======= Contenedor General ======= */
@@ -90,8 +94,14 @@ margin-left: 260px;
 padding: 2rem 3rem;
 }
 
+/* ======= Encabezado ======= */
 header {
-background: url('/img/banner_restaurante.jpg') center/cover no-repeat;
+background: linear-gradient(
+to right,
+rgba(178, 34, 34, 0.079),
+rgba(255, 99, 71, 0.85)
+),
+url('../img/platos_img.jpg') center/cover no-repeat;
 color: var(--blanco);
 padding: 3rem 2rem;
 border-radius: 20px;
@@ -103,32 +113,63 @@ margin-bottom: 2rem;
 header h1 {
 font-family: 'Playfair Display', serif;
 font-size: 2.5rem;
-text-shadow: 1px 1px 3px #000;
+text-shadow: 1px 1px 4px #000;
 }
 
 .welcome-badge {
-background-color: var(--rojo);
+background: linear-gradient(to right, #b22222, #ff6347);
 display: inline-block;
-padding: 0.4rem 1.2rem;
+padding: 0.5rem 1.4rem;
 border-radius: 30px;
 margin-top: 1rem;
 font-size: 1rem;
 font-weight: 600;
+box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
 }
 
 /* ======= Sección Usuarios ======= */
 section {
-background: var(--blanco);
+background: linear-gradient(
+rgba(106, 46, 46, 0.303),
+rgba(222, 177, 177, 0.85)
+),
+url('../img/img_platos.jpg') center/cover no-repeat;
 padding: 2rem;
 border-radius: 20px;
-box-shadow: 0 5px 15px var(--sombra);
+box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+backdrop-filter: blur(6px);
 }
 
 section p {
-font-size: 1.1rem;
-margin-bottom: 1rem;
+font-family: 'Montserrat Alternates', sans-serif;
+font-size: 1.3rem;
+font-weight: 600;
+color: #251717;
+text-align: center;
+margin-bottom: 1.8rem;
+letter-spacing: 0.5px;
+text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
+.titulo-usuarios {
+font-family: 'Playfair Display', serif;
+font-size: 2rem;
+font-weight: 700;
+color: #482525;
+text-align: center;
+margin-bottom: 2rem;
+letter-spacing: 1px;
+text-transform: uppercase;
+text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+background: linear-gradient(to right, #ffffff, #e8e1e1);
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+padding: 0.8rem;
+border-radius: 12px;
+box-shadow: 0 6px 15px rgba(178, 34, 34, 0.35);
+}
+
+/* ======= Tarjetas de usuarios ======= */
 .usuarios-container {
 display: grid;
 grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
@@ -136,32 +177,38 @@ gap: 1.5rem;
 }
 
 .card {
-background: var(--gris);
-border-radius: 15px;
+background: linear-gradient(
+145deg,
+rgba(255, 245, 240, 0.9),
+rgba(255, 235, 230, 0.95)
+);
+border-radius: 18px;
 padding: 1.5rem;
-box-shadow: 0 3px 10px var(--sombra);
+box-shadow: 0 5px 15px var(--sombra);
 transition: var(--transicion);
 text-align: center;
 }
 
 .card:hover {
-transform: translateY(-5px);
+transform: translateY(-6px) scale(1.03);
+box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
 }
 
 .card h3 {
 font-family: 'Playfair Display', serif;
 color: var(--rojo);
 margin-bottom: 0.5rem;
+font-size: 1.3rem;
 }
 
 .card p {
 font-size: 0.95rem;
 color: #333;
-margin-bottom: 0.5rem;
+margin-bottom: 0.4rem;
 }
 
 .card button {
-background-color: var(--rojo);
+background: linear-gradient(to right, #b22222, #ff6347);
 color: var(--blanco);
 border: none;
 padding: 0.6rem 1.2rem;
@@ -170,11 +217,12 @@ cursor: pointer;
 margin-top: 0.8rem;
 font-size: 0.9rem;
 transition: var(--transicion);
+box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
 }
 
 .card button:hover {
-background-color: #a01818;
-transform: scale(1.05);
+background: linear-gradient(to right, #a01818, #e55337);
+transform: scale(1.07);
 }
 
 /* ======= Estado vacío ======= */

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard - Nova Salud</title>
+  <title>Dashboard - Restaurante</title>
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="dashboard.css">
@@ -12,13 +12,17 @@
   <div class="dashboard-container">
     <!-- Sidebar -->
     <aside class="sidebar">
-      <h2>Restaurante</h2>
+      <h2 class="logo">
+      <i class="fas fa-utensils"></i><br>
+      Restaurante
+    </h2>
+
       <nav>
         <a href="/dashboard" class="active"><i class="fas fa-home"></i> <span>Dashboard</span></a>
         <a href="/platos"><i class="fas fa-box"></i> <span>Platos</span></a>
         <a href="/clientes"><i class="fas fa-users"></i> <span>Clientes</span></a>
         <a href="/ventas"><i class="fas fa-shopping-cart"></i> <span>Ventas</span></a>
-        <a href="/carta"><i class="fas fa-utensils"></i> <span>Carta</span></a>
+        <a href="/carta"><i class="fas fa-book-open"></i> <span>Carta</span></a>
         <a href="/logout"><i class="fas fa-sign-out-alt"></i> <span>Cerrar sesión</span></a>
       </nav>
     </aside>
@@ -26,12 +30,13 @@
     <!-- Main content -->
     <main class="main-content">
       <header>
-        <h1>Bienvenido, <%= usuario.nombre %> 👋</h1>
+        <h1>Bienvenido, <%= usuario.nombre %> </h1>
         <div class="welcome-badge">Panel de Administración</div>
       </header>
 
       <section>
-        <p>Usuarios registrados en el sistema:</p>
+        <p class="titulo-usuarios">Usuarios registrados en el sistema:</p>
+
 
         <% if (users && users.length > 0) { %>
           <div class="usuarios-container">

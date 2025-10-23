@@ -1,0 +1,296 @@
+/* ======= Fuentes y Colores Pastel ======= */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Poppins:wght@300;400;600&display=swap');
+
+:root {
+  --rosa: #ffb6b9;
+  --celeste: #bde0fe;
+  --menta: #caffbf;
+  --blanco: #fff;
+  --gris: #f8f9fa;
+  --negro: #222;
+  --sombra: rgba(0, 0, 0, 0.1);
+  --transicion: all 0.3s ease;
+}
+
+/* ======= Reset General ======= */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, var(--celeste), var(--menta));
+  color: var(--negro);
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ======= Contenedor General ======= */
+.dashboard-container {
+  display: flex;
+  width: 100%;
+}
+
+/* ======= Sidebar ======= */
+.sidebar {
+  width: 260px;
+  background: linear-gradient(180deg, var(--rosa), var(--celeste));
+  color: var(--negro);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem;
+  box-shadow: 2px 0 10px var(--sombra);
+  position: fixed;
+  height: 100vh;
+}
+
+.logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo i {
+  font-size: 2rem;
+  color: var(--blanco);
+}
+
+.logo h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.6rem;
+  color: var(--blanco);
+}
+
+.nav-links {
+  list-style: none;
+  margin-top: 2rem;
+  width: 100%;
+}
+
+.nav-links li a {
+  text-decoration: none;
+  color: var(--blanco);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0.8rem 1rem;
+  border-radius: 12px;
+  margin: 6px 0;
+  transition: var(--transicion);
+}
+
+.nav-links li a:hover,
+.nav-links li a.active {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateX(5px);
+}
+
+/* ======= Contenido Principal ======= */
+.main-content {
+  flex: 1;
+  margin-left: 260px;
+  padding: 2rem 3rem;
+}
+
+/* ======= Header ======= */
+.top-header {
+  background: linear-gradient(90deg, var(--celeste), var(--rosa));
+  color: var(--negro);
+  padding: 1.5rem 2rem;
+  border-radius: 20px;
+  box-shadow: 0 5px 15px var(--sombra);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.welcome-section h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.8rem;
+}
+
+.welcome-section p {
+  font-size: 1rem;
+  color: #333;
+}
+
+.user-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.notification {
+  position: relative;
+}
+
+.notification i {
+  font-size: 1.3rem;
+  color: var(--negro);
+}
+
+.notification-badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  background-color: var(--rosa);
+  color: var(--blanco);
+  border-radius: 50%;
+  padding: 3px 7px;
+  font-size: 0.7rem;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--blanco);
+  padding: 0.4rem 1rem;
+  border-radius: 30px;
+  box-shadow: 0 3px 10px var(--sombra);
+}
+
+.avatar {
+  background-color: var(--rosa);
+  color: var(--blanco);
+  font-weight: bold;
+  width: 35px;
+  height: 35px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+}
+
+/* ======= Contenido ======= */
+.content h2 {
+  font-family: 'Playfair Display', serif;
+  color: var(--negro);
+  margin-bottom: 1rem;
+}
+
+/* ======= Formulario ======= */
+.form-section {
+  background: var(--blanco);
+  padding: 2rem;
+  border-radius: 20px;
+  box-shadow: 0 4px 10px var(--sombra);
+  margin-bottom: 2rem;
+}
+
+.form-section h3 {
+  color: var(--rosa);
+  margin-bottom: 1rem;
+}
+
+form input {
+  width: 100%;
+  padding: 0.8rem;
+  margin-bottom: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  outline: none;
+  transition: var(--transicion);
+}
+
+form input:focus {
+  border-color: var(--celeste);
+  box-shadow: 0 0 5px var(--celeste);
+}
+
+form button {
+  background: linear-gradient(90deg, var(--celeste), var(--rosa));
+  border: none;
+  color: var(--negro);
+  font-weight: bold;
+  padding: 0.8rem 1.5rem;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: var(--transicion);
+}
+
+form button:hover {
+  transform: scale(1.05);
+  background: linear-gradient(90deg, var(--rosa), var(--menta));
+}
+
+/* ======= Tabla ======= */
+.list-section {
+  background: var(--blanco);
+  padding: 2rem;
+  border-radius: 20px;
+  box-shadow: 0 4px 10px var(--sombra);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead {
+  background: linear-gradient(90deg, var(--menta), var(--celeste));
+}
+
+th, td {
+  padding: 0.9rem;
+  text-align: center;
+  border-bottom: 1px solid #ddd;
+}
+
+th {
+  font-weight: 600;
+  color: var(--negro);
+}
+
+tr:hover {
+  background-color: var(--gris);
+}
+
+button.editar {
+  background-color: var(--menta);
+  color: var(--negro);
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-right: 5px;
+}
+
+button.eliminar {
+  background-color: var(--rosa);
+  color: var(--blanco);
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+button.editar:hover,
+button.eliminar:hover {
+  opacity: 0.8;
+}
+
+/* ======= Responsividad ======= */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 200px;
+  }
+
+  .main-content {
+    margin-left: 200px;
+    padding: 1.5rem;
+  }
+
+  .top-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+}
