@@ -1,0 +1,87 @@
+/* Reset básico */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Fondo y centrado */
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(to right, #09b783, #73d9bc);
+}
+
+/* Contenedor del formulario */
+.login-wrapper {
+  background-color: white;
+  padding: 40px 30px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+/* Título */
+.login-title {
+  margin-bottom: 25px;
+  color: #16dda1;
+}
+
+/* Inputs del formulario */
+.login-wrapper input {
+  width: 100%;
+  padding: 12px 15px;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.login-wrapper input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+/* Botón de registro */
+.login-wrapper button {
+  width: 100%;
+  padding: 12px;
+  background-color: #16dda1;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.login-wrapper button:hover {
+  background-color: #16dda1; /* Puedes poner un verde más oscuro si quieres */
+}
+
+/* Mensaje de error */
+.error-message {
+  margin-top: 15px;
+  color: red;
+  font-weight: 500;
+}
+
+/* Link para ir al login */
+.register-link {
+  display: inline-block;
+  margin-top: 15px;
+  color: #16dda1;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.register-link:hover {
+  color: #0c9a5c;
+}

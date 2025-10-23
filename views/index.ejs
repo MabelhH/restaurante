@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Clientes - Nova Salud</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/clientes.css">
+</head>
+<body>
+  <div class="dashboard-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="logo">
+        <i class="fas fa-heartbeat"></i>
+        <h1>Nova Salud</h1>
+      </div>
+      <ul class="nav-links">
+        <li><a href="/" ><i class="fas fa-home"></i> Inicio</a></li>
+        <li><a href="/platos"><i class="fas fa-pills"></i> Productos</a></li>
+        <li><a href="/clientes" class="active"><i class="fas fa-users"></i> Clientes</a></li>
+        <li><a href="/ventas"><i class="fas fa-chart-line"></i> Ventas</a></li>
+        <li><a href="/logout"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</a></li>
+      </ul>
+    </aside>
+
+
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Header -->
+      <header class="top-header">
+        <div class="welcome-section">
+          <h2>Bienvenido, Dr. Clara 👋</h2>
+          <p>Gestiona tus clientes de manera eficiente</p>
+        </div>
+        <div class="user-actions">
+          <div class="notification">
+            <i class="fas fa-bell"></i>
+            <span class="notification-badge">2</span>
+          </div>
+          <div class="user-profile">
+            <div class="avatar">C</div>
+            <div>
+              <div class="user-name">Clara Huanco</div>
+              <div class="user-role">Administrador</div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Content Area -->
+      <div class="content">
+        <!-- Formulario -->
+        <section class="form-section">
+          <h3>Registrar nuevo cliente</h3>
+          <form id="formCliente">
+            <input type="text" id="nombre" placeholder="Nombre completo" required>
+            <input type="text" id="telefono" placeholder="Teléfono" required>
+            <input type="email" id="correo" placeholder="Correo electrónico" required>
+            <input type="text" id="direccion" placeholder="Dirección" required>
+            <button type="submit"><i class="fas fa-plus"></i> Agregar Cliente</button>
+          </form>
+        </section>
+
+        <!-- Lista de Clientes -->
+        <section class="cards-container" id="listaClientes">
+          <!-- Los clientes se renderizan aquí -->
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const form = document.getElementById('formCliente');
+    const lista = document.getElementById('listaClientes');
+
+    async function agregarClienteOriginal(e) {
+      e.preventDefault();
+      const nuevoCliente = {
+        nombre: document.getElementById('nombre').value,
+        telefono: document.getElementById('telefono').value,
+        correo: document.getElementById('correo').value,
+        direccion: document.getElementById('direccion').value
+      };
+      await fetch('/api/clientes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nuevoCliente)
+      });
+      form.reset();
+      obtenerClientes();
+    }
+
+    form.addEventListener('submit', agregarClienteOriginal);
+
+    async function obtenerClientes() {
+      const res = await fetch('/api/clientes');
+      const clientes = await res.json();
+      lista.innerHTML = '';
+      if(clientes.length === 0) {
+        lista.innerHTML = `<div class="empty-state">
+          <i class="fas fa-users"></i>
+          <h3>No hay clientes registrados</h3>
+          <p>Agrega tu primer cliente al sistema.</p>
+        </div>`;
+      } else {
+        clientes.forEach(c => {
+          const card = document.createElement('div');
+          card.classList.add('card');
+          card.innerHTML = `
+            <h3>
+              ${c.nombre}
+              <div class="card-actions">
+                <button class="editar" data-id="${c._id}"><i class="fas fa-edit"></i></button>
+                <button class="eliminar" data-id="${c._id}"><i class="fas fa-trash"></i></button>
+              </div>
+            </h3>
+            <p><i class="fas fa-phone"></i> <strong>Tel:</strong> ${c.telefono}</p>
+            <p><i class="fas fa-envelope"></i> <strong>Email:</strong> ${c.correo}</p>
+            <p><i class="fas fa-map-marker-alt"></i> <strong>Dirección:</strong> ${c.direccion}</p>
+          `;
+          lista.appendChild(card);
+        });
+      }
+    }
+
+    lista.addEventListener('click', async (e) => {
+      const id = e.target.closest('button')?.dataset.id;
+      if(!id) return;
+
+      if(e.target.closest('button').classList.contains('eliminar')) {
+        await fetch(`/api/clientes/${id}`, { method: 'DELETE' });
+        obtenerClientes();
+      }
+
+      if(e.target.closest('button').classList.contains('editar')) {
+        const res = await fetch(`/api/clientes/${id}`);
+        const cliente = await res.json();
+        document.getElementById('nombre').value = cliente.nombre;
+        document.getElementById('telefono').value = cliente.telefono;
+        document.getElementById('correo').value = cliente.correo;
+        document.getElementById('direccion').value = cliente.direccion;
+
+        const boton = form.querySelector('button[type="submit"]');
+        boton.textContent = 'Actualizar Cliente';
+
+        form.onsubmit = async (ev) => {
+          ev.preventDefault();
+          const actualizado = {
+            nombre: document.getElementById('nombre').value,
+            telefono: document.getElementById('telefono').value,
+            correo: document.getElementById('correo').value,
+            direccion: document.getElementById('direccion').value
+          };
+          await fetch(`/api/clientes/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(actualizado)
+          });
+          form.reset();
+          boton.textContent = 'Agregar Cliente';
+          form.onsubmit = agregarClienteOriginal;
+          obtenerClientes();
+        }
+      }
+    });
+
+    obtenerClientes();
+  </script>
+</body>
+</html>

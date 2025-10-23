@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Productos - Nova Salud</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/styleProducto.css"> 
+</head>
+<body>
+
+  <div class="dashboard-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="logo">
+        <i class="fas fa-heartbeat"></i>
+        <h1>Nova Salud</h1>
+      </div>
+      <ul class="nav-links">
+        <li><a href="/" ><i class="fas fa-home"></i> Inicio</a></li>
+        <li><a href="/productos"><i class="fas fa-pills"></i> Platos</a></li>
+        <li><a href="/clientes"><i class="fas fa-users"></i> Clientes</a></li>
+        <li><a href="/ventas"><i class="fas fa-chart-line"></i> Ventas</a></li>
+        <li><a href="/logout"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</a></li>
+      </ul>
+    </aside>
+
+    <main class="main-content">
+      <!-- Header -->
+      <header class="top-header">
+        <div class="welcome-section">
+          <h2>Bienvenido, Dr. Clara 👋</h2>
+          <p>Gestiona tus clientes de manera eficiente</p>
+        </div>
+        <div class="user-actions">
+          <div class="notification">
+            <i class="fas fa-bell"></i>
+            <span class="notification-badge">2</span>
+          </div>
+          <div class="user-profile">
+            <div class="avatar">C</div>
+            <div>
+              <div class="user-name">Clara Huanco</div>
+              <div class="user-role">Administrador</div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+    <div class="content">
+      <main>
+        <h2>Gestión de Productos</h2>
+
+        <!-- Formulario para agregar productos -->
+        <section class="form-section">
+          <h3>Registrar nuevo producto</h3>
+          <form id="formProducto">
+            <input type="text" id="nombre" placeholder="Nombre del producto" required>
+            <input type="text" id="categoria" placeholder="Categoría" required>
+            <input type="text" id="descripcion" placeholder="Descripción" required>
+            <input type="number" id="precio" placeholder="Precio" step="0.01" min="0" required>
+            <input type="number" id="stock" placeholder="Stock" required>
+            <input type="number" id="stockMinimo" placeholder="Stock Mínimo" required>
+            <button type="submit">Agregar Producto</button>
+          </form>
+        </section>
+
+    <!-- Tabla de productos -->
+        <section class="list-section">
+          <h3>Lista de productos</h3>
+          <table id="tablaProductos">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Categoría</th>
+                <th>Descripción</th>
+                <th>Precio</th>
+                <th>Stock</th>
+                <th>Stock Mínimo</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Productos cargados dinámicamente -->
+            </tbody>
+          </table>
+        </section>
+      </main>
+    </div>
+  <script>
+    const form = document.getElementById('formProducto');
+    const tabla = document.querySelector('#tablaProductos tbody');
+
+    // Función original para agregar producto
+    async function agregarProductoOriginal(e){
+      e.preventDefault();
+      const nuevoProducto = {
+        nombre: document.getElementById('nombre').value,
+        categoria: document.getElementById('categoria').value,
+        descripcion: document.getElementById('descripcion').value,
+        precio: parseFloat(document.getElementById('precio').value),
+        stock: parseInt(document.getElementById('stock').value),
+        stockMinimo: parseInt(document.getElementById('stockMinimo').value)
+      };
+      await fetch('/api/productos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nuevoProducto)
+      });
+      form.reset();
+      cargarProductos();
+    }
+
+    form.addEventListener('submit', agregarProductoOriginal);
+
+    // Cargar productos
+    async function cargarProductos() {
+      const res = await fetch('/api/productos');
+      const productos = await res.json();
+      tabla.innerHTML = '';
+      productos.forEach(p => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${p.nombre}</td>
+          <td>${p.categoria}</td>
+          <td>${p.descripcion}</td>
+          <td>${p.precio.toFixed(2)}</td>
+          <td>${p.stock}</td>
+          <td>${p.stockMinimo}</td>
+          <td>
+            <button class="editar" data-id="${p._id}">Editar</button>
+            <button class="eliminar" data-id="${p._id}">Eliminar</button>
+          </td>
+        `;
+        tabla.appendChild(tr);
+      });
+    }
+
+    // Manejar botones Editar y Eliminar
+    tabla.addEventListener('click', async (e) => {
+      const id = e.target.dataset.id;
+
+      // Eliminar
+      if(e.target.classList.contains('eliminar')){
+        await fetch(`/api/productos/${id}`, { method: 'DELETE' });
+        cargarProductos();
+      }
+
+      // Editar
+      if(e.target.classList.contains('editar')){
+        const res = await fetch(`/api/productos/${id}`);
+        const producto = await res.json();
+
+        // Llenar formulario con datos del producto
+        document.getElementById('nombre').value = producto.nombre;
+        document.getElementById('categoria').value = producto.categoria;
+        document.getElementById('descripcion').value = producto.descripcion;
+        document.getElementById('precio').value = producto.precio;
+        document.getElementById('stock').value = producto.stock;
+        document.getElementById('stockMinimo').value = producto.stockMinimo;
+
+        // Cambiar texto del botón
+        const boton = form.querySelector('button[type="submit"]');
+        boton.textContent = 'Actualizar Producto';
+
+        // Cambiar el comportamiento del submit para actualizar
+        form.onsubmit = async (ev) => {
+          ev.preventDefault();
+          const actualizado = {
+            nombre: document.getElementById('nombre').value,
+            categoria: document.getElementById('categoria').value,
+            descripcion: document.getElementById('descripcion').value,
+            precio: parseFloat(document.getElementById('precio').value),
+            stock: parseInt(document.getElementById('stock').value),
+            stockMinimo: parseInt(document.getElementById('stockMinimo').value)
+          };
+
+          await fetch(`/api/productos/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(actualizado)
+          });
+
+          form.reset();
+          boton.textContent = 'Agregar Producto';
+          form.onsubmit = agregarProductoOriginal; // Restaurar comportamiento original
+          cargarProductos();
+        }
+      }
+    });
+
+    // Inicializar
+    cargarProductos();
+  </script>
+</body>
+</html>

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ventas - Nova Salud</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/styleVentas.css">
+</head>
+<body>
+
+  <!-- Header del dashboard -->
+  <header>
+    <h1>Nova Salud - Dashboard</h1>
+    <nav>
+      <a href="/">Dashboard</a>
+      <a href="/platos">Platos</a>
+      <a href="/clientes">Clientes</a>
+      <a href="/ventas" class="active">Ventas</a>
+      <a href="/logout">Cerrar sesión</a>
+    </nav>
+  </header>
+
+  <main>
+    <h2>Gestión de Ventas</h2>
+
+    <!-- Estadísticas -->
+    <div class="stats-overview">
+      <div class="stat-card">
+        <div class="stat-value" id="totalVentas">0</div>
+        <div class="stat-label">Ventas Totales</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="ingresoTotal">S/ 0.00</div>
+        <div class="stat-label">Ingresos Totales</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="ventasHoy">0</div>
+        <div class="stat-label">Ventas Hoy</div>
+      </div>
+    </div>
+
+    <!-- Formulario para registrar venta -->
+    <section class="form-section">
+      <h3>Registrar nueva venta</h3>
+      <form id="formVenta">
+        <div class="form-group">
+          <label for="cliente">Cliente</label>
+          <select id="cliente" required>
+            <option value="">Seleccione un cliente</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="producto">Producto</label>
+          <select id="producto" required>
+            <option value="">Seleccione un producto</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="cantidad">Cantidad</label>
+          <input type="number" id="cantidad" placeholder="Cantidad" required min="1">
+        </div>
+        <button type="submit">
+          <i class="fas fa-cash-register"></i>
+          Registrar Venta
+        </button>
+      </form>
+    </section>
+
+    <!-- Cards de ventas -->
+    <section class="cards-section">
+      <div class="search-container">
+        <h3>Historial de ventas</h3>
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="searchInput" placeholder="Buscar ventas...">
+        </div>
+        <div class="filter-buttons">
+          <button class="filter-btn active">Todas</button>
+          <button class="filter-btn">Hoy</button>
+          <button class="filter-btn">Esta semana</button>
+        </div>
+      </div>
+      
+      <div class="cards-container" id="cardsContainer">
+        <!-- Las cards de ventas se cargarán aquí dinámicamente -->
+      </div>
+      
+      <div class="empty-state" id="emptyState">
+        <i class="fas fa-receipt"></i>
+        <p>No hay ventas registradas</p>
+        <p>Comienza registrando tu primera venta</p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const form = document.getElementById('formVenta');
+    const clienteSelect = document.getElementById('cliente');
+    const productoSelect = document.getElementById('producto');
+    const cardsContainer = document.getElementById('cardsContainer');
+    const emptyState = document.getElementById('emptyState');
+    const searchInput = document.getElementById('searchInput');
+    const totalVentas = document.getElementById('totalVentas');
+    const ingresoTotal = document.getElementById('ingresoTotal');
+    const ventasHoy = document.getElementById('ventasHoy');
+
+    // Función para obtener iniciales del nombre
+    function obtenerIniciales(nombre) {
+      return nombre
+        .split(' ')
+        .map(palabra => palabra.charAt(0))
+        .join('')
+        .toUpperCase()
+        .substring(0, 2);
+    }
+
+    // Cargar clientes y productos
+    async function cargarClientes() {
+      const res = await fetch('/api/clientes');
+      const clientes = await res.json();
+      clienteSelect.innerHTML = '<option value="">Seleccione un cliente</option>';
+      clientes.forEach(c => {
+        const option = document.createElement('option');
+        option.value = c._id;
+        option.textContent = c.nombre;
+        clienteSelect.appendChild(option);
+      });
+    }
+
+    async function cargarProductos() {
+      const res = await fetch('/api/productos');
+      const productos = await res.json();
+      productoSelect.innerHTML = '<option value="">Seleccione un producto</option>';
+      productos.forEach(p => {
+        const option = document.createElement('option');
+        option.value = p._id;
+        option.textContent = `${p.nombre} (Stock: ${p.stock}) - S/ ${p.precio}`;
+        productoSelect.appendChild(option);
+      });
+    }
+
+    // Cargar historial de ventas en cards
+    async function cargarVentas() {
+      const res = await fetch('/api/ventas');
+      const ventas = await res.json();
+      
+      cardsContainer.innerHTML = '';
+      
+      // Actualizar estadísticas
+      totalVentas.textContent = ventas.length;
+      const ingresos = ventas.reduce((sum, venta) => sum + venta.total, 0);
+      ingresoTotal.textContent = `S/ ${ingresos.toFixed(2)}`;
+      
+      const hoy = new Date().toDateString();
+      const ventasHoyCount = ventas.filter(v => new Date(v.fechaVenta).toDateString() === hoy).length;
+      ventasHoy.textContent = ventasHoyCount;
+      
+      if (ventas.length === 0) {
+        emptyState.style.display = 'block';
+        return;
+      }
+      
+      emptyState.style.display = 'none';
+      
+      ventas.forEach(venta => {
+        const card = document.createElement('div');
+        card.className = 'sale-card';
+        const iniciales = obtenerIniciales(venta.cliente.nombre);
+        
+        const productosHTML = venta.productos.map(p => `
+          <div class="product-item">
+            <span class="product-name">${p.producto.nombre}</span>
+            <span class="product-quantity">x${p.cantidad}</span>
+          </div>
+        `).join('');
+        
+        card.innerHTML = `
+          <div class="sale-header">
+            <div class="client-avatar">${iniciales}</div>
+            <div class="sale-info">
+              <div class="client-name">${venta.cliente.nombre}</div>
+              <div class="sale-date">${new Date(venta.fechaVenta).toLocaleString()}</div>
+            </div>
+          </div>
+          <div class="sale-products">
+            ${productosHTML}
+          </div>
+          <div class="sale-total">
+            <span class="total-label">Total:</span>
+            <span class="total-amount">S/ ${venta.total.toFixed(2)}</span>
+          </div>
+        `;
+        cardsContainer.appendChild(card);
+      });
+    }
+
+    // Registrar venta
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const venta = {
+        cliente: clienteSelect.value,
+        productos: [{
+          producto: productoSelect.value,
+          cantidad: parseInt(document.getElementById('cantidad').value),
+        }]
+      };
+      await fetch('/api/ventas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(venta)
+      });
+      form.reset();
+      cargarVentas();
+      cargarProductos(); // actualizar stock disponible
+    });
+
+    // Búsqueda de ventas
+    searchInput.addEventListener('input', function() {
+      const searchTerm = this.value.toLowerCase();
+      const cards = document.querySelectorAll('.sale-card');
+      
+      cards.forEach(card => {
+        const cliente = card.querySelector('.client-name').textContent.toLowerCase();
+        const productos = card.querySelector('.sale-products').textContent.toLowerCase();
+        
+        if (cliente.includes(searchTerm) || productos.includes(searchTerm)) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    });
+
+    // Inicializar
+    async function initVentas() {
+      await cargarClientes();
+      await cargarProductos();
+      await cargarVentas();
+    }
+
+    initVentas();
+  </script>
+
+</body>
+</html>
