@@ -1,23 +1,43 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Registro - Nova Salud</title>
-<link rel="stylesheet" href="/register.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro - Nova Salud</title>
+  <link rel="stylesheet" href="/register.css">
 </head>
 <body>
-<div class="login-wrapper">
-    <h1 class="login-title">Registro</h1>
-    <form method="POST" action="/register">
-        <input type="text" name="nombre" placeholder="Nombre" required>
-        <input type="text" name="apellido" placeholder="Apellido" required>
-        <input type="email" name="email" placeholder="Correo" required>
-        <input type="password" name="password" placeholder="Contraseña" required>
-        <button type="submit">Registrar</button>
-        <p class="error-message"><%= error || '' %></p>
-        <a href="/login" class="register-link">Ir al login</a>
-    </form>
-</div>
+  <div class="overlay">
+    <div class="register-card">
+      <div class="register-content">
+        <h2 class="header">Crea tu cuenta</h2>
+        <h3 class="subheader">Regístrate para acceder al sistema</h3>
+
+        <form method="POST" action="/register">
+          <label>Nombre</label>
+          <input type="text" name="nombre" placeholder="Tu nombre" required>
+          <label>Apellido</label>
+          <input type="text" name="apellido" placeholder="Tu apellido" required>
+          <label>Correo electrónico</label>
+          <input type="email" name="email" placeholder="correo@ejemplo.com" required>
+          <label>Contraseña</label>
+          <input type="password" name="password" placeholder="********" required>
+
+          <button type="submit">Crear cuenta</button>
+          <p class="error-message"><%= error || '' %></p>
+        </form>
+
+        <div class="login-section">
+          <p>¿Ya tienes una cuenta?
+            <a href="/login" class="login-link">Inicia sesión</a>
+          </p>
+        </div>
+      </div>
+
+      <div class="image-side">
+        <img src="/img/imagen_login.jpg" alt="Imagen de fondo">
+      </div>
+    </div>
+  </div>
 </body>
 </html>

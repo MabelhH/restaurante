@@ -2,22 +2,33 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Iniciar Sesión - Nova Salud</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iniciar Sesión - Restaurante</title>
   <link rel="stylesheet" href="/login.css">
 </head>
-<body class="login">
-  <div class="login-container">
-    <h1>Iniciar Sesión</h1>
+<body>
+  <div class="overlay">
+    <div class="login-card">
+      <div class="login-content">
+        <h1 class="title">Bienvenido</h1>
+        <p class="subtitle">Accede a tu cuenta para continuar</p>
 
-    <!-- Cambiar action a /auth/login y agregar name a los inputs -->
-    <form action="/login" method="POST" id="formLogin">
-      <input type="email" id="correo" name="email" placeholder="Correo" required>
-      <input type="password" id="contraseña" name="password" placeholder="Contraseña" required>
-      <button type="submit">Ingresar</button>
-    </form>
-    <p>¿No tienes cuenta? <a href="/register">Regístrate</a></p>
+        <form action="/login" method="POST" id="formLogin">
+          <input type="email" id="correo" name="email" placeholder="Correo electrónico" required>
+          <input type="password" id="contraseña" name="password" placeholder="Contraseña" required>
+          <button type="submit">Ingresar</button>
+        </form>
 
-    <p id="loginMsg"></p>
+        <p class="register-text">
+          ¿No tienes cuenta?
+          <a href="/register" class="register-link">Regístrate aquí</a>
+        </p>
+      </div>
+
+      <div class="image-side">
+        <img src="/img/imagen_login.jpg" alt="Imagen del restaurante">
+      </div>
+    </div>
   </div>
 </body>
 </html>
