@@ -1,41 +1,42 @@
 const Venta = require('../models/ventaModel');
 const Producto = require('../models/platosModel');
-const Cliente = require('../models/clienteModel');
 
 class VentaService {
-  // Listar ventas con cliente y productos populados
   async getAll() {
     return await Venta.find()
-      .populate('cliente') // ahora cliente es referencia
-      .populate('productos.producto');
+      .populate('cliente')
+      .populate('platos.producto');
   }
 
   async getById(id) {
     return await Venta.findById(id)
       .populate('cliente')
-      .populate('productos.producto');
+      .populate('platos.producto');
   }
 
   async create(data) {
-    // Obtener productos completos para calcular total
+    if (!data.platos || data.platos.length === 0) {
+      throw new Error('Debe incluir al menos un plato en la venta');
+    }
+
     let total = 0;
 
-    for (let item of data.productos) {
+    for (let item of data.platos) {
       const prod = await Producto.findById(item.producto);
-      if (!prod) throw new Error('Producto no encontrado');
+      if (!prod) throw new Error(`Producto no encontrado: ${item.producto}`);
       if (prod.stock < item.cantidad) throw new Error(`Stock insuficiente para ${prod.nombre}`);
-      
+
       item.precioUnitario = prod.precio;
       total += item.cantidad * prod.precio;
 
-      // Restar stock
+      // Actualizar stock
       prod.stock -= item.cantidad;
       await prod.save();
     }
 
     const venta = new Venta({
       cliente: data.cliente,
-      productos: data.productos,
+      platos: data.platos,
       total
     });
 

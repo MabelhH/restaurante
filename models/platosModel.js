@@ -7,7 +7,8 @@ const platosSchema = new Schema({
     descripcion: String,
     precio: Number,
     stock: Number,
-    stockMinimo: Number
+    stockMinimo: Number,
+    imagen: String 
 });
 
 const Platos = mongoose.model('Platos', platosSchema);

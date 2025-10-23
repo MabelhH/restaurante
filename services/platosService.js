@@ -1,30 +1,30 @@
-const Platos = require('../models/platosModel')
-class PlatoService {
-    constructor() {}
+const Platos = require('../models/platosModel');
 
+class PlatoService {
     async getAll() {
-        const platos = await Plato.find({})
-        return platos
+        return await Platos.find({});
     }
 
-    async filterById(id) {
-        const platos = await Plato.findOne({ _id: id })
-        return platos
+    async getById(id) {
+        return await Platos.findById(id);
     }
 
     async create(data) {
-        const plato = new Plato(data)
-        return await producto.save()
+        const plato = new Platos(data);
+        return await plato.save();
     }
+
     async update(id, data) {
-        return await Plato.findByIdAndUpdate({
-            _id: id
-        }, data)
+        return await Platos.findByIdAndUpdate(id, data, { new: true });
     }
+
     async delete(id) {
-        return await Plato.deleteOne({
-            _id: id
-        });
+        return await Platos.findByIdAndDelete(id);
+    }
+
+    async verificarStockMinimo() {
+        return await Platos.find({ stock: { $lte: '$stockMinimo' } });
     }
 }
-module.exports = PlatoService
+
+module.exports = PlatoService;
