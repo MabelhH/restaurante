@@ -19,7 +19,7 @@ body {
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.568);
+  background: rgba(0, 0, 0, 0.55);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -33,13 +33,13 @@ body {
   max-width: 95%;
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.74);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
 }
 
 /* ===== Lado izquierdo ===== */
 .register-content {
   flex: 1;
-  background: rgba(0, 0, 0, 0.349);
+  background: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(6px);
   color: #fff;
   padding: 45px 40px;
@@ -149,26 +149,4 @@ button:hover {
   color: #ff5f87;
   font-size: 0.85rem;
   margin-top: 10px;
-}
-
-
-select {
-  padding: 12px;
-  border: none;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
-  font-size: 1rem;
-  outline: none;
-  transition: all 0.3s;
-  appearance: none;
-}
-
-select option {
-  color: #000;
-}
-
-select:focus {
-  background: rgba(255, 255, 255, 0.25);
-  box-shadow: 0 0 6px rgba(255, 180, 150, 0.6);
 }

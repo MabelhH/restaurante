@@ -98,6 +98,16 @@ exports.register = async (req, res) => {
     res.render('register', { error: 'Error al registrar el usuario' });
   }
 };
+// ==================== Vista para registrar usuarios desde el panel del admin ====================
+exports.viewRegisterAdmin = async (req, res) => {
+  try {
+    const users = await Usuario.find();
+    res.render('register_admin', { user: req.user, users, error: null });
+  } catch (err) {
+    console.error(err);
+    res.render('register_admin', { user: req.user, users: [], error: 'Error al cargar usuarios' });
+  }
+};
 
 // ==================== Login ====================
 exports.login = async (req, res) => {

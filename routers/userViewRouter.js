@@ -12,6 +12,24 @@ router.get('/register', (req, res) => res.render('register', { error: null }));
 router.post('/login', userController.login);
 router.post('/register', userController.register);
 
+router.get('/register_admin', verifyToken, async (req, res) => {
+    const users = await Usuario.find();
+    res.render('register_admin', { user: req.user, users, error: null });
+});
+
+router.post('/register_admin', verifyToken, async (req, res) => {
+    try {
+        const { nombre, apellido, email, password, rol } = req.body;
+        const nuevoUsuario = new Usuario({ nombre, apellido, email, password, rol });
+        await nuevoUsuario.save();
+        const users = await Usuario.find();
+        res.render('register_admin', { user: req.user, users, error: null });
+    } catch (error) {
+        const users = await Usuario.find();
+        res.render('register_admin', { user: req.user, users, error: 'Error al registrar usuario' });
+    }
+});
+
 // Dashboard protegido
 router.get('/dashboard', verifyToken, async (req, res) => {
     const users = await Usuario.find(); // todos los usuarios

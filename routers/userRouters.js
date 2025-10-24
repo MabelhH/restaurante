@@ -12,4 +12,8 @@ router.post('/', userController.verifyToken, userController.onlyAdmin, userContr
 router.put('/:id', userController.verifyToken, userController.onlyAdmin, userController.updateUser);
 router.delete('/:id', userController.verifyToken, userController.onlyAdmin, userController.deleteUser);
 
+// ==== NUEVAS RUTAS ====
+router.get('/register_admin', userController.verifyToken, userController.onlyAdmin, userController.viewRegisterAdmin);
+router.post('/register_admin', userController.verifyToken, userController.onlyAdmin, userController.createUser);
+
 module.exports = router;

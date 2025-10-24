@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de nuevos usuarios - Restaurante</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/register_admin.css">
+</head>
+
+<body>
+    <div class="Register-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <h2 class="logo">
+                <i class="fas fa-utensils"></i><br>Restaurante
+            </h2>
+
+            <nav>
+                <a href="/dashboard"><i class="fas fa-home"></i> <span>Dashboard</span></a>
+                <a href="/register_admin" class="active"><i class="fas fa-user-plus"></i> <span>Registro</span></a>
+                <a href="/platos"><i class="fas fa-bowl-food"></i> <span>Platos</span></a>
+                <a href="/clientes"><i class="fas fa-users"></i> <span>Clientes</span></a>
+                <a href="/ventas"><i class="fas fa-shopping-cart"></i> <span>Ventas</span></a>
+                <a href="/carta"><i class="fas fa-book-open"></i> <span>Carta</span></a>
+                <a href="/logout"><i class="fas fa-sign-out-alt"></i> <span>Cerrar sesión</span></a>
+            </nav>
+        </aside>
+
+        <!-- Contenido principal -->
+        <main class="main-content">
+            <div class="register-card">
+                <!-- Lado del formulario -->
+                <div class="register-content">
+                    <header>
+                        <h1>Bienvenido, <%= user?.nombre || '' %>
+                        </h1>
+                        <div class="welcome-badge">Panel de Administración</div>
+                    </header>
+
+                    <section class="form-section">
+                        <div class="register-card">
+                            <div class="register-content">
+                                <h2 class="header">Registrar nuevo usuario</h2>
+                                <h3 class="subheader">Solo disponible para el administrador</h3>
+
+                                <form method="POST" action="/register_admin">
+                                    <label>Nombre</label>
+                                    <input type="text" name="nombre" placeholder="Nombre" required>
+
+                                    <label>Apellido</label>
+                                    <input type="text" name="apellido" placeholder="Apellido" required>
+
+                                    <label>Correo electrónico</label>
+                                    <input type="email" name="email" placeholder="correo@ejemplo.com" required>
+
+                                    <label>Contraseña</label>
+                                    <input type="password" name="password" placeholder="********" required>
+
+                                    <label>Rol</label>
+                                    <select name="rol" required>
+                                        <option value="">Selecciona un rol</option>
+                                        <option value="cocinero">Cocinero</option>
+                                        <option value="mesero">Mesero</option>
+                                        <option value="cajero">Cajero</option>
+                                    </select>
+
+                                    <button type="submit" class="btn-crear">Registrar Usuario</button>
+                                    <p class="error-message">
+                                        <%= error || '' %>
+                                    </p>
+                                </form>
+                            </div>
+
+                            <!-- Lado derecho con imagen -->
+                            <div class="image-side">
+                                <img src="/img/img_register.jpg" alt="Imagen decorativa">
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Lista de usuarios -->
+                    <section>
+                        <p class="titulo-usuarios">Usuarios registrados:</p>
+                        <% if (users && users.length> 0) { %>
+                            <div class="usuarios-container">
+                                <% users.forEach((u, index)=> { %>
+                                    <div class="card" data-id="<%= u._id %>">
+                                        <h3>
+                                            <%= u.nombre %>
+                                                <%= u.apellido %>
+                                        </h3>
+                                        <p><strong>Email:</strong>
+                                            <%= u.email %>
+                                        </p>
+                                        <p><strong>Rol:</strong>
+                                            <%= u.rol %>
+                                        </p>
+                                        <p><strong>ID:</strong>
+                                            <%= index + 1 %>
+                                        </p>
+
+                                        <div class="card-buttons">
+                                            <button class="btn-edit" onclick="editUser('<%= u._id %>')">
+                                                <i class="fas fa-edit"></i> Editar
+                                            </button>
+                                            <button class="btn-delete" onclick="deleteUser('<%= u._id %>')">
+                                                <i class="fas fa-trash-alt"></i> Eliminar
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <% }) %>
+                            </div>
+                            <% } else { %>
+                                <div class="empty-state">
+                                    <i class="fas fa-users"></i>
+                                    <p>No hay usuarios registrados.</p>
+                                </div>
+                                <% } %>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts para editar y eliminar -->
+    <script>
+        async function deleteUser(id) {
+            if (!confirm('¿Deseas eliminar este usuario?')) return;
+
+            try {
+                const res = await fetch(`/api/users/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    alert('Usuario eliminado');
+                    location.reload();
+                } else {
+                    alert(data.error || 'Error al eliminar usuario');
+                }
+            } catch (err) {
+                alert('Error al eliminar usuario');
+                console.error(err);
+            }
+        }
+
+        async function editUser(id) {
+            try {
+                const res = await fetch(`/api/users/${id}`);
+                const user = await res.json();
+                if (!res.ok) return alert(user.error);
+
+                document.querySelector('input[name="nombre"]').value = user.nombre;
+                document.querySelector('input[name="apellido"]').value = user.apellido;
+                document.querySelector('input[name="email"]').value = user.email;
+                document.querySelector('select[name="rol"]').value = user.rol;
+
+                const btn = document.querySelector('.btn-crear');
+                btn.textContent = 'Actualizar Usuario';
+                btn.onclick = async (e) => {
+                    e.preventDefault();
+                    const nombre = document.querySelector('input[name="nombre"]').value;
+                    const apellido = document.querySelector('input[name="apellido"]').value;
+                    const email = document.querySelector('input[name="email"]').value;
+                    const rol = document.querySelector('select[name="rol"]').value;
+                    const password = document.querySelector('input[name="password"]').value;
+
+                    const resUpdate = await fetch(`/api/users/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ nombre, apellido, email, rol, password })
+                    });
+
+                    const data = await resUpdate.json();
+                    if (resUpdate.ok) {
+                        alert('Usuario actualizado');
+                        location.reload();
+                    } else {
+                        alert(data.error || 'Error al actualizar usuario');
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Error al cargar usuario para editar');
+            }
+        }
+    </script>
+
+</body>
+
+</html>

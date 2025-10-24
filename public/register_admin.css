@@ -1,0 +1,364 @@
+/* ===== Importación de fuentes ===== */
+@import url('[https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Poppins:wght@300;400;600&family=Montserrat+Alternates:wght@500;600&display=swap](https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Poppins:wght@300;400;600&family=Montserrat+Alternates:wght@500;600&display=swap)');
+
+:root {
+    --rojo: #b22222;
+    --negro: #111;
+    --blanco: #fff;
+    --gris: #f8f8f8;
+    --sombra: rgba(0, 0, 0, 0.15);
+    --transicion: all 0.3s ease;
+}
+
+/* ===== Reset general ===== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', 'Segoe UI', sans-serif;
+}
+
+body {
+    color: var(--negro);
+    display: flex;
+    min-height: 100vh;
+    background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
+        url('../img/fond_rest.jpg') center/cover no-repeat;
+    background-attachment: fixed;
+}
+
+/* ===== Contenedor principal ===== */
+.Register-container {
+    display: flex;
+    width: 100%;
+}
+
+/* ===== Sidebar ===== */
+.sidebar {
+    width: 260px;
+    background-color: var(--negro);
+    color: var(--blanco);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+    position: fixed;
+    height: 100vh;
+}
+
+.sidebar h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    color: var(--rojo);
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.sidebar nav {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.sidebar nav a {
+    text-decoration: none;
+    color: var(--blanco);
+    font-size: 1rem;
+    padding: 0.8rem 1rem;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 5px 0;
+    transition: var(--transicion);
+}
+
+.sidebar nav a i {
+    font-size: 1.2rem;
+}
+
+.sidebar nav a:hover,
+.sidebar nav a.active {
+    background-color: var(--rojo);
+    transform: translateX(5px);
+}
+
+/* ===== Contenido principal ===== */
+.main-content {
+    flex: 1;
+    margin-left: 260px;
+    padding: 2rem 3rem;
+}
+
+/* ===== Encabezado ===== */
+header {
+    background: linear-gradient(to right, rgba(178, 34, 34, 0.079), rgba(255, 99, 71, 0.85)),
+        url('../img/platos_img.jpg') center/cover no-repeat;
+    color: var(--blanco);
+    padding: 3rem 2rem;
+    border-radius: 20px;
+    box-shadow: 0 5px 20px var(--sombra);
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.5rem;
+    text-shadow: 1px 1px 4px #000;
+}
+
+.welcome-badge {
+    background: linear-gradient(to right, #b22222, #ff6347);
+    display: inline-block;
+    padding: 0.5rem 1.4rem;
+    border-radius: 30px;
+    margin-top: 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+}
+
+/* ===== Sección del formulario ===== */
+.form-section {
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(8px);
+    padding: 2.5rem;
+    border-radius: 20px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    color: #fff;
+    margin-bottom: 2rem;
+}
+
+.form-section h2 {
+    text-align: center;
+    color: #a31818;
+    margin-bottom: 1.5rem;
+    font-size: 1.9rem;
+    font-weight: 600;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 420px;
+    margin: 0 auto;
+}
+
+form label {
+    font-size: 0.9rem;
+    color: #eee;
+    margin-bottom: 4px;
+}
+
+form input,
+form select {
+    padding: 12px;
+    border: 1px solid #d81d1d;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+form input::placeholder {
+    color: #ccc;
+}
+
+form input:focus,
+form select:focus {
+    border-color: #851919;
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 6px rgba(214, 64, 64, 0.6);
+}
+
+select option {
+    color: #000;
+}
+
+.btn-crear {
+    background: transparent;
+    border: 2px solid #8d2626;
+    color: #df2727;
+    padding: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    margin-top: 8px;
+}
+
+.btn-crear:hover {
+    background: #680b30;
+    color: #fff;
+}
+
+.error-message {
+    color: #801b1b;
+    text-align: center;
+    font-size: 0.9rem;
+    margin-top: 0.6rem;
+    font-weight: 500;
+}
+
+/* ===== Lista de usuarios ===== */
+.titulo-usuarios {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #482525;
+    text-align: center;
+    margin-bottom: 2rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(to right, #ffffff, #e8e1e1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    padding: 0.8rem;
+    border-radius: 12px;
+    box-shadow: 0 6px 15px rgba(178, 34, 34, 0.35);
+}
+
+.usuarios-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 1.5rem;
+}
+
+.card {
+    background: linear-gradient(145deg, rgba(255, 245, 240, 0.9), rgba(255, 235, 230, 0.95));
+    border-radius: 18px;
+    padding: 1.5rem;
+    box-shadow: 0 5px 15px var(--sombra);
+    transition: var(--transicion);
+    text-align: center;
+}
+
+.card:hover {
+    transform: translateY(-6px) scale(1.03);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+}
+
+.card h3 {
+    font-family: 'Playfair Display', serif;
+    color: var(--rojo);
+    margin-bottom: 0.5rem;
+    font-size: 1.3rem;
+}
+
+.card p {
+    font-size: 0.95rem;
+    color: #333;
+    margin-bottom: 0.4rem;
+}
+
+/* ===== Estado vacío ===== */
+.empty-state {
+    text-align: center;
+    color: #777;
+    padding: 3rem 0;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    color: var(--rojo);
+    margin-bottom: 1rem;
+}
+
+/* ===== Responsividad ===== */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 200px;
+    }
+
+    .main-content {
+        margin-left: 200px;
+        padding: 1.5rem;
+    }
+
+    header h1 {
+        font-size: 2rem;
+    }
+
+    form {
+        max-width: 100%;
+    }
+}
+/* ===== Estructura del registro con imagen ===== */
+.register-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    background: rgba(134, 130, 130, 0.267);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.493);
+    margin-top: 2rem;
+}
+
+/* Lado del formulario */
+.register-content {
+    flex: 1;
+    padding: 3rem;
+    color: #fff;
+}
+
+/* Lado de la imagen */
+.image-side {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.image-side img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+
+/* =====Botones===== */
+.card-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.card-buttons button {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: 0.3s ease;
+}
+
+.btn-edit {
+    background-color: #185a2e65;
+    color: #111;
+}
+
+.btn-edit:hover {
+    background-color: #0b571b73;
+}
+
+.btn-delete {
+    background-color: #460f0f9d;
+    color: #fff;
+}
+
+.btn-delete:hover {
+    background-color: #db202056;
+}
