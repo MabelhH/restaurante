@@ -144,3 +144,33 @@ button:hover {
 .image-side img:hover {
   transform: scale(1.05);
 }
+
+
+/* ===== Botón flotante de registro ===== */
+.btn-register {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(6px);
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+}
+
+.btn-register img {
+  width: 35px;
+  height: 35px;
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6));
+}
+
+.btn-register:hover {
+  transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.2);
+}

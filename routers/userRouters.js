@@ -2,14 +2,14 @@ const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
 
-// CRUD usuarios
-router.get('/', userController.getAllUsers);
-router.get('/:id', userController.getUser);
-router.post('/', userController.createUser);
-router.put('/:id', userController.updateUser);
-router.delete('/:id', userController.deleteUser);
-
 // Dashboard protegido
 router.get('/dashboard', userController.verifyToken, userController.dashboard);
+
+// CRUD (solo admin)
+router.get('/', userController.verifyToken, userController.onlyAdmin, userController.getAllUsers);
+router.get('/:id', userController.verifyToken, userController.onlyAdmin, userController.getUser);
+router.post('/', userController.verifyToken, userController.onlyAdmin, userController.createUser);
+router.put('/:id', userController.verifyToken, userController.onlyAdmin, userController.updateUser);
+router.delete('/:id', userController.verifyToken, userController.onlyAdmin, userController.deleteUser);
 
 module.exports = router;

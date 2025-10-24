@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Registro - Restaurante</title>
   <link rel="stylesheet" href="/register.css">
 </head>
+
 <body>
   <div class="overlay">
     <div class="register-card">
@@ -16,15 +18,30 @@
         <form method="POST" action="/register">
           <label>Nombre</label>
           <input type="text" name="nombre" placeholder="Tu nombre" required>
+
           <label>Apellido</label>
           <input type="text" name="apellido" placeholder="Tu apellido" required>
+
           <label>Correo electrónico</label>
           <input type="email" name="email" placeholder="correo@ejemplo.com" required>
+
           <label>Contraseña</label>
           <input type="password" name="password" placeholder="********" required>
 
+          <!-- Nuevo campo para seleccionar rol -->
+          <label>Rol</label>
+          <select name="rol" required>
+            <option value="">Selecciona un rol</option>
+            <option value="admin">Administrador</option>
+            <option value="cocinero">Cocinero</option>
+            <option value="mesero">Mesero</option>
+            <option value="cajero">Cajero</option>
+          </select>
+
           <button type="submit">Crear cuenta</button>
-          <p class="error-message"><%= error || '' %></p>
+          <p class="error-message">
+            <%= error || '' %>
+          </p>
         </form>
 
         <div class="login-section">
@@ -40,4 +57,5 @@
     </div>
   </div>
 </body>
+
 </html>
