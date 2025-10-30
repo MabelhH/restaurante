@@ -25,26 +25,12 @@ exports.verifyToken = (req, res, next) => {
 // ==================== Dashboard protegido ====================
 exports.dashboard = async (req, res) => {
   try {
-    const usuario = req.user;
-
-    if (usuario.rol === 'admin') {
-      const users = await Usuario.find();
-      return res.render('dashboard', { user: usuario, users });
-    } else if (usuario.rol === 'mesero') {
-      return res.render('dashboard_mesero', { user: usuario });
-    } else {
-      return res.render('login', { error: 'Rol no autorizado' });
-    }
-
+    const users = await Usuario.find();
+    res.render('dashboard', { user: req.user, users });
   } catch (err) {
     console.error(err);
-    if (req.user.rol === 'admin') {
-      res.render('dashboard', { user: req.user, users: [], error: 'Error al obtener usuarios' });
-    } else {
-      res.render('dashboard_mesero', { user: req.user, error: 'Error al cargar dashboard' });
-    }
+    res.render('dashboard', { user: req.user, users: [], error: 'Error al obtener usuarios' });
   }
-
 };
 
 // ==================== Registro ====================
@@ -101,17 +87,9 @@ exports.register = async (req, res) => {
         return res.render('register', { error: 'Solo el admin puede registrar nuevos usuarios.' });
       }
     }
-    const bcrypt = require('bcrypt');
+
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    const newUser = new Usuario({
-      nombre,
-      apellido,
-      email,
-      password: hashedPassword,
-      rol
-    });
-
+    const newUser = new Usuario({ nombre, apellido, email, password: hashedPassword, rol });
     await newUser.save();
 
     res.redirect('/dashboard');
@@ -198,30 +176,11 @@ exports.createUser = async (req, res) => {
         return res.status(400).json({ error: 'Ya existe un administrador registrado' });
     }
 
-    xports.createUser = async (req, res) => {
-  try {
-    // Solo admin puede crear usuarios
-    if (req.user.rol !== 'admin') {
-      return res.status(403).json({ error: 'Solo el administrador puede crear usuarios' });
-    }
-
-    // Validar que no haya más de un admin
-    if (req.body.rol === 'admin') {
-      const adminExistente = await Usuario.findOne({ rol: 'admin' });
-      if (adminExistente)
-        return res.status(400).json({ error: 'Ya existe un administrador registrado' });
-    }
-
     if (req.body.password) {
       req.body.password = await bcrypt.hash(req.body.password, 10);
     }
 
     const newUser = await userService.create(req.body);
-    res.status(201).json(newUser);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
     res.status(201).json(newUser);
   } catch (err) {
     res.status(500).json({ error: err.message });
