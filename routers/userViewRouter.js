@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const bcrypt = require('bcrypt');
 const userController = require('../controllers/userController');
 const Usuario = require('../models/userModel');
 
@@ -20,7 +21,8 @@ router.get('/register_admin', verifyToken, async (req, res) => {
 router.post('/register_admin', verifyToken, async (req, res) => {
     try {
         const { nombre, apellido, email, password, rol } = req.body;
-        const nuevoUsuario = new Usuario({ nombre, apellido, email, password, rol });
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const nuevoUsuario = new Usuario({ nombre, apellido, email,password: hashedPassword, rol });
         await nuevoUsuario.save();
         const users = await Usuario.find();
         res.render('register_admin', { user: req.user, users, error: null });
@@ -35,6 +37,30 @@ router.get('/dashboard', verifyToken, async (req, res) => {
     const users = await Usuario.find(); // todos los usuarios
     res.render('dashboard', { usuario: req.user, users });
 });
+
+
+// 🟢 Dashboard de mesero
+router.get('/dashboard_mesero', verifyToken, async (req, res) => {
+  try {
+    // Si deseas que el mesero vea los clientes registrados:
+    const users = await Usuario.find();
+
+    res.render('dashboard_mesero', {
+      usuario: req.user, // datos del usuario logueado
+      users,             // lista de usuarios para el bucle EJS
+    });
+  } catch (error) {
+    console.error('Error al cargar dashboard del mesero:', error);
+    res.render('dashboard_mesero', {
+      usuario: req.user,
+      users: [],
+      error: 'Error al cargar los usuarios',
+    });
+  }
+});
+
+
+
 
 router.get('/logout', (req, res) => {
     res.clearCookie('token'); // elimina la cookie con el JWT

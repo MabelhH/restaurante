@@ -33,23 +33,57 @@
       <header class="top-header">
         <div class="welcome-section">
           <h1>Bienvenido</h1>
-          <p>Gestiona tus clientes de manera eficiente</p>
+          <p>Gestiona tus platos de manera eficiente</p>
         </div>
+
         <div class="user-actions">
-          <div class="notification">
-            <i class="fas fa-bell"></i>
-            <span class="notification-badge">2</span>
-          </div>
-          <div class="user-profile">
-            <div class="avatar">C</div>
-            <div>
-              <div class="user-name">Clara Huanco</div>
-              <div class="user-role">Administrador</div>
+          <!-- EL WIDGET DE NOTIFICACIONES VA AQUÍ DENTRO -->
+          <div class="notification-widget">
+            <div class="notification-trigger" id="notificationIcon">
+              <div class="notification-icon-wrapper">
+                <i class="fas fa-bell"></i>
+                <span class="notification-pulse"></span>
+                <span class="notification-badge" id="notificationBadge">0</span>
+              </div>
+              <span class="notification-label">Alertas de Stock</span>
+            </div>
+            
+            <div class="notification-panel" id="notificationDropdown">
+              <div class="panel-header">
+                <div class="panel-title">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  <h4>Alertas de Stock Bajo</h4>
+                </div>
+                <span class="panel-counter" id="panelCounter">0 productos</span>
+              </div>
+              
+              <div class="notification-content">
+                <div class="notification-list" id="notificationList">
+                  <!-- Los platos con stock bajo aparecerán aquí -->
+                </div>
+                
+                <div class="panel-footer">
+                  <div class="stock-summary">
+                    <div class="summary-item critical">
+                      <span class="summary-dot"></span>
+                      <span>Crítico: <strong id="criticalCount">0</strong></span>
+                    </div>
+                    <div class="summary-item low">
+                      <span class="summary-dot"></span>
+                      <span>Bajo: <strong id="lowCount">0</strong></span>
+                    </div>
+                  </div>
+                  <button class="view-all-btn" onclick="cargarProductos()">
+                    <i class="fas fa-list"></i>
+                    Ver todos los platos
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
+          <!-- FIN DEL WIDGET DE NOTIFICACIONES -->
         </div>
       </header>
-
     <div class="content">
       <main>
         <!-- Formulario para agregar productos -->
@@ -194,6 +228,276 @@ let editarId = null;
 const fileInput = document.getElementById('imagenFile');
 const fileSelectButton = document.getElementById('fileSelectButton');
 const fileName = document.getElementById('fileName');
+
+// ========== FUNCIONALIDAD DE NOTIFICACIONES ==========
+const notificationIcon = document.getElementById('notificationIcon');
+const notificationBadge = document.getElementById('notificationBadge');
+const notificationDropdown = document.getElementById('notificationDropdown');
+const notificationList = document.getElementById('notificationList');
+
+// Función para actualizar las notificaciones
+async function actualizarNotificaciones() {
+  try {
+    const res = await fetch('/api/platos');
+    if (!res.ok) throw new Error('Error al cargar productos');
+    
+    const productos = await res.json();
+    
+    // Filtrar productos con stock bajo
+    const productosStockBajo = productos.filter(p => p.stock <= p.stockMinimo);
+    
+    // Actualizar badge
+    notificationBadge.textContent = productosStockBajo.length;
+    
+    // Actualizar lista de notificaciones
+    actualizarListaNotificaciones(productosStockBajo);
+    
+  } catch (error) {
+    console.error('Error al actualizar notificaciones:', error);
+  }
+}
+
+// Función para actualizar la lista de notificaciones
+function actualizarListaNotificaciones(productosStockBajo) {
+  if (productosStockBajo.length === 0) {
+    notificationList.innerHTML = `
+      <div class="notification-empty">
+        <i class="fas fa-check-circle"></i>
+        <p>¡Todo en orden!</p>
+        <p>No hay platos con stock bajo</p>
+      </div>
+    `;
+    return;
+  }
+  
+  notificationList.innerHTML = productosStockBajo.map(p => {
+    const esCritico = p.stock === 0;
+    const claseStock = esCritico ? 'critical' : '';
+    const claseItem = esCritico ? 'stock-critical' : 'stock-low';
+    
+    return `
+      <div class="notification-item ${claseItem}">
+        <div class="notification-product">${p.nombre}</div>
+        <div class="notification-stock ${claseStock}">
+          Stock: ${p.stock} | Mínimo: ${p.stockMinimo}
+          ${esCritico ? ' - ¡AGOTADO!' : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Función para ordenar productos (stock bajo primero)
+function ordenarProductosConStockBajoPrimero(productos) {
+  return productos.sort((a, b) => {
+    const aStockBajo = a.stock <= a.stockMinimo;
+    const bStockBajo = b.stock <= b.stockMinimo;
+    
+    if (aStockBajo && !bStockBajo) return -1;
+    if (!aStockBajo && bStockBajo) return 1;
+    
+    // Si ambos tienen stock bajo o ambos no, ordenar por nombre
+    return a.nombre.localeCompare(b.nombre);
+  });
+}
+
+// Modificar la función cargarProductos para ordenar con stock bajo primero
+async function cargarProductos() {
+  try {
+    const res = await fetch('/api/platos');
+    if (!res.ok) throw new Error('Error al cargar productos');
+    
+    const productos = await res.json();
+    
+    // Ordenar productos: stock bajo primero
+    const productosOrdenados = ordenarProductosConStockBajoPrimero(productos);
+    
+    container.innerHTML = '';
+
+    if (productosOrdenados.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <i class="fas fa-utensils"></i>
+          <p>No hay productos registrados</p>
+          <p>Comienza agregando tu primer producto</p>
+        </div>
+      `;
+      return;
+    }
+
+    productosOrdenados.forEach(p => {
+      const stockBajo = p.stock <= p.stockMinimo;
+      const card = document.createElement('div');
+      card.classList.add('card');
+      
+      if (stockBajo) {
+        card.classList.add('stock-bajo');
+      }
+      
+      card.innerHTML = `
+        <img src="${p.imagen || 'https://via.placeholder.com/150'}" alt="${p.nombre}" 
+             onerror="this.src='https://via.placeholder.com/150'">
+        <h4>${p.nombre}</h4>
+        <p><strong>Categoría:</strong> ${p.categoria}</p>
+        <p><strong>Precio:</strong> S/. ${p.precio.toFixed(2)}</p>
+        <p class="${stockBajo ? 'stock-low' : ''}">
+          <strong>Stock:</strong> ${p.stock} 
+          ${stockBajo ? '<span class="stock-warning">(!)</span>' : ''}
+        </p>
+        <p><strong>Stock Mínimo:</strong> ${p.stockMinimo}</p>
+        <div class="card-actions">
+          <button class="editar" data-id="${p._id}">
+            <i class="fas fa-edit"></i>
+            Editar
+          </button>
+          <button class="eliminar" data-id="${p._id}">
+            <i class="fas fa-trash"></i>
+            Eliminar
+          </button>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+    
+  } catch (error) {
+    console.error('Error:', error);
+    mostrarError('Error al cargar los productos');
+  }
+}
+
+// Event listeners para las notificaciones
+notificationIcon.addEventListener('click', function(e) {
+  e.stopPropagation();
+  notificationDropdown.classList.toggle('show');
+});
+
+// Cerrar dropdown al hacer click fuera
+document.addEventListener('click', function(e) {
+  if (!notificationIcon.contains(e.target) && !notificationDropdown.contains(e.target)) {
+    notificationDropdown.classList.remove('show');
+  }
+});
+
+// Actualizar notificaciones cuando se carga la página
+document.addEventListener('DOMContentLoaded', function() {
+  cargarProductos();
+  actualizarNotificaciones();
+});
+
+// Actualizar notificaciones después de agregar/editar/eliminar productos
+async function enviarProducto(e) {
+  e.preventDefault();
+  
+  // ... (código existente para enviar producto)
+  
+  // Después de guardar, actualizar notificaciones
+  await cargarProductos();
+  await actualizarNotificaciones();
+}
+
+// En la función de eliminar producto, también actualizar notificaciones
+container.addEventListener('click', async (e) => {
+  const button = e.target.closest('button');
+  if (!button) return;
+
+  const id = button.dataset.id;
+  if (!id) return;
+
+  if (button.classList.contains('eliminar')) {
+    if (confirm('¿Estás seguro de que deseas eliminar este producto?')) {
+      try {
+        const response = await fetch(`/api/platos/${id}`, { 
+          method: 'DELETE' 
+        });
+        
+        if (!response.ok) throw new Error('Error al eliminar el producto');
+        
+        mostrarExito('Producto eliminado correctamente');
+        await cargarProductos();
+        await actualizarNotificaciones(); // ← Agregar esta línea
+      } catch (error) {
+        console.error('Error:', error);
+        mostrarError('Error al eliminar el producto');
+      }
+    }
+  }
+
+  // ... (resto del código existente)
+});
+// Función para actualizar las notificaciones
+async function actualizarNotificaciones() {
+  try {
+    const res = await fetch('/api/platos');
+    if (!res.ok) throw new Error('Error al cargar productos');
+    
+    const productos = await res.json();
+    
+    // Filtrar productos con stock bajo
+    const productosStockBajo = productos.filter(p => p.stock <= p.stockMinimo);
+    const productosCriticos = productosStockBajo.filter(p => p.stock === 0);
+    const productosBajos = productosStockBajo.filter(p => p.stock > 0 && p.stock <= p.stockMinimo);
+    
+    // Actualizar badge
+    notificationBadge.textContent = productosStockBajo.length;
+    
+    // Actualizar contadores del panel
+    document.getElementById('panelCounter').textContent = `${productosStockBajo.length} producto${productosStockBajo.length !== 1 ? 's' : ''}`;
+    document.getElementById('criticalCount').textContent = productosCriticos.length;
+    document.getElementById('lowCount').textContent = productosBajos.length;
+    
+    // Actualizar lista de notificaciones
+    actualizarListaNotificaciones(productosStockBajo);
+    
+  } catch (error) {
+    console.error('Error al actualizar notificaciones:', error);
+  }
+}
+
+// Función para actualizar la lista de notificaciones
+function actualizarListaNotificaciones(productosStockBajo) {
+  if (productosStockBajo.length === 0) {
+    notificationList.innerHTML = `
+      <div class="notification-empty">
+        <i class="fas fa-check-circle"></i>
+        <h5>¡Todo en orden!</h5>
+        <p>No hay productos con stock bajo</p>
+      </div>
+    `;
+    return;
+  }
+  
+  notificationList.innerHTML = productosStockBajo.map(p => {
+    const esCritico = p.stock === 0;
+    const claseItem = esCritico ? 'stock-critical' : 'stock-low';
+    const icono = esCritico ? 'fa-fire' : 'fa-exclamation-triangle';
+    const textoStock = esCritico ? 'AGOTADO' : `Stock: ${p.stock}`;
+    
+    return `
+      <div class="notification-item ${claseItem}">
+        <div class="notification-icon">
+          <i class="fas ${icono}"></i>
+        </div>
+        <div class="notification-details">
+          <div class="notification-product">${p.nombre}</div>
+          <div class="notification-stock">
+            <span class="stock-value">${textoStock}</span>
+            <span class="stock-minimum">Mínimo: ${p.stockMinimo}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+
+
+
+
+
+
+
+
+
 
 // Crear contenedor para preview
 const previewContainer = document.createElement('div');

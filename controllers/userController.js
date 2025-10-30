@@ -89,7 +89,7 @@ exports.register = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new Usuario({ nombre, apellido, email, password: hashedPassword, rol });
+    const newUser = new Usuario({ nombre, apellido, email,password: hashedPassword, rol});
     await newUser.save();
 
     res.redirect('/dashboard');
@@ -127,7 +127,18 @@ exports.login = async (req, res) => {
     );
 
     res.cookie('token', token, { httpOnly: true });
-    res.redirect('/dashboard');
+    switch (user.rol) {
+      case 'admin':
+        return res.redirect('/dashboard');
+      case 'mesero':
+        return res.redirect('/dashboard_mesero');
+      // case 'cocinero':
+      //   return res.redirect('/cocinero');
+      // case 'cajero':
+      //   return res.redirect('/cajero');
+      default:
+        return res.redirect('/login');
+    }
   } catch (err) {
     console.error(err);
     res.render('login', { error: err.message });

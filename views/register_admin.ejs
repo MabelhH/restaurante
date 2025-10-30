@@ -84,9 +84,13 @@
                     <section>
                         <p class="titulo-usuarios">Usuarios registrados:</p>
                         <% if (users && users.length> 0) { %>
-                            <div class="usuarios-container">
+                            <div class="search-bar">
+                                <input type="text" id="searchInput" placeholder="Buscar usuario ..." />
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <div class="usuarios-container" id="usuariosContainer">
                                 <% users.forEach((u, index)=> { %>
-                                    <div class="card" data-id="<%= u._id %>">
+                                    <div class="card user-card" data-id="<%= u._id %>" data-nombre="<%= u.nombre.toLowerCase() %>" data-apellido="<%= u.apellido.toLowerCase() %>">
                                         <h3>
                                             <%= u.nombre %>
                                                 <%= u.apellido %>
@@ -124,8 +128,38 @@
         </main>
     </div>
 
-    <!-- Scripts para editar y eliminar -->
+    <!-- Scripts para editar, eliminar y buscar -->
     <script>
+        // Función de búsqueda
+        function setupSearch() {
+            const searchInput = document.getElementById('searchInput');
+            const userCards = document.querySelectorAll('.user-card');
+            
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase().trim();
+                
+                userCards.forEach(card => {
+                    const nombre = card.getAttribute('data-nombre');
+                    const apellido = card.getAttribute('data-apellido');
+                    const nombreCompleto = `${nombre} ${apellido}`;
+                    
+                    // Buscar en nombre, apellido o nombre completo
+                    if (nombre.includes(searchTerm) || 
+                        apellido.includes(searchTerm) || 
+                        nombreCompleto.includes(searchTerm)) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        // Inicializar la búsqueda cuando el DOM esté cargado
+        document.addEventListener('DOMContentLoaded', function() {
+            setupSearch();
+        });
+
         async function deleteUser(id) {
             if (!confirm('¿Deseas eliminar este usuario?')) return;
 

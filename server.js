@@ -49,19 +49,21 @@ function verifyToken(req, res, next) {
 const clienteRouter = require('./routers/clientesRouters');
 const platosRouter = require('./routers/platosRouters');
 const ventaRouter = require('./routers/ventasRouters');
-const userApiRouter = require('./routers/userRouters'); // CRUD API usuarios
+const userRouter = require('./routers/userRouters'); 
+// CRUD API usuarios
 
 app.use('/api/clientes', clienteRouter);
 app.use('/api/platos', platosRouter);
 app.use('/api/ventas', ventaRouter);
-app.use('/api/users', userApiRouter); // API REST protegida con JWT
+app.use('/api/users', userRouter); // API REST protegida con JWT
 app.use('/carta', cartaViewRouter);
 
 // ===== Routers de vistas =====
 const clienteViewRouter = require('./routers/clienteViewRouter');
 const platosViewRouter = require('./routers/platosViewRouter');
 const ventaViewRouter = require('./routers/ventaViewRouter');
-const userViewRouter = require('./routers/userViewRouter'); // Login, Register, Dashboard
+const userViewRouter = require('./routers/userViewRouter');
+ // Login, Register, Dashboard
 
 app.use('/clientes', clienteViewRouter);
 app.use('/platos', platosViewRouter);

@@ -363,3 +363,46 @@ select option {
 .btn-delete:hover {
     background-color: #db202056;
 }
+
+
+
+
+.search-bar {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    margin: 20px 0;
+    margin-left: auto;
+}
+
+.search-bar input {
+    width: 100%;
+    padding: 14px 50px 14px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    font-size: 14px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    color: #333;
+    transition: all 0.3s ease;
+}
+
+.search-bar input::placeholder {
+    color: rgba(2, 3, 7, 0.7);
+}
+
+.search-bar input:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(59, 130, 246, 0.5);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.search-bar .fas.fa-search {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(30, 32, 35, 0.8);
+    pointer-events: none;
+}
