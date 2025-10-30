@@ -18,12 +18,12 @@
       </h2>
 
       <nav>
-        <a href="/dashboard" class="active"><i class="fas fa-home"></i> <span>Dashboard</span></a>
-        <a href="/platos"><i class="fas fa-bowl-food"></i> <span>Platos</span></a>
-        <a href="/clientes"><i class="fas fa-users"></i> <span>Usuarios</span></a>
-        <a href="/ventas"><i class="fas fa-shopping-cart"></i> <span>Ventas</span></a>
-        <a href="/carta"><i class="fas fa-book-open"></i> <span>Carta</span></a>
-        <a href="/logout"><i class="fas fa-sign-out-alt"></i> <span>Cerrar sesión</span></a>
+            <a href="/dashboard"><i class="fas fa-home"></i> <span>Dashboard</span></a>
+            <a href="/register_admin"><i class="fas fa-user-plus"></i> <span>Registro</span></a>
+            <a href="/platos"><i class="fas fa-bowl-food"></i> <span>Platos</span></a>
+            <a href="/ventas"><i class="fas fa-shopping-cart"></i> <span>Ventas</span></a>
+            <a href="/carta"><i class="fas fa-book-open"></i> <span>Carta</span></a>
+            <a href="/logout"><i class="fas fa-sign-out-alt"></i> <span>Cerrar sesión</span></a>
       </nav>
     </aside>
 
@@ -31,7 +31,7 @@
       <!-- Header -->
       <header class="top-header">
         <div class="welcome-section">
-          <h2>Bienvenido, Dr. Clara </h2>
+          <h1>Bienvenido</h1>
           <p>Gestiona tus clientes de manera eficiente</p>
         </div>
         <div class="user-actions">
@@ -51,8 +51,6 @@
 
     <div class="content">
       <main>
-        <h2>Gestión de Productos</h2>
-
         <!-- Formulario para agregar productos -->
         <section class="form-section">
           <h3>Registrar nuevo producto</h3>
@@ -63,7 +61,15 @@
             <input type="number" id="precio" placeholder="Precio" step="0.01" min="0" required>
             <input type="number" id="stock" placeholder="Stock" required>
             <input type="number" id="stockMinimo" placeholder="Stock Mínimo" required>
-            <input type="text" id="imagen" placeholder="URL de la imagen del plato" required>
+            <input type="text" name="imagenUrl" placeholder="Ingrese URL de imagen">
+            <div class="file-button-container">
+              <input type="file" name="imagenFile" accept="image/*" id="imagenFile" class="file-input-hidden">
+              <button type="button" class="file-select-button" id="fileSelectButton">
+                <i class="fas fa-image"></i>
+                Seleccionar Imagen
+              </button>
+              <span class="file-name" id="fileName">Sin archivo seleccionado</span>
+            </div>
             <button type="submit">Agregar Producto</button>
           </form>
         </section>
@@ -71,129 +77,538 @@
     <!-- Tabla de productos -->
         <section class="list-section">
           <h3>Lista de productos</h3>
-          <table id="tablaProductos">
-            <thead>
-              <tr>
-                <th>Nombre</th>
-                <th>Categoría</th>
-                <th>Descripción</th>
-                <th>Precio</th>
-                <th>Stock</th>
-                <th>Stock Mínimo</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- Productos cargados dinámicamente -->
-            </tbody>
-          </table>
+          <div id="productosContainer" class="cards-container"></div>
         </section>
       </main>
     </div>
-  <script>
-const form = document.getElementById('formProducto');
-const tabla = document.querySelector('#tablaProductos tbody');
+    </main>
+  </div>
+  <!-- <script>
+  const form = document.getElementById('formProducto');
+  const tabla = document.querySelector('#tablaProductos tbody');
+  const container = document.getElementById('productosContainer');
+  let editarId = null;
 
-// Función para agregar producto
-async function agregarProductoOriginal(e){
-  e.preventDefault();
-  const nuevoProducto = {
-    nombre: document.getElementById('nombre').value,
-    categoria: document.getElementById('categoria').value,
-    descripcion: document.getElementById('descripcion').value,
-    precio: parseFloat(document.getElementById('precio').value),
-    stock: parseInt(document.getElementById('stock').value),
-    stockMinimo: parseInt(document.getElementById('stockMinimo').value),
-    imagen: document.getElementById('imagen').value // <-- agregado
-  };
-  await fetch('/api/platos', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(nuevoProducto)
-  });
-  form.reset();
-  cargarProductos();
-}
+  // Función para cargar productos
+  async function cargarProductos() {
+    const res = await fetch('/api/platos');
+    const productos = await res.json();
+    container.innerHTML = '';
 
-form.addEventListener('submit', agregarProductoOriginal);
+    productos.forEach(p => {
+      const card = document.createElement('div');
+      card.classList.add('card');
+      card.innerHTML = `
+        <img src="${p.imagen || 'https://via.placeholder.com/150'}" alt="${p.nombre}">
+        <h4>${p.nombre}</h4>
+        <p><strong>Categoría:</strong> ${p.categoria}</p>
+        <p><strong>Precio:</strong> S/. ${p.precio.toFixed(2)}</p>
+        <p><strong>Stock:</strong> ${p.stock}</p>
+        <div class="card-actions">
+          <button class="editar" data-id="${p._id}">Editar</button>
+          <button class="eliminar" data-id="${p._id}">Eliminar</button>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
 
-// Cargar productos
-async function cargarProductos() {
-  const res = await fetch('/api/platos');
-  const productos = await res.json();
-  tabla.innerHTML = '';
-  productos.forEach(p => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${p.nombre}</td>
-      <td>${p.categoria}</td>
-      <td>${p.descripcion}</td>
-      <td>${p.precio.toFixed(2)}</td>
-      <td>${p.stock}</td>
-      <td>${p.stockMinimo}</td>
-      <td>
-        <button class="editar" data-id="${p._id}">Editar</button>
-        <button class="eliminar" data-id="${p._id}">Eliminar</button>
-      </td>
-    `;
-    tabla.appendChild(tr);
-  });
-}
+  // Función para crear o actualizar producto
+  async function enviarProducto(e) {
+    e.preventDefault();
+    const formData = new FormData();
 
-// Manejar botones Editar y Eliminar
-tabla.addEventListener('click', async (e) => {
-  const id = e.target.dataset.id;
+    formData.append('nombre', form.nombre.value);
+    formData.append('categoria', form.categoria.value);
+    formData.append('descripcion', form.descripcion.value);
+    formData.append('precio', form.precio.value);
+    formData.append('stock', form.stock.value);
+    formData.append('stockMinimo', form.stockMinimo.value);
 
-  if(e.target.classList.contains('eliminar')){
-    await fetch(`/api/platos/${id}`, { method: 'DELETE' });
+    // Priorizar archivo sobre URL
+    if (form.imagenFile.files[0]) {
+      formData.set('imagenFile', form.imagenFile.files[0]);
+    } else if (form.imagenUrl.value) {
+      formData.set('imagenUrl', form.imagenUrl.value);
+    }
+
+    let url = '/api/platos';
+    let method = 'POST';
+    if (editarId) {
+      url = `/api/platos/${editarId}`;
+      method = 'PUT';
+    }
+
+    await fetch(url, { method, body: formData });
+
+    form.reset();
+    editarId = null;
+    form.querySelector('button[type="submit"]').textContent = 'Agregar Producto';
     cargarProductos();
   }
 
-  if(e.target.classList.contains('editar')){
-    const res = await fetch(`/api/platos/${id}`);
-    const plato = await res.json();
+  // Manejar botones Editar y Eliminar
+  container.addEventListener('click', async (e) => {
+  const id = e.target.closest('button')?.dataset.id;
+  if (!id) return;
 
-    // Llenar formulario con datos del producto
-    document.getElementById('nombre').value = plato.nombre;
-    document.getElementById('categoria').value = plato.categoria;
-    document.getElementById('descripcion').value = plato.descripcion;
-    document.getElementById('precio').value = plato.precio;
-    document.getElementById('stock').value = plato.stock;
-    document.getElementById('stockMinimo').value = plato.stockMinimo;
-    document.getElementById('imagen').value = plato.imagen; // <-- agregado
-
-    const boton = form.querySelector('button[type="submit"]');
-    boton.textContent = 'Actualizar Producto';
-
-    form.onsubmit = async (ev) => {
-      ev.preventDefault();
-      const actualizado = {
-        nombre: document.getElementById('nombre').value,
-        categoria: document.getElementById('categoria').value,
-        descripcion: document.getElementById('descripcion').value,
-        precio: parseFloat(document.getElementById('precio').value),
-        stock: parseInt(document.getElementById('stock').value),
-        stockMinimo: parseInt(document.getElementById('stockMinimo').value),
-        imagen: document.getElementById('imagen').value // <-- agregado
-      };
-
-      await fetch(`/api/platos/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(actualizado)
-      });
-
-      form.reset();
-      boton.textContent = 'Agregar Producto';
-      form.onsubmit = agregarProductoOriginal;
+  if (e.target.classList.contains('eliminar')) {
+    if (confirm('¿Deseas eliminar este producto?')) {
+      await fetch(`/api/platos/${id}`, { method: 'DELETE' });
       cargarProductos();
+    }
+  }
+
+  if (e.target.classList.contains('editar')) {
+    const res = await fetch(`/api/platos/${id}`);
+    const p = await res.json();
+
+    form.nombre.value = p.nombre;
+    form.categoria.value = p.categoria;
+    form.descripcion.value = p.descripcion;
+    form.precio.value = p.precio;
+    form.stock.value = p.stock;
+    form.stockMinimo.value = p.stockMinimo;
+    form.imagenUrl.value = p.imagen || '';
+    form.imagenFile.value = '';
+
+    form.querySelector('button[type="submit"]').textContent = 'Actualizar Producto';
+    editarId = id;
+  }
+});
+
+  // Evento submit
+  form.addEventListener('submit', enviarProducto);
+
+  // Inicializar
+  cargarProductos();
+</script> -->
+<script>
+  const form = document.getElementById('formProducto');
+const tabla = document.querySelector('#tablaProductos tbody');
+const container = document.getElementById('productosContainer');
+let editarId = null;
+
+// ========== FUNCIONALIDAD PARA EL BOTÓN DE ARCHIVO ==========
+const fileInput = document.getElementById('imagenFile');
+const fileSelectButton = document.getElementById('fileSelectButton');
+const fileName = document.getElementById('fileName');
+
+// Crear contenedor para preview
+const previewContainer = document.createElement('div');
+previewContainer.className = 'file-preview-container';
+previewContainer.id = 'filePreview';
+form.insertBefore(previewContainer, form.querySelector('button[type="submit"]'));
+
+// Botón abre el selector de archivos
+fileSelectButton.addEventListener('click', function() {
+  fileInput.click();
+});
+
+// Cuando se selecciona un archivo
+fileInput.addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (file) {
+    mostrarArchivoSeleccionado(file);
+  }
+});
+
+function mostrarArchivoSeleccionado(file) {
+  // Validar que sea una imagen
+  if (!file.type.startsWith('image/')) {
+    mostrarError('Por favor, selecciona solo archivos de imagen');
+    removerArchivo();
+    return;
+  }
+
+  // Validar tamaño (5MB máximo)
+  if (file.size > 5 * 1024 * 1024) {
+    mostrarError('La imagen es demasiado grande. Máximo 5MB permitido');
+    removerArchivo();
+    return;
+  }
+
+  // Actualizar nombre del archivo
+  fileName.textContent = file.name;
+  fileName.classList.add('has-file');
+  
+  // Mostrar preview
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    previewContainer.innerHTML = `
+      <div class="file-preview-info">
+        <img src="${e.target.result}" alt="Preview" class="file-preview-image">
+        <div class="file-preview-details">
+          <div class="file-preview-name">${file.name}</div>
+          <div class="file-preview-size">${formatearTamañoArchivo(file.size)}</div>
+        </div>
+        <button type="button" class="file-preview-remove" onclick="removerArchivo()">
+          <i class="fas fa-trash"></i>
+          Eliminar imagen
+        </button>
+      </div>
+    `;
+  };
+  reader.onerror = function() {
+    mostrarError('Error al cargar la imagen');
+    removerArchivo();
+  };
+  reader.readAsDataURL(file);
+}
+
+function removerArchivo() {
+  fileInput.value = '';
+  fileName.textContent = 'Sin archivo seleccionado';
+  fileName.classList.remove('has-file');
+  previewContainer.innerHTML = '';
+}
+
+function formatearTamañoArchivo(bytes) {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function mostrarError(mensaje) {
+  // Crear notificación de error
+  const errorDiv = document.createElement('div');
+  errorDiv.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #dc3545;
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
+    z-index: 10000;
+    animation: slideInRight 0.3s ease;
+    box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    max-width: 300px;
+  `;
+  errorDiv.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <i class="fas fa-exclamation-triangle"></i>
+      <span>${mensaje}</span>
+    </div>
+  `;
+  
+  document.body.appendChild(errorDiv);
+  
+  // Remover después de 4 segundos
+  setTimeout(() => {
+    errorDiv.style.animation = 'slideOutRight 0.3s ease';
+    setTimeout(() => {
+      if (errorDiv.parentNode) {
+        errorDiv.parentNode.removeChild(errorDiv);
+      }
+    }, 300);
+  }, 4000);
+}
+
+// ========== FUNCIONES PRINCIPALES ==========
+
+// Función para cargar productos
+async function cargarProductos() {
+  try {
+    const res = await fetch('/api/platos');
+    if (!res.ok) throw new Error('Error al cargar productos');
+    
+    const productos = await res.json();
+    container.innerHTML = '';
+
+    if (productos.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <i class="fas fa-utensils"></i>
+          <p>No hay productos registrados</p>
+          <p>Comienza agregando tu primer producto</p>
+        </div>
+      `;
+      return;
+    }
+
+    productos.forEach(p => {
+      const card = document.createElement('div');
+      card.classList.add('card');
+      
+      // Verificar si el stock está bajo
+      const stockBajo = p.stock <= p.stockMinimo;
+      if (stockBajo) {
+        card.classList.add('stock-bajo');
+      }
+      
+      card.innerHTML = `
+        <img src="${p.imagen || 'https://via.placeholder.com/150'}" alt="${p.nombre}" 
+             onerror="this.src='https://via.placeholder.com/150'">
+        <h4>${p.nombre}</h4>
+        <p><strong>Categoría:</strong> ${p.categoria}</p>
+        <p><strong>Precio:</strong> S/. ${p.precio.toFixed(2)}</p>
+        <p class="${stockBajo ? 'stock-low' : ''}">
+          <strong>Stock:</strong> ${p.stock} 
+          ${stockBajo ? '<span class="stock-warning">(!)</span>' : ''}
+        </p>
+        <p><strong>Stock Mínimo:</strong> ${p.stockMinimo}</p>
+        <div class="card-actions">
+          <button class="editar" data-id="${p._id}">
+            <i class="fas fa-edit"></i>
+            Editar
+          </button>
+          <button class="eliminar" data-id="${p._id}">
+            <i class="fas fa-trash"></i>
+            Eliminar
+          </button>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    mostrarError('Error al cargar los productos');
+  }
+}
+
+// Función para crear o actualizar producto
+async function enviarProducto(e) {
+  e.preventDefault();
+  
+  // Validaciones básicas
+  if (!form.nombre.value.trim()) {
+    mostrarError('El nombre del producto es requerido');
+    return;
+  }
+  
+  if (form.precio.value <= 0) {
+    mostrarError('El precio debe ser mayor a 0');
+    return;
+  }
+  
+  if (form.stock.value < 0) {
+    mostrarError('El stock no puede ser negativo');
+    return;
+  }
+
+  try {
+    const formData = new FormData();
+
+    formData.append('nombre', form.nombre.value.trim());
+    formData.append('categoria', form.categoria.value.trim());
+    formData.append('descripcion', form.descripcion.value.trim());
+    formData.append('precio', parseFloat(form.precio.value));
+    formData.append('stock', parseInt(form.stock.value));
+    formData.append('stockMinimo', parseInt(form.stockMinimo.value));
+
+    // Priorizar archivo sobre URL
+    if (form.imagenFile.files[0]) {
+      formData.append('imagenFile', form.imagenFile.files[0]);
+    } else if (form.imagenUrl.value.trim()) {
+      formData.append('imagenUrl', form.imagenUrl.value.trim());
+    }
+
+    let url = '/api/platos';
+    let method = 'POST';
+    if (editarId) {
+      url = `/api/platos/${editarId}`;
+      method = 'PUT';
+    }
+
+    const response = await fetch(url, { 
+      method, 
+      body: formData 
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Error al guardar el producto');
+    }
+
+    // Mostrar mensaje de éxito
+    mostrarExito(editarId ? 'Producto actualizado correctamente' : 'Producto agregado correctamente');
+    
+    // Resetear formulario
+    resetearFormulario();
+    await cargarProductos();
+    
+  } catch (error) {
+    console.error('Error:', error);
+    mostrarError(error.message || 'Error al guardar el producto');
+  }
+}
+
+function mostrarExito(mensaje) {
+  const exitoDiv = document.createElement('div');
+  exitoDiv.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #28a745;
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
+    z-index: 10000;
+    animation: slideInRight 0.3s ease;
+    box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    max-width: 300px;
+  `;
+  exitoDiv.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <i class="fas fa-check-circle"></i>
+      <span>${mensaje}</span>
+    </div>
+  `;
+  
+  document.body.appendChild(exitoDiv);
+  
+  setTimeout(() => {
+    exitoDiv.style.animation = 'slideOutRight 0.3s ease';
+    setTimeout(() => {
+      if (exitoDiv.parentNode) {
+        exitoDiv.parentNode.removeChild(exitoDiv);
+      }
+    }, 300);
+  }, 3000);
+}
+
+function resetearFormulario() {
+  form.reset();
+  editarId = null;
+  removerArchivo();
+  form.querySelector('button[type="submit"]').textContent = 'Agregar Producto';
+  form.querySelector('button[type="submit"]').innerHTML = 'Agregar Producto';
+}
+
+// Manejar botones Editar y Eliminar
+container.addEventListener('click', async (e) => {
+  const button = e.target.closest('button');
+  if (!button) return;
+
+  const id = button.dataset.id;
+  if (!id) return;
+
+  if (button.classList.contains('eliminar')) {
+    if (confirm('¿Estás seguro de que deseas eliminar este producto?')) {
+      try {
+        const response = await fetch(`/api/platos/${id}`, { 
+          method: 'DELETE' 
+        });
+        
+        if (!response.ok) throw new Error('Error al eliminar el producto');
+        
+        mostrarExito('Producto eliminado correctamente');
+        await cargarProductos();
+      } catch (error) {
+        console.error('Error:', error);
+        mostrarError('Error al eliminar el producto');
+      }
+    }
+  }
+
+  if (button.classList.contains('editar')) {
+    try {
+      const res = await fetch(`/api/platos/${id}`);
+      if (!res.ok) throw new Error('Error al cargar el producto');
+      
+      const p = await res.json();
+
+      // Llenar formulario con datos del producto
+      form.nombre.value = p.nombre || '';
+      form.categoria.value = p.categoria || '';
+      form.descripcion.value = p.descripcion || '';
+      form.precio.value = p.precio || '';
+      form.stock.value = p.stock || '';
+      form.stockMinimo.value = p.stockMinimo || '';
+      form.imagenUrl.value = p.imagen || '';
+
+      // Limpiar file input
+      removerArchivo();
+
+      // Cambiar texto del botón
+      const submitButton = form.querySelector('button[type="submit"]');
+      submitButton.innerHTML = '<i class="fas fa-save"></i> Actualizar Producto';
+      submitButton.textContent = 'Actualizar Producto';
+      
+      editarId = id;
+      
+      // Scroll al formulario
+      form.scrollIntoView({ behavior: 'smooth' });
+      
+    } catch (error) {
+      console.error('Error:', error);
+      mostrarError('Error al cargar el producto para editar');
     }
   }
 });
 
-// Inicializar
-cargarProductos();
-</script>
+// Evento submit del formulario
+form.addEventListener('submit', enviarProducto);
 
+// Animaciones CSS para las notificaciones
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes slideInRight {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes slideOutRight {
+    from {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+  }
+  
+  .stock-low {
+    color: #dc3545;
+    font-weight: bold;
+  }
+  
+  .stock-warning {
+    color: #dc3545;
+    font-weight: bold;
+    margin-left: 5px;
+  }
+  
+  .empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #666;
+    grid-column: 1 / -1;
+  }
+  
+  .empty-state i {
+    font-size: 3rem;
+    color: #b22222;
+    margin-bottom: 1rem;
+    opacity: 0.7;
+  }
+  
+  .empty-state p:first-of-type {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+`;
+document.head.appendChild(style);
+
+// Inicializar
+document.addEventListener('DOMContentLoaded', function() {
+  cargarProductos();
+});
+</script>
 </body>
 </html>

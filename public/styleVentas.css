@@ -306,3 +306,406 @@ main h2 {
     grid-template-columns: 1fr;
   }
 }
+
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Poppins:wght@300;400;600&family=Montserrat+Alternates:wght@500;600&display=swap');
+
+:root {
+  --rojo: #b22222;
+  --negro: #111;
+  --blanco: #fff;
+  --gris: #f8f8f8;
+  --sombra: rgba(0, 0, 0, 0.15);
+  --transicion: all 0.3s ease;
+}
+
+/* ======= Historial de Ventas Mejorado ======= */
+.search-container {
+  background: linear-gradient(
+    rgba(255,245,240,0.95),
+    rgba(255,235,230,0.98)
+  );
+  padding: 2rem;
+  border-radius: 20px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  margin-bottom: 2rem;
+  border: 2px solid rgba(178, 34, 34, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.search-container h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.8rem;
+  color: var(--rojo);
+  margin-bottom: 1.5rem;
+  text-align: center;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.search-container h3::before {
+  content: "📋";
+  font-size: 1.5rem;
+}
+
+.search-box {
+  position: relative;
+  max-width: 450px;
+  margin: 0 auto 1.5rem;
+}
+
+.search-box i {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--rojo);
+  z-index: 2;
+  font-size: 1.1rem;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 1rem 1rem 1rem 3rem;
+  border: 2px solid rgba(178, 34, 34, 0.2);
+  border-radius: 15px;
+  font-size: 1rem;
+  font-family: 'Poppins', sans-serif;
+  background: rgba(255, 255, 255, 0.9);
+  transition: var(--transicion);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.search-box input:focus {
+  outline: none;
+  border-color: var(--rojo);
+  background: var(--blanco);
+  box-shadow: 0 6px 20px rgba(178, 34, 34, 0.25);
+  transform: translateY(-2px);
+}
+
+.search-box input::placeholder {
+  color: #888;
+  font-weight: 300;
+}
+
+.filter-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 0.8rem 1.8rem;
+  border: 2px solid rgba(178, 34, 34, 0.3);
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 25px;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  color: var(--rojo);
+  transition: var(--transicion);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+.filter-btn:hover {
+  border-color: var(--rojo);
+  background: rgba(178, 34, 34, 0.1);
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(178, 34, 34, 0.2);
+}
+
+.filter-btn.active {
+  background: linear-gradient(135deg, var(--rojo), #ff6347);
+  border-color: var(--rojo);
+  color: var(--blanco);
+  box-shadow: 0 5px 18px rgba(178, 34, 34, 0.4);
+  transform: translateY(-2px);
+}
+
+/* ======= Cards de Ventas Mejoradas ======= */
+.cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.8rem;
+  margin-bottom: 2rem;
+}
+
+.sale-card {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 245, 240, 0.95) 0%,
+    rgba(255, 235, 230, 0.98) 100%
+  );
+  border: 2px solid rgba(178, 34, 34, 0.15);
+  border-radius: 20px;
+  padding: 1.8rem;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+  transition: var(--transicion);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+
+.sale-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--rojo), #ff6347);
+  border-radius: 20px 20px 0 0;
+}
+
+.sale-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 15px 35px rgba(178, 34, 34, 0.25);
+  border-color: rgba(178, 34, 34, 0.3);
+}
+
+.sale-header {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px dashed rgba(178, 34, 34, 0.2);
+}
+
+.client-avatar {
+  width: 65px;
+  height: 65px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, var(--rojo), #ff6347);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--blanco);
+  font-weight: 700;
+  font-size: 1.3rem;
+  font-family: 'Montserrat Alternates', sans-serif;
+  box-shadow: 0 4px 15px rgba(178, 34, 34, 0.4);
+  transition: var(--transicion);
+}
+
+.sale-card:hover .client-avatar {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.sale-info {
+  flex: 1;
+}
+
+.client-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.3rem;
+  color: var(--rojo);
+  margin-bottom: 0.3rem;
+  font-weight: 600;
+}
+
+.sale-date {
+  font-size: 0.9rem;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 400;
+}
+
+.sale-date::before {
+  content: "🕒";
+  font-size: 0.8rem;
+}
+
+.sale-products {
+  margin-bottom: 1.5rem;
+}
+
+.product-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid rgba(178, 34, 34, 0.1);
+  transition: var(--transicion);
+}
+
+.product-item:hover {
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 10px;
+  padding: 0.8rem 0.8rem;
+  margin: 0 -0.8rem;
+  transform: translateX(5px);
+}
+
+.product-item:last-child {
+  border-bottom: none;
+}
+
+.product-name {
+  font-weight: 600;
+  color: #333;
+  flex: 1;
+  font-family: 'Poppins', sans-serif;
+}
+
+.product-quantity {
+  background: rgba(178, 34, 34, 0.1);
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--rojo);
+  margin: 0 0.8rem;
+  border: 1px solid rgba(178, 34, 34, 0.2);
+}
+
+.product-price {
+  font-weight: 700;
+  color: #2e8b57;
+  min-width: 85px;
+  text-align: right;
+  font-family: 'Montserrat Alternates', sans-serif;
+  font-size: 0.95rem;
+}
+
+.sale-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1.2rem;
+  border-top: 2px dashed rgba(178, 34, 34, 0.3);
+  margin-top: 0.5rem;
+}
+
+.total-label {
+  font-weight: 600;
+  color: #555;
+  font-size: 1rem;
+  font-family: 'Poppins', sans-serif;
+}
+
+.total-amount {
+  font-weight: 800;
+  color: var(--rojo);
+  font-size: 1.5rem;
+  font-family: 'Montserrat Alternates', sans-serif;
+  background: linear-gradient(135deg, var(--rojo), #ff4500);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+}
+
+/* ======= Estado Vacío Mejorado ======= */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: linear-gradient(
+    rgba(255,245,240,0.9),
+    rgba(255,235,230,0.95)
+  );
+  border-radius: 20px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+  border: 2px dashed rgba(178, 34, 34, 0.3);
+  backdrop-filter: blur(5px);
+}
+
+.empty-state i {
+  font-size: 4.5rem;
+  color: var(--rojo);
+  margin-bottom: 1.5rem;
+  opacity: 0.7;
+  display: block;
+}
+
+.empty-state p:first-of-type {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--rojo);
+  margin-bottom: 0.8rem;
+  font-family: 'Playfair Display', serif;
+}
+
+.empty-state p:last-of-type {
+  color: #666;
+  font-size: 1.1rem;
+  font-weight: 300;
+}
+
+/* ======= Animaciones ======= */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(25px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sale-card {
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+/* ======= Responsividad ======= */
+@media (max-width: 768px) {
+  .search-container {
+    padding: 1.5rem;
+    margin: 1rem 0;
+  }
+  
+  .cards-container {
+    grid-template-columns: 1fr;
+    gap: 1.2rem;
+  }
+  
+  .filter-buttons {
+    gap: 0.8rem;
+  }
+  
+  .filter-btn {
+    padding: 0.7rem 1.4rem;
+    font-size: 0.9rem;
+  }
+  
+  .sale-card {
+    padding: 1.4rem;
+  }
+  
+  .sale-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+  
+  .search-box {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .search-container h3 {
+    font-size: 1.5rem;
+  }
+  
+  .filter-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .filter-btn {
+    width: 200px;
+    justify-content: center;
+  }
+}

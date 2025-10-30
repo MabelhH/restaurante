@@ -18,6 +18,7 @@ app.use(cookieParser());
 
 // ===== Archivos estáticos =====
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ===== Motor de plantillas EJS =====
 app.set('view engine', 'ejs');

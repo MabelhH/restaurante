@@ -22,21 +22,57 @@ class PlatoController {
 
     async crear(req, res) {
         try {
-            const nuevo = await platoService.create(req.body);
+            console.log('req.body:', req.body);
+            console.log('req.file:', req.file);
+
+            const data = req.body;
+
+            if (data.imagenUrl && data.imagenUrl.trim() !== '') {
+            data.imagen = data.imagenUrl;
+            } else if (req.file) {
+            data.imagen = '/uploads/' + req.file.filename;
+            } else {
+            data.imagen = '';
+            }
+
+            const nuevo = await platoService.create(data);
             res.json(nuevo);
         } catch (error) {
+            console.error(error);
             res.status(500).json({ message: 'Error al crear plato', error });
         }
     }
 
     async actualizar(req, res) {
         try {
-            const actualizado = await platoService.update(req.params.id, req.body);
+            const data = req.body;
+
+            const platoExistente = await platoService.getById(req.params.id);
+            if (!platoExistente) return res.status(404).json({ message: 'Plato no encontrado' });
+
+            // Si subieron archivo con Multer
+            if (req.file) {
+                data.imagen = '/uploads/' + req.file.filename;
+            } 
+            // Si enviaron imagenUrl en el body
+            else if (data.imagenUrl) {
+                data.imagen = data.imagenUrl;
+            } 
+            // Si no enviaron nada, mantenemos la anterior
+            else {
+                data.imagen = platoExistente.imagen;
+            }
+
+            const actualizado = await platoService.update(req.params.id, data);
             res.json(actualizado);
+
         } catch (error) {
+            console.error(error);
             res.status(500).json({ message: 'Error al actualizar plato', error });
         }
     }
+
+
 
     async eliminar(req, res) {
         try {

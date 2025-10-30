@@ -146,60 +146,68 @@
     }
 
     // Cargar historial de ventas en cards
+    // Cargar historial de ventas en cards
     async function cargarVentas() {
-      const res = await fetch('/api/ventas');
-      const ventas = await res.json();
-      
-      cardsContainer.innerHTML = '';
-      
-      // Actualizar estadísticas
-      totalVentas.textContent = ventas.length;
-      const ingresos = ventas.reduce((sum, venta) => sum + venta.total, 0);
-      ingresoTotal.textContent = `S/ ${ingresos.toFixed(2)}`;
-      
-      const hoy = new Date().toDateString();
-      const ventasHoyCount = ventas.filter(v => new Date(v.fechaVenta).toDateString() === hoy).length;
-      ventasHoy.textContent = ventasHoyCount;
-      
-      if (ventas.length === 0) {
-        emptyState.style.display = 'block';
-        return;
-      }
-      
-      emptyState.style.display = 'none';
-      
-      ventas.forEach(venta => {
-        const card = document.createElement('div');
-        card.className = 'sale-card';
-        const iniciales = obtenerIniciales(venta.cliente.nombre);
+      try {
+        const res = await fetch('/api/ventas');
+        const ventas = await res.json();
         
-        const productosHTML = venta.platos.map(p => `
-          <div class="product-item">
-            <span class="product-name">${p.producto.nombre}</span>
-            <span class="product-quantity">x${p.cantidad}</span>
-          </div>
-        `).join('');
+        console.log('Ventas cargadas:', ventas); // Para debug
         
-        card.innerHTML = `
-          <div class="sale-header">
-            <div class="client-avatar">${iniciales}</div>
-            <div class="sale-info">
-              <div class="client-name">${venta.cliente.nombre}</div>
-              <div class="sale-date">${new Date(venta.fechaVenta).toLocaleString()}</div>
+        cardsContainer.innerHTML = '';
+        
+        // Actualizar estadísticas
+        totalVentas.textContent = ventas.length;
+        const ingresos = ventas.reduce((sum, venta) => sum + venta.total, 0);
+        ingresoTotal.textContent = `S/ ${ingresos.toFixed(2)}`;
+        
+        const hoy = new Date().toDateString();
+        const ventasHoyCount = ventas.filter(v => new Date(v.fechaVenta).toDateString() === hoy).length;
+        ventasHoy.textContent = ventasHoyCount;
+        
+        if (ventas.length === 0) {
+          emptyState.style.display = 'block';
+          return;
+        }
+        
+        emptyState.style.display = 'none';
+        
+        ventas.forEach(venta => {
+          const card = document.createElement('div');
+          card.className = 'sale-card';
+          const iniciales = obtenerIniciales(venta.cliente?.nombre || 'Cliente');
+          
+          // CORRECCIÓN: Acceder directamente a p.producto en lugar de p.platos
+          const productosHTML = venta.platos.map(p => `
+            <div class="product-item">
+              <span class="product-name">${p.producto?.nombre || 'Producto'}</span>
+              <span class="product-quantity">x${p.cantidad}</span>
+              <span class="product-price">S/ ${p.precioUnitario}</span>
             </div>
-          </div>
-          <div class="sale-products">
-            ${productosHTML}
-          </div>
-          <div class="sale-total">
-            <span class="total-label">Total:</span>
-            <span class="total-amount">S/ ${venta.total.toFixed(2)}</span>
-          </div>
-        `;
-        cardsContainer.appendChild(card);
-      });
+          `).join('');
+          
+          card.innerHTML = `
+            <div class="sale-header">
+              <div class="client-avatar">${iniciales}</div>
+              <div class="sale-info">
+                <div class="client-name">${venta.cliente?.nombre || 'Cliente no encontrado'}</div>
+                <div class="sale-date">${new Date(venta.fechaVenta).toLocaleString()}</div>
+              </div>
+            </div>
+            <div class="sale-products">
+              ${productosHTML}
+            </div>
+            <div class="sale-total">
+              <span class="total-label">Total:</span>
+              <span class="total-amount">S/ ${venta.total.toFixed(2)}</span>
+            </div>
+          `;
+          cardsContainer.appendChild(card);
+        });
+      } catch (error) {
+        console.error('Error cargando ventas:', error);
+      }
     }
-
     // Registrar venta
     form.addEventListener('submit', async (e) => {
       e.preventDefault();

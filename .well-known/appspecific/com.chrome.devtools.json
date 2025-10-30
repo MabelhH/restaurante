@@ -1,0 +1,7 @@
+{
+  "name": "com.chrome.devtools",
+  "description": "App-specific config for Chrome DevTools",
+  "version": "1.0.0",
+  "createdAt": "2025-10-29T00:00:00Z",
+  "notes": "Replace this content with your app-specific settings if needed."
+}
