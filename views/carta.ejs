@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gestión de Platos - Restaurante</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="/stylePlatos.css">
+  <link rel="stylesheet" href="/carta.css">
 </head>
 <body>
   <div class="dashboard-container">
@@ -15,43 +15,145 @@
         <i class="fas fa-utensils"></i><br>
         Restaurante
       </h2>
+
       <nav>
-        <a href="/dashboard" class="active"><i class="fas fa-home"></i> <span>Dashboard</span></a>
+        <a href="/dashboard"><i class="fas fa-home"></i> <span>Dashboard</span></a>
+        <a href="/register_admin"><i class="fas fa-user-plus"></i> <span>Registro</span></a>
         <a href="/platos"><i class="fas fa-bowl-food"></i> <span>Platos</span></a>
-        <a href="/clientes"><i class="fas fa-users"></i> <span>Clientes</span></a>
+        <a href="/clientes"><i class="fas fa-users"></i> <span>Usuarios</span></a>
         <a href="/ventas"><i class="fas fa-shopping-cart"></i> <span>Ventas</span></a>
-        <a href="/carta"><i class="fas fa-book-open"></i> <span>Carta</span></a>
+        <a href="/carta"class="active"><i class="fas fa-book-open"></i> <span>Carta</span></a>
         <a href="/logout"><i class="fas fa-sign-out-alt"></i> <span>Cerrar sesión</span></a>
       </nav>
+
     </aside>
-
     <!-- Contenido principal -->
-    <main class="main-content">
-      <header>
-        <h1>Gestión de Platos</h1>
-        <div class="welcome-badge">Panel del Menu</div>
-      </header>
+<main class="main-content">
+  <header class="main-header">
+    <div class="welcome">
+      <h2>Bienvenido </h2>
+      <p>Descubre lo que necesites</p>
+    </div>
+    <div class="search-bar">
+      <input type="text" placeholder="Buscar plato..." />
+      <i class="fas fa-search"></i>
+    </div>
+  </header>
 
-      <!-- Lista -->
-      <section class="list-section">
-        <h3>Lista de platos registrados</h3>
-        <table id="tablaProductos">
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Descripción</th>
-              <th>Precio</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </section>
-    </main>
+  <!-- Sección principal -->
+  <section class="hero">
+    <div class="hero-text">
+      <h1>No es solo comida,<br> es una experiencia</h1>
+      <p>Ordena tu plato favorito y disfruta tu día</p>
+    </div>
+    <div class="hero-img">
+      <img src="/img/platos-tipicos.jpg" alt="platos">
+    </div>
+  </section>
+
+<!-- Categorías -->
+    <section class="categories">
+      <button class="category active" data-categoria="todas">
+        <i class="fas fa-th-large"></i> Todas
+      </button>
+      <% if (categorias && categorias.length > 0) { %>
+        <% categorias.forEach(categoria => { %>
+          <button class="category" data-categoria="<%= categoria %>">
+            <i class="fas fa-bowl-food"></i> <%= categoria %>
+          </button>
+        <% }) %>
+      <% } else { %>
+        <p>No hay categorías disponibles.</p>
+      <% } %>
+    </section>
+
+  <!-- Lista de platos -->
+  <section class="food-list">
+    <% platos.forEach(plato => { %>
+      <div class="food-card <%= plato.stock <= plato.stockMinimo ? 'stock-bajo' : '' %>" data-categoria="<%= plato.categoria %>">
+        <!-- Alerta de stock bajo -->
+        <% if (plato.stock <= plato.stockMinimo) { %>
+          <div class="stock-alert">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>Stock bajo: <%= plato.stock %> unidades</span>
+          </div>
+        <% } %>
+        
+        <img src="<%= plato.imagen %>" alt="<%= plato.nombre %>">
+        <h4><%= plato.nombre %></h4>
+        <p><%= plato.descripcion %></p>
+        <div class="price-row">
+          <span class="price">S/. <%= plato.precio %></span>
+          <button class="add-btn"><i class="fas fa-plus"></i></button>
+        </div>
+      </div>
+    <% }) %>
+  </section>
+</main>
   </div>
 
-  <script>
-    
-  </script>
+<script>
+  // Esperar que cargue todo
+  document.addEventListener('DOMContentLoaded', function () {
+    const inputBusqueda = document.querySelector('.search-bar input');
+    const tarjetas = document.querySelectorAll('.food-card');
+    const botonesCategoria = document.querySelectorAll('.category');
+    let categoriaActiva = 'todas';
+
+    // Función para filtrar por categoría
+    function filtrarPorCategoria(categoria) {
+      categoriaActiva = categoria;
+      
+      tarjetas.forEach(card => {
+        const categoriaPlato = card.getAttribute('data-categoria');
+        
+        if (categoria === 'todas' || categoriaPlato === categoria) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+
+      // Actualizar botones activos
+      botonesCategoria.forEach(btn => {
+        if (btn.getAttribute('data-categoria') === categoria) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+    }
+
+    // Event listeners para botones de categoría
+    botonesCategoria.forEach(btn => {
+      btn.addEventListener('click', function() {
+        const categoria = this.getAttribute('data-categoria');
+        filtrarPorCategoria(categoria);
+      });
+    });
+
+    // Función de búsqueda
+    inputBusqueda.addEventListener('input', function () {
+      const texto = inputBusqueda.value.toLowerCase();
+
+      tarjetas.forEach(card => {
+        const nombre = card.querySelector('h4').textContent.toLowerCase();
+        const descripcion = card.querySelector('p').textContent.toLowerCase();
+        const categoriaPlato = card.getAttribute('data-categoria');
+        
+        // Verificar si coincide con búsqueda Y con categoría activa
+        const coincideBusqueda = nombre.includes(texto) || descripcion.includes(texto);
+        const coincideCategoria = categoriaActiva === 'todas' || categoriaPlato === categoriaActiva;
+
+        if (coincideBusqueda && coincideCategoria) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    });
+  });
+</script>
+
 </body>
 </html>

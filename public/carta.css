@@ -1,0 +1,323 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Poppins:wght@300;400;600&family=Montserrat+Alternates:wght@500;600&display=swap');
+
+:root {
+  --rojo: #b22222;
+  --negro: #111;
+  --blanco: #fff;
+  --gris: #f8f8f8;
+  --sombra: rgba(0, 0, 0, 0.15);
+  --transicion: all 0.3s ease;
+}
+
+/* ======= Reset General ======= */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  color: var(--negro);
+  display: flex;
+  min-height: 100vh;
+  background: linear-gradient(
+    rgba(0, 0, 0, 0.4),
+    rgba(0, 0, 0, 0.4)
+  ),
+  url('../img/fond_rest.jpg') center/cover no-repeat;
+  background-attachment: fixed;
+}
+
+/* ======= Contenedor Principal ======= */
+.dashboard-container {
+  display: flex;
+  width: 100%;
+}
+
+/* ======= Sidebar ======= */
+.sidebar {
+  width: 260px;
+  background-color: var(--negro);
+  color: var(--blanco);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+  position: fixed;
+  height: 100vh;
+}
+
+.sidebar h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.8rem;
+  color: var(--rojo);
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.sidebar nav {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.sidebar nav a {
+  text-decoration: none;
+  color: var(--blanco);
+  font-size: 1rem;
+  padding: 0.8rem 1rem;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 5px 0;
+  transition: var(--transicion);
+}
+
+.sidebar nav a i {
+  font-size: 1.2rem;
+}
+
+.sidebar nav a:hover,
+.sidebar nav a.active {
+  background-color: var(--rojo);
+  transform: translateX(5px);
+}
+
+/* ======= CONTENIDO PRINCIPAL ======= */
+.main-content {
+  margin-left: 260px;
+  padding: 2rem;
+  width: calc(100% - 260px);
+  color: var(--negro);
+  background: transparent; /* CAMBIO IMPORTANTE: fondo transparente */
+  min-height: 100vh;
+}
+
+/* CABECERA */
+.main-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.main-header .welcome h2 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--blanco); /* Texto blanco para contraste con fondo */
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+.main-header .welcome p {
+  color: var(--blanco); /* Texto blanco para contraste */
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.main-header .search-bar {
+  position: relative;
+}
+
+.main-header .search-bar input {
+  padding: 0.6rem 2.5rem 0.6rem 1rem;
+  border-radius: 12px;
+  border: none;
+  outline: none;
+  background: #fff;
+  width: 230px;
+  box-shadow: 0 2px 6px var(--sombra);
+}
+
+.main-header .search-bar i {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--rojo);
+}
+
+/* SECCIÓN PRINCIPAL */
+.hero {
+  background: rgba(255, 255, 255, 0.95); /* Fondo semi-transparente */
+  border-radius: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2rem;
+  box-shadow: 0 4px 10px var(--sombra);
+  margin-bottom: 2rem;
+  backdrop-filter: blur(5px); /* Efecto de desenfoque */
+}
+
+.hero-text h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.hero-text p {
+  color: #555;
+}
+
+.hero-img img {
+  width: 220px;
+  border-radius: 50%;
+}
+
+/* CATEGORÍAS */
+.categories {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.category {
+  background: rgba(255, 255, 255, 0.95); /* Fondo semi-transparente */
+  border: none;
+  border-radius: 15px;
+  padding: 0.7rem 1.5rem;
+  font-weight: 600;
+  color: #333;
+  box-shadow: 0 2px 8px var(--sombra);
+  cursor: pointer;
+  transition: var(--transicion);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  backdrop-filter: blur(5px); /* Efecto de desenfoque */
+}
+
+.category:hover,
+.category.active {
+  background: var(--rojo);
+  color: #fff;
+  transform: scale(1.05);
+}
+
+/* ... (todo el CSS anterior se mantiene igual) ... */
+
+/* TARJETAS DE PLATOS */
+.food-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.food-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 1rem;
+  box-shadow: 0 4px 12px var(--sombra);
+  text-align: center;
+  transition: var(--transicion);
+  backdrop-filter: blur(5px);
+  border: 2px solid transparent; /* Borde transparente por defecto */
+  position: relative;
+}
+
+.food-card:hover {
+  transform: translateY(-5px);
+}
+
+/* ESTILO PARA STOCK BAJO */
+.food-card.stock-bajo {
+  border: 3px solid #e53e3e;
+  background: rgba(255, 245, 245, 0.95);
+  animation: pulseAlerta 2s infinite;
+}
+
+/* ALERTA DE STOCK BAJO */
+.stock-alert {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #e53e3e, #c53030);
+  color: white;
+  padding: 0.4rem 0.8rem;
+  border-radius: 15px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 3px 10px rgba(229, 62, 62, 0.4);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  animation: alertaPulse 1.5s infinite;
+}
+
+.stock-alert i {
+  font-size: 0.7rem;
+}
+
+.food-card img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 15px;
+  margin-bottom: 1rem;
+}
+
+.food-card h4 {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
+.food-card p {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 0.8rem;
+}
+
+.price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.price {
+  font-weight: 700;
+  color: var(--rojo);
+}
+
+.add-btn {
+  background: var(--rojo);
+  border: none;
+  color: #fff;
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  cursor: pointer;
+  transition: var(--transicion);
+}
+
+.add-btn:hover {
+  background: #a00000;
+  transform: rotate(90deg);
+}
+
+/* ANIMACIONES PARA STOCK BAJO */
+@keyframes pulseAlerta {
+  0%, 100% {
+    border-color: #e53e3e;
+    box-shadow: 0 4px 12px rgba(229, 62, 62, 0.3);
+  }
+  50% {
+    border-color: #fc8181;
+    box-shadow: 0 4px 15px rgba(229, 62, 62, 0.5);
+  }
+}
+
+@keyframes alertaPulse {
+  0%, 100% {
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    transform: translateX(-50%) scale(1.05);
+  }
+}

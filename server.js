@@ -5,6 +5,7 @@ const cookieParser = require('cookie-parser');
 const path = require('path');
 const jwt = require('jsonwebtoken');
 const Usuario = require('./models/userModel');
+const cartaViewRouter = require('./routers/cartaViewRouter');
 require('./database/connection'); // conexión a MongoDB
 
 // ===== Inicializar app =====
@@ -54,6 +55,7 @@ app.use('/api/clientes', clienteRouter);
 app.use('/api/platos', platosRouter);
 app.use('/api/ventas', ventaRouter);
 app.use('/api/users', userApiRouter); // API REST protegida con JWT
+app.use('/carta', cartaViewRouter);
 
 // ===== Routers de vistas =====
 const clienteViewRouter = require('./routers/clienteViewRouter');

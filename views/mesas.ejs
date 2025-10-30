@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Mesas - Restaurante</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/mesas.css">
+</head>
+<body>
+
+<div class="dashboard-container">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <h2 class="logo">
+      <i class="fas fa-utensils"></i><br>Restaurante
+    </h2>
+    <nav>
+      <a href="/dashboard"><i class="fas fa-home"></i> <span>Dashboard</span></a>
+      <a href="/register_admin"><i class="fas fa-user-plus"></i> <span>Registro</span></a>
+      <a href="/platos"><i class="fas fa-bowl-food"></i> <span>Platos</span></a>
+      <a href="/mesas"><i class="fas fa-chair"></i> <span>Mesas</span></a>
+      <a href="/ventas"><i class="fas fa-shopping-cart"></i> <span>Ventas</span></a>
+      <a href="/logout"><i class="fas fa-sign-out-alt"></i> <span>Cerrar sesión</span></a>
+    </nav>
+  </aside>
+
+  <!-- Contenido principal -->
+  <main class="main-content">
+    <header class="top-header">
+      <div class="welcome-section">
+        <h1>Gestión de Mesas</h1>
+        <p>Administra las mesas del restaurante</p>
+      </div>
+      <div class="user-actions">
+        <div class="notification">
+          <i class="fas fa-bell"></i>
+          <span class="notification-badge">2</span>
+        </div>
+        <div class="user-profile">
+          <div class="avatar">C</div>
+          <div>
+            <div class="user-name">Clara Huanco</div>
+            <div class="user-role">Administrador</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="content">
+      <section class="form-section">
+        <h3>Registrar nueva mesa</h3>
+        <form id="formMesa">
+          <input type="number" id="numeroMesa" placeholder="Número de Mesa" required>
+          
+          <select id="estado" required>
+            <option value="">Selecciona Estado</option>
+            <option value="liberada">Liberada</option>
+            <option value="ocupada">Ocupada</option>
+            <option value="atendida">Atendida</option>
+          </select>
+
+          <select id="piso" required>
+            <option value="">Selecciona Piso</option>
+            <option value="piso 1">Piso 1</option>
+            <option value="piso 2">Piso 2</option>
+            <option value="piso 3">Piso 3</option>
+          </select>
+
+          <select id="sector" required>
+            <option value="">Selecciona Sector</option>
+            <option value="vid">Vid</option>
+            <option value="valcon">Valcon</option>
+            <option value="normal">Normal</option>
+          </select>
+
+          <button type="submit">Agregar Mesa</button>
+        </form>
+      </section>
+
+      <section class="list-section">
+        <h3>Lista de Mesas</h3>
+        <div id="mesasContainer" class="cards-container"></div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script>
+const form = document.getElementById('formMesa');
+const container = document.getElementById('mesasContainer');
+let editarId = null;
+
+// Cargar mesas
+async function cargarMesas() {
+  const res = await fetch('/api/mesas');
+  const mesas = await res.json();
+  container.innerHTML = '';
+
+  if (mesas.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <i class="fas fa-chair"></i>
+        <p>No hay mesas registradas</p>
+      </div>`;
+    return;
+  }
+
+  mesas.forEach(m => {
+    const card = document.createElement('div');
+    card.classList.add('card');
+    if (m.estado === 'ocupada') card.classList.add('ocupada');
+    if (m.estado === 'atendida') card.classList.add('atendida');
+
+    card.innerHTML = `
+      <h4>Mesa N° ${m.numeroMesa}</h4>
+      <p><strong>Estado:</strong> ${m.estado}</p>
+      <p><strong>Piso:</strong> ${m.piso}</p>
+      <p><strong>Sector:</strong> ${m.sector}</p>
+      <div class="card-actions">
+        <button class="editar" data-id="${m._id}"><i class="fas fa-edit"></i> Editar</button>
+        <button class="eliminar" data-id="${m._id}"><i class="fas fa-trash"></i> Eliminar</button>
+      </div>`;
+    container.appendChild(card);
+  });
+}
+
+// Enviar mesa (crear o editar)
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const data = {
+    numeroMesa: parseInt(form.numeroMesa.value),
+    estado: form.estado.value,
+    piso: form.piso.value,
+    sector: form.sector.value
+  };
+
+  let url = '/api/mesas';
+  let method = 'POST';
+  if (editarId) {
+    url = `/api/mesas/${editarId}`;
+    method = 'PUT';
+  }
+
+  await fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+
+  form.reset();
+  editarId = null;
+  form.querySelector('button[type="submit"]').textContent = 'Agregar Mesa';
+  cargarMesas();
+});
+
+// Editar o eliminar
+container.addEventListener('click', async (e) => {
+  const id = e.target.closest('button')?.dataset.id;
+  if (!id) return;
+
+  if (e.target.closest('.eliminar')) {
+    if (confirm('¿Deseas eliminar esta mesa?')) {
+      await fetch(`/api/mesas/${id}`, { method: 'DELETE' });
+      cargarMesas();
+    }
+  }
+
+  if (e.target.closest('.editar')) {
+    const res = await fetch(`/api/mesas/${id}`);
+    const mesa = await res.json();
+
+    form.numeroMesa.value = mesa.numeroMesa;
+    form.estado.value = mesa.estado;
+    form.piso.value = mesa.piso;
+    form.sector.value = mesa.sector;
+
+    editarId = id;
+    form.querySelector('button[type="submit"]').textContent = 'Actualizar Mesa';
+  }
+});
+
+document.addEventListener('DOMContentLoaded', cargarMesas);
+</script>
+
+<style>
+.cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+}
+.card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 1rem;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+.card.ocupada { border-left: 5px solid #dc3545; }
+.card.atendida { border-left: 5px solid #ffc107; }
+.card-actions button {
+  margin-right: 8px;
+  cursor: pointer;
+}
+.empty-state {
+  text-align: center;
+  color: #777;
+  padding: 2rem;
+}
+</style>
+
+</body>
+</html>

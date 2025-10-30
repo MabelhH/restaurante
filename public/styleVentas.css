@@ -22,11 +22,17 @@ body {
   display: flex;
   min-height: 100vh;
   background: linear-gradient(
-    rgba(0,0,0,0.4),
-    rgba(0,0,0,0.4)
+    rgba(0, 0, 0, 0.4),
+    rgba(0, 0, 0, 0.4)
   ),
   url('../img/fond_rest.jpg') center/cover no-repeat;
   background-attachment: fixed;
+}
+
+/* ======= Contenedor Principal ======= */
+.dashboard-container {
+  display: flex;
+  width: 100%;
 }
 
 /* ======= Sidebar ======= */
@@ -70,11 +76,16 @@ body {
   transition: var(--transicion);
 }
 
+.sidebar nav a i {
+  font-size: 1.2rem;
+}
+
 .sidebar nav a:hover,
 .sidebar nav a.active {
   background-color: var(--rojo);
   transform: translateX(5px);
 }
+
 
 /* ======= Main ======= */
 main {

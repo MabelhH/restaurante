@@ -1,88 +1,89 @@
-/* ===== Importación de fuentes ===== */
-@import url('[https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Poppins:wght@300;400;600&family=Montserrat+Alternates:wght@500;600&display=swap](https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Poppins:wght@300;400;600&family=Montserrat+Alternates:wght@500;600&display=swap)');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Poppins:wght@300;400;600&family=Montserrat+Alternates:wght@500;600&display=swap');
 
 :root {
-    --rojo: #b22222;
-    --negro: #111;
-    --blanco: #fff;
-    --gris: #f8f8f8;
-    --sombra: rgba(0, 0, 0, 0.15);
-    --transicion: all 0.3s ease;
+  --rojo: #b22222;
+  --negro: #111;
+  --blanco: #fff;
+  --gris: #f8f8f8;
+  --sombra: rgba(0, 0, 0, 0.15);
+  --transicion: all 0.3s ease;
 }
 
-/* ===== Reset general ===== */
-
+/* ======= Reset General ======= */
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Poppins', 'Segoe UI', sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 body {
-    color: var(--negro);
-    display: flex;
-    min-height: 100vh;
-    background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
-        url('../img/fond_rest.jpg') center/cover no-repeat;
-    background-attachment: fixed;
+  font-family: 'Poppins', sans-serif;
+  color: var(--negro);
+  display: flex;
+  min-height: 100vh;
+  background: linear-gradient(
+    rgba(0, 0, 0, 0.4),
+    rgba(0, 0, 0, 0.4)
+  ),
+  url('../img/fond_rest.jpg') center/cover no-repeat;
+  background-attachment: fixed;
 }
 
-/* ===== Contenedor principal ===== */
-.Register-container {
-    display: flex;
-    width: 100%;
+/* ======= Contenedor Principal ======= */
+.dashboard-container {
+  display: flex;
+  width: 100%;
 }
 
-/* ===== Sidebar ===== */
+/* ======= Sidebar ======= */
 .sidebar {
-    width: 260px;
-    background-color: var(--negro);
-    color: var(--blanco);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 2rem 1rem;
-    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
-    position: fixed;
-    height: 100vh;
+  width: 260px;
+  background-color: var(--negro);
+  color: var(--blanco);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+  position: fixed;
+  height: 100vh;
 }
 
 .sidebar h2 {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.8rem;
-    color: var(--rojo);
-    margin-bottom: 2rem;
-    text-align: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.8rem;
+  color: var(--rojo);
+  margin-bottom: 2rem;
+  text-align: center;
 }
 
 .sidebar nav {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 }
 
 .sidebar nav a {
-    text-decoration: none;
-    color: var(--blanco);
-    font-size: 1rem;
-    padding: 0.8rem 1rem;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin: 5px 0;
-    transition: var(--transicion);
+  text-decoration: none;
+  color: var(--blanco);
+  font-size: 1rem;
+  padding: 0.8rem 1rem;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 5px 0;
+  transition: var(--transicion);
 }
 
 .sidebar nav a i {
-    font-size: 1.2rem;
+  font-size: 1.2rem;
 }
 
 .sidebar nav a:hover,
 .sidebar nav a.active {
-    background-color: var(--rojo);
-    transform: translateX(5px);
+  background-color: var(--rojo);
+  transform: translateX(5px);
 }
 
 /* ===== Contenido principal ===== */
