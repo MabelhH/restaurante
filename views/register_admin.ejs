@@ -90,7 +90,9 @@
                             </div>
                             <div class="usuarios-container" id="usuariosContainer">
                                 <% users.forEach((u, index)=> { %>
-                                    <div class="card user-card" data-id="<%= u._id %>" data-nombre="<%= u.nombre.toLowerCase() %>" data-apellido="<%= u.apellido.toLowerCase() %>">
+                                    <div class="card user-card" data-id="<%= u._id %>"
+                                        data-nombre="<%= u.nombre.toLowerCase() %>"
+                                        data-apellido="<%= u.apellido.toLowerCase() %>">
                                         <h3>
                                             <%= u.nombre %>
                                                 <%= u.apellido %>
@@ -134,18 +136,18 @@
         function setupSearch() {
             const searchInput = document.getElementById('searchInput');
             const userCards = document.querySelectorAll('.user-card');
-            
-            searchInput.addEventListener('input', function() {
+
+            searchInput.addEventListener('input', function () {
                 const searchTerm = this.value.toLowerCase().trim();
-                
+
                 userCards.forEach(card => {
                     const nombre = card.getAttribute('data-nombre');
                     const apellido = card.getAttribute('data-apellido');
                     const nombreCompleto = `${nombre} ${apellido}`;
-                    
+
                     // Buscar en nombre, apellido o nombre completo
-                    if (nombre.includes(searchTerm) || 
-                        apellido.includes(searchTerm) || 
+                    if (nombre.includes(searchTerm) ||
+                        apellido.includes(searchTerm) ||
                         nombreCompleto.includes(searchTerm)) {
                         card.style.display = 'block';
                     } else {
@@ -156,7 +158,7 @@
         }
 
         // Inicializar la búsqueda cuando el DOM esté cargado
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             setupSearch();
         });
 

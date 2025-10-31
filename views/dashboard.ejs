@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +9,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="dashboard.css">
 </head>
+
 <body>
   <div class="dashboard-container">
     <!-- Sidebar -->
@@ -26,39 +28,199 @@
         <a href="/carta"><i class="fas fa-book-open"></i> <span>Carta</span></a>
         <a href="/logout"><i class="fas fa-sign-out-alt"></i> <span>Cerrar sesión</span></a>
       </nav>
-
     </aside>
 
     <!-- Main content -->
     <main class="main-content">
       <header>
-        <h1>Bienvenido, <%= usuario.nombre %> </h1>
-        <div class="welcome-badge">Panel de Administración</div>
+        <h1>Mi Panel de Control</h1>
+        <div class="welcome-badge">Tu actividad reciente y todo</div>
       </header>
 
-      <section>
-        <p class="titulo-usuarios">Usuarios registrados:</p>
+      <!-- Dashboard Stats -->
+      <section class="dashboard-stats">
+        <div class="stat-card">
+          <div class="stat-header">
+            <h3>Platos Disponibles</h3>
+            <div class="stat-badge">+ 24 Nuevos</div>
+          </div>
+          <div class="stat-value">150.00</div>
+        </div>
 
+        <div class="stat-card">
+          <div class="stat-header">
+            <h3>Total de Pedidos</h3>
+            <div class="stat-badge">$ 600, Conductor</div>
+          </div>
+          <div class="stat-value">11,000</div>
+        </div>
 
-        <% if (users && users.length > 0) { %>
-          <div class="usuarios-container">
-            <% users.forEach((u, index) => { %>
-              <div class="card">
-                <h3><%= u.nombre %> <%= u.apellido %></h3>
-                <p><strong>Email:</strong> <%= u.email %></p>
-                <p><strong>ID:</strong> <%= index + 1 %></p>
-                <button><i class="fas fa-user"></i> Ver perfil</button>
+        <div class="stat-card">
+          <div class="stat-header">
+            <h3>Ventas Totales</h3>
+            <div class="stat-badge">$ 225, Crecimiento</div>
+          </div>
+          <div class="stat-value">2,77000</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <h3>Ganancia Total</h3>
+            <div class="stat-badge">+ 4.8% Incremento</div>
+          </div>
+          <div class="stat-value">35,000</div>
+        </div>
+      </section>
+
+      <!-- Revenue Chart -->
+      <section class="revenue-section">
+        <h3>Ingresos Totales</h3>
+        <div class="revenue-chart">
+          <div class="chart-bars">
+            <div class="chart-bar" style="height: 70%"></div>
+            <div class="chart-bar" style="height: 50%"></div>
+            <div class="chart-bar" style="height: 80%"></div>
+            <div class="chart-bar" style="height: 60%"></div>
+            <div class="chart-bar" style="height: 90%"></div>
+            <div class="chart-bar" style="height: 40%"></div>
+            <div class="chart-bar" style="height: 70%"></div>
+            <div class="chart-bar" style="height: 85%"></div>
+            <div class="chart-bar" style="height: 65%"></div>
+            <div class="chart-bar" style="height: 55%"></div>
+            <div class="chart-bar" style="height: 75%"></div>
+            <div class="chart-bar" style="height: 45%"></div>
+          </div>
+          <div class="chart-labels">
+            <span>Ene</span>
+            <span>Feb</span>
+            <span>Mar</span>
+            <span>Abr</span>
+            <span>May</span>
+            <span>Jun</span>
+            <span>Jul</span>
+            <span>Ago</span>
+            <span>Sep</span>
+            <span>Oct</span>
+            <span>Nov</span>
+            <span>Dic</span>
+          </div>
+        </div>
+        <div class="revenue-scale">
+          <span>$50k</span>
+          <span>$40k</span>
+          <span>$30k</span>
+          <span>$20k</span>
+          <span>$10k</span>
+        </div>
+      </section>
+
+      <!-- Performance and Recent Orders -->
+      <section class="performance-orders">
+        <div class="performance-section">
+          <h3>Rendimiento</h3>
+          <div class="performance-value">2.375</div>
+          <p class="performance-text">Mantén tu información actualizada para aumentar el número de transacciones</p>
+
+          <div class="performance-stats">
+            <div class="performance-stat">
+              <span class="stat-label">Recuento de Visitas</span>
+              <span class="stat-value">-</span>
+            </div>
+            <div class="performance-stat">
+              <span class="stat-label">Porcentaje</span>
+              <span class="stat-value">9%</span>
+            </div>
+          </div>
+
+          <a href="#" class="more-link">Más →</a>
+          <p class="feature-text">características de gestión de estación.</p>
+
+          <div class="today-stats">
+            <div class="today-stat">
+              <div class="today-value">28</div>
+              <div class="today-label">Pedidos Hoy</div>
+            </div>
+            <div class="today-stat">
+              <div class="today-value">24</div>
+              <div class="today-label">Correlación</div>
+            </div>
+            <div class="today-stat">
+              <div class="today-value">04</div>
+              <div class="today-label">Estacionamiento</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="recent-orders-section">
+          <h3>Pedidos Recientes</h3>
+          <div class="orders-list">
+            <div class="order-item">
+              <div class="order-details">
+                <h4>Ensalada de Pollo</h4>
+                <span class="order-price">$12.70</span>
               </div>
-            <% }) %>
+              <div class="order-date-status">
+                <span class="order-date">06 Ago 2024</span>
+                <span class="order-status pending">Pendiente</span>
+              </div>
+            </div>
+
+            <div class="order-item">
+              <div class="order-details">
+                <h4>Fideos al Cursor</h4>
+                <span class="order-price">$12.70</span>
+              </div>
+              <div class="order-date-status">
+                <span class="order-date">06 Ago 2024</span>
+                <span class="order-status complete">Completado</span>
+              </div>
+            </div>
+
+            <div class="order-item">
+              <div class="order-details">
+                <h4>Fideos Salteados</h4>
+                <span class="order-price">$14.70</span>
+              </div>
+              <div class="order-date-status">
+                <span class="order-date">06 Ago 2024</span>
+                <span class="order-status complete">Completado</span>
+              </div>
+            </div>
           </div>
-        <% } else { %>
-          <div class="empty-state">
-            <i class="fas fa-users"></i>
-            <p>No hay usuarios registrados.</p>
+        </div>
+      </section>
+
+      <!-- Reports and Customers -->
+      <section class="reports-customers">
+        <div class="reports-section">
+          <h3>Últimos Reportes</h3>
+          <div class="report-item">
+            <div class="report-name">Reporte Julio 2024</div>
+            <div class="report-actions">
+              <a href="#" class="action-link">Ver todos</a>
+              <a href="#" class="action-link">Crear Nuevo</a>
+              <a href="#" class="action-link">Descargar PDF</a>
+            </div>
           </div>
-        <% } %>
+        </div>
+
+        <div class="customers-section">
+          <h3>Tus Clientes</h3>
+          <div class="customer-stats">
+            <div class="customer-stat">
+              <div class="customer-value">3750</div>
+              <div class="customer-label">En Línea</div>
+            </div>
+            <div class="customer-stat">
+              <div class="customer-value">5410</div>
+              <div class="customer-label">En Tienda</div>
+            </div>
+          </div>
+          <a href="#" class="view-more">Ver Más</a>
+        </div>
       </section>
     </main>
   </div>
 </body>
+
 </html>

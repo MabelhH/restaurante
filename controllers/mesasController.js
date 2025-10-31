@@ -1,10 +1,10 @@
 const MesaService = require('../services/mesaService');
-const mesaService = new MesaService();
-const Pedido = require('../models/Pedido'); // Para validar pedidos activos
+const Mesa = require('../models/mesaModel'); // ✅ AGREGAR ESTO
+const Pedido = require('../models/Pedido');
 
 class MesaController {
 
-  // 1️⃣ Listar todas las mesas
+  //  Listar todas las mesas
   async listar(req, res) {
     try {
       const mesas = await mesaService.getAll();
@@ -14,7 +14,7 @@ class MesaController {
     }
   }
 
-  // 2️⃣ Obtener una mesa por ID
+  //  Obtener una mesa por ID
   async obtener(req, res) {
     try {
       const mesa = await mesaService.getById(req.params.id);
@@ -24,7 +24,7 @@ class MesaController {
     }
   }
 
-  // 3️⃣ Crear una nueva mesa
+  //  Crear una nueva mesa
   async crear(req, res) {
     try {
       const nuevaMesa = await mesaService.create(req.body);
@@ -34,7 +34,7 @@ class MesaController {
     }
   }
 
-  // 4️⃣ Actualizar mesa
+  // Actualizar mesa
   async actualizar(req, res) {
     try {
       const mesaActualizada = await mesaService.update(req.params.id, req.body);
@@ -44,7 +44,7 @@ class MesaController {
     }
   }
 
-  // 5️⃣ Eliminar mesa (solo si no tiene pedidos pendientes)
+  //  Eliminar mesa (solo si no tiene pedidos pendientes)
   async eliminar(req, res) {
     try {
       const pedidosActivos = await Pedido.find({
@@ -63,7 +63,7 @@ class MesaController {
     }
   }
 
-  // 6️⃣ Filtrar mesas por estado o piso
+  // 6Filtrar mesas por estado o piso - CORREGIDO
   async filtrar(req, res) {
     try {
       const { estado, piso } = req.query;
@@ -71,14 +71,14 @@ class MesaController {
       if (estado) query.estado = estado;
       if (piso) query.piso = piso;
 
-      const mesas = await MesaService.prototype.getAll.call({ find: () => Mesa.find(query) });
+      const mesas = await Mesa.find(query); 
       res.json(mesas);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
   }
 
-  // 7️⃣ Cambiar el estado de la mesa manualmente
+  //  Cambiar el estado de la mesa manualmente
   async cambiarEstado(req, res) {
     try {
       const { estado } = req.body;
@@ -89,19 +89,19 @@ class MesaController {
     }
   }
 
-  // 8️⃣ Contar mesas por estado
+  //  Contar mesas por estado - 
   async contarPorEstado(req, res) {
     try {
-      const conteo = await MesaService.prototype.getAll.call({ aggregate: () => Mesa.aggregate([
+      const conteo = await Mesa.aggregate([ 
         { $group: { _id: "$estado", total: { $sum: 1 } } }
-      ]) });
+      ]);
       res.json(conteo);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
   }
 
-  // 9️⃣ Traer mesas con pedidos activos
+  // 9️ Traer mesas con pedidos activos
   async mesasConPedidos(req, res) {
     try {
       const mesas = await mesaService.getAll();
@@ -126,4 +126,5 @@ class MesaController {
   }
 }
 
+const mesaService = new MesaService(); //  MOVER AQUÍ después de definir la clase
 module.exports = new MesaController();
