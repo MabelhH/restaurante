@@ -10,6 +10,6 @@ router.delete('/:id', MesaController.eliminar);
 router.get('/filtrar', MesaController.filtrar);
 router.patch('/:id/estado', MesaController.cambiarEstado);
 router.get('/conteo/estado', MesaController.contarPorEstado);
-router.get('/con-pedidos', MesaController.mesasConPedidos);
+//router.get('/con-pedidos', MesaController.mesasConPedidos);
 
 module.exports = router;
