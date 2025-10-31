@@ -14,28 +14,28 @@ router.post('/login', userController.login);
 router.post('/register', userController.register);
 
 router.get('/register_admin', verifyToken, async (req, res) => {
-    const users = await Usuario.find();
-    res.render('register_admin', { user: req.user, users, error: null });
+  const users = await Usuario.find();
+  res.render('register_admin', { user: req.user, users, error: null });
 });
 
 router.post('/register_admin', verifyToken, async (req, res) => {
-    try {
-        const { nombre, apellido, email, password, rol } = req.body;
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const nuevoUsuario = new Usuario({ nombre, apellido, email,password: hashedPassword, rol });
-        await nuevoUsuario.save();
-        const users = await Usuario.find();
-        res.render('register_admin', { user: req.user, users, error: null });
-    } catch (error) {
-        const users = await Usuario.find();
-        res.render('register_admin', { user: req.user, users, error: 'Error al registrar usuario' });
-    }
+  try {
+    const { nombre, apellido, email, password, rol } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const nuevoUsuario = new Usuario({ nombre, apellido, email, password: hashedPassword, rol });
+    await nuevoUsuario.save();
+    const users = await Usuario.find();
+    res.render('register_admin', { user: req.user, users, error: null });
+  } catch (error) {
+    const users = await Usuario.find();
+    res.render('register_admin', { user: req.user, users, error: 'Error al registrar usuario' });
+  }
 });
 
 // Dashboard protegido
 router.get('/dashboard', verifyToken, async (req, res) => {
-    const users = await Usuario.find(); // todos los usuarios
-    res.render('dashboard', { usuario: req.user, users });
+  const users = await Usuario.find(); // todos los usuarios
+  res.render('dashboard', { usuario: req.user, users });
 });
 
 
@@ -63,8 +63,8 @@ router.get('/dashboard_mesero', verifyToken, async (req, res) => {
 
 
 router.get('/logout', (req, res) => {
-    res.clearCookie('token'); // elimina la cookie con el JWT
-    res.redirect('/login');   // redirige al login
+  res.clearCookie('token'); // elimina la cookie con el JWT
+  res.redirect('/login');   // redirige al login
 });
 
 module.exports = router;

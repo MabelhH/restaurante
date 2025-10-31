@@ -89,7 +89,7 @@ exports.register = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new Usuario({ nombre, apellido, email,password: hashedPassword, rol});
+    const newUser = new Usuario({ nombre, apellido, email, password: hashedPassword, rol });
     await newUser.save();
 
     res.redirect('/dashboard');
