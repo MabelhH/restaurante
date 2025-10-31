@@ -1,6 +1,7 @@
-const Mesa = require('../models/mesaModel');
+// services/mesasService.js
+const Mesa = require('../models/mesasModel');
 
-class MesaService {
+class MesasService {
 
   // Traer todas las mesas
   async getAll() {
@@ -14,7 +15,7 @@ class MesaService {
     return mesa;
   }
 
-  // Crear una nueva mesa - CORREGIDO
+  // Crear una nueva mesa
   async create(data) {
     // Encontrar el último número de mesa para autoincrementar
     const ultimaMesa = await Mesa.findOne().sort({ numeroMesa: -1 });
@@ -32,7 +33,7 @@ class MesaService {
 
     // Crear nueva mesa
     const mesa = new Mesa({
-      numeroMesa: siguienteNumero, // ✅ AGREGADO
+      numeroMesa: siguienteNumero,
       piso: data.piso,
       sector: data.sector,
       estado: data.estado || 'liberada'
@@ -41,7 +42,7 @@ class MesaService {
     return await mesa.save();
   }
 
-  // Actualizar mesa - CORREGIDO
+  // Actualizar mesa
   async update(id, data) {
     const mesa = await Mesa.findById(id);
     if (!mesa) throw new Error('Mesa no encontrada');
@@ -78,4 +79,4 @@ class MesaService {
   }
 }
 
-module.exports = MesaService;
+module.exports = MesasService;

@@ -1,31 +1,30 @@
+// models/mesasModel.js
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const mesaSchema = new Schema({
-  numeroMesa: { 
-    type: Number, 
-    required: true, 
-    unique: true 
+const mesasSchema = new Schema({
+  numeroMesa: {
+    type: Number,
+    required: true,
+    unique: true
   },
-  estado: { 
-    type: String, 
-    enum: ['atendida', 'liberada','ocupada'], 
-    default: 'liberada', 
-    required: true 
+  estado: {
+    type: String,
+    enum: ['atendida', 'liberada', 'ocupada', 'reparacion'],
+    default: 'liberada',
+    required: true
   },
-  piso: { 
-    type: String, 
-    enum: ['piso 1', 'piso 2', 'piso 3'], 
-    required: true 
+  piso: {
+    type: String,
+    enum: ['piso 1', 'piso 2', 'piso 3'],
+    required: true
   },
   sector: {
-      type:String,
-      enun: ['vid', 'valcon', 'normal'],
-      required:true
+    type: String,
+    enum: ['vid', 'valcon', 'normal'],
+    required: true
   }
 });
 
-// Middleware para asignar número de mesa autoincremental
-
-const Mesa = mongoose.model('Mesa', mesaSchema);
+const Mesa = mongoose.model('Mesa', mesasSchema);
 module.exports = Mesa;

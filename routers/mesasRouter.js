@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const MesaController = require('../controllers/MesaController');
+const MesaController = require('../controllers/mesasController');
 
 router.get('/', MesaController.listar);
 router.get('/:id', MesaController.obtener);

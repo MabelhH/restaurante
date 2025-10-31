@@ -52,7 +52,7 @@ const platosRouter = require('./routers/platosRouters');
 const ventaRouter = require('./routers/ventasRouters');
 const userRouter = require('./routers/userRouters'); 
 const cartaViewRouter = require('./routers/cartaViewRouter');
-const mesaRouter = require('./routers/mesasRouter'); 
+const mesasRouter = require('./routers/mesasRouter');
 // CRUD API usuarios
 
 app.use('/api/clientes', clienteRouter);
@@ -60,20 +60,20 @@ app.use('/api/platos', platosRouter);
 app.use('/api/ventas', ventaRouter);
 app.use('/api/users', userRouter); // API REST protegida con JWT
 app.use('/carta', cartaViewRouter);
-app.use('/api/mesas', mesaRouter);
+app.use('/api/mesas', mesasRouter); 
 
 // ===== Routers de vistas =====
 const clienteViewRouter = require('./routers/clienteViewRouter');
 const platosViewRouter = require('./routers/platosViewRouter');
 const ventaViewRouter = require('./routers/ventaViewRouter');
 const userViewRouter = require('./routers/userViewRouter');
-const mesaViewRouter = require('./routers/mesasViewRouter');
+const mesasViewRouter = require('./routers/mesasViewRouter');
  // Login, Register, Dashboard
 
 app.use('/clientes', clienteViewRouter);
 app.use('/platos', platosViewRouter);
 app.use('/ventas', ventaViewRouter);
-app.use('/mesas', mesaViewRouter);
+app.use('/mesas', mesasViewRouter);
 app.use('/', userViewRouter); // rutas de usuario
 
 // ===== Rutas de vistas principales =====
