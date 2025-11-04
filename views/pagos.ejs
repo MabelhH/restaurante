@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Pagos - Cajero</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/styleVentas.css">
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <h2 class="logo">
+      <i class="fas fa-utensils"></i><br>
+      Restaurante
+    </h2>
+
+    <nav>
+      <a href="/dashboard_cajero"><i class="fas fa-home"></i> <span>Dashboard</span></a>
+      <a href="/pagos" class="active"><i class="fas fa-cash-register"></i> <span>Pagos</span></a>
+      <a href="/logout"><i class="fas fa-sign-out-alt"></i> <span>Cerrar sesión</span></a>
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <main>
+    <h2>Gestión de Pagos</h2>
+
+    <!-- Estadísticas -->
+    <div class="stats-overview">
+      <div class="stat-card">
+        <div class="stat-value" id="pedidosPendientes"><%= pedidos.filter(p => p.estado === 'pendiente').length %></div>
+        <div class="stat-label">Pendientes</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="pedidosPagados"><%= pedidos.filter(p => p.estado === 'pagado').length %></div>
+        <div class="stat-label">Pagados</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="pedidosCancelados"><%= pedidos.filter(p => p.estado === 'cancelado').length %></div>
+        <div class="stat-label">Cancelados</div>
+      </div>
+    </div>
+
+    <!-- Tabla de pedidos -->
+    <section class="cards-section">
+      <div class="search-container">
+        <h3>Pedidos Registrados</h3>
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="searchInput" placeholder="Buscar pedidos...">
+        </div>
+        <div class="filter-buttons">
+          <button class="filter-btn active">Todos</button>
+          <button class="filter-btn">Pendientes</button>
+          <button class="filter-btn">Pagados</button>
+        </div>
+      </div>
+
+      <div class="cards-container" id="cardsContainer">
+        <% if (pedidos.length === 0) { %>
+          <div class="empty-state">
+            <i class="fas fa-receipt"></i>
+            <p>No hay pedidos registrados</p>
+          </div>
+        <% } else { %>
+          <% pedidos.forEach(pedido => { %>
+            
+            <div class="sale-card">
+  <div class="sale-header">
+    <div class="client-avatar">
+      <%= pedido.mesa && pedido.mesa.numero 
+            ? pedido.mesa.numero 
+            : 'M' %>
+    </div>
+    <div class="sale-info">
+      <div class="client-name">
+        <%= pedido.mesa && pedido.mesa.numeroMesa 
+              ? `Mesa ${pedido.mesa.numeroMesa}` 
+              : 'Mesa desconocida' %>
+      </div>
+          <div class="sale-date">
+            Pedido #<%= pedido.numeroPedido %>
+          </div>
+
+              </div>
+            </div>
+
+
+              <div class="sale-products">
+  <% pedido.platos.forEach(plato => { %>
+    <div class="product-item">
+      <span class="product-name">
+        <%= plato.producto && plato.producto.nombre ? plato.producto.nombre : plato.nombre %> 
+        x <%= plato.cantidad %>
+      </span>
+      <span class="product-price">S/ <%= plato.precio.toFixed(2) %></span>
+    </div>
+  <% }) %>
+  <hr>
+  <div class="product-item total">
+    <strong>Total a pagar:</strong>
+    <span class="product-price">S/ <%= pedido.total.toFixed(2) %></span>
+  </div>
+</div>
+
+
+              <div class="sale-total">
+                <% if (pedido.estado === 'pendiente') { %>
+                  <form action="/pagos/pagar/<%= pedido._id %>" method="POST" style="display:inline;">
+  <button type="submit" class="filter-btn success">Pagar</button>
+</form>
+
+<form action="/pagos/cancelar/<%= pedido._id %>" method="POST" style="display:inline;">
+  <button type="submit" class="filter-btn danger">Cancelar</button>
+</form>
+
+                <% } else if (pedido.estado === 'pagado') { %>
+                  <span class="badge success">Pagado</span>
+                <% } else { %>
+                  <span class="badge danger">Cancelado</span>
+                <% } %>
+              </div>
+            </div>
+          <% }) %>
+        <% } %>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const searchInput = document.getElementById('searchInput');
+    const cards = document.querySelectorAll('.sale-card');
+
+    searchInput.addEventListener('input', function() {
+      const term = this.value.toLowerCase();
+      cards.forEach(card => {
+        const cliente = card.querySelector('.client-name').textContent.toLowerCase();
+        const total = card.querySelector('.product-price').textContent.toLowerCase();
+        card.style.display = cliente.includes(term) || total.includes(term) ? 'block' : 'none';
+      });
+    });
+  </script>
+
+</body>
+</html>

@@ -5,8 +5,6 @@ const cookieParser = require('cookie-parser');
 const path = require('path');
 const jwt = require('jsonwebtoken');
 const Usuario = require('./models/userModel');
-
-
 require('./database/connection'); // conexión a MongoDB
 
 // ===== Inicializar app =====
@@ -27,56 +25,71 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 // ===== Clave secreta JWT =====
-const SECRET_KEY = 'tu_clave_secreta_aqui'; // ⚠️ pon esto en .env luego
+const SECRET_KEY = 'tu_clave_secreta_aqui'; // ⚠️ luego mover a .env
 
 // ===== Middleware para verificar token =====
 function verifyToken(req, res, next) {
-    const token = req.cookies.token;
-    if (!token) {
-        return res.redirect('/login');
-    }
+  const token = req.cookies.token;
+  if (!token) {
+    return res.redirect('/login');
+  }
 
-    try {
-        const decoded = jwt.verify(token, SECRET_KEY);
-        req.user = decoded; // datos del usuario (id, email, nombre)
-        next();
-    } catch (err) {
-        res.clearCookie('token');
-        return res.redirect('/login');
-    }
+  try {
+    const decoded = jwt.verify(token, SECRET_KEY);
+    req.user = decoded; // datos del usuario (id, email, nombre)
+    next();
+  } catch (err) {
+    res.clearCookie('token');
+    return res.redirect('/login');
+  }
 }
 
-// ===== Routers API =====
+// =====================================================================
+// ======== RUTAS API (para manejar datos tipo REST) ===================
+// =====================================================================
 const clienteRouter = require('./routers/clientesRouters');
 const platosRouter = require('./routers/platosRouters');
 const ventaRouter = require('./routers/ventasRouters');
-const userRouter = require('./routers/userRouters'); 
-const cartaViewRouter = require('./routers/cartaViewRouter');
+const userRouter = require('./routers/userRouters');
 const mesasRouter = require('./routers/mesasRouter');
-// CRUD API usuarios
 
 app.use('/api/clientes', clienteRouter);
 app.use('/api/platos', platosRouter);
 app.use('/api/ventas', ventaRouter);
-app.use('/api/users', userRouter); // API REST protegida con JWT
-app.use('/carta', cartaViewRouter);
-app.use('/api/mesas', mesasRouter); 
+app.use('/api/users', userRouter);
+app.use('/api/mesas', mesasRouter);
 
-// ===== Routers de vistas =====
+// =====================================================================
+// ======== RUTAS DE VISTAS (para renderizar páginas EJS) ==============
+// =====================================================================
+const cartaViewRouter = require('./routers/cartaViewRouter');
 const clienteViewRouter = require('./routers/clienteViewRouter');
 const platosViewRouter = require('./routers/platosViewRouter');
 const ventaViewRouter = require('./routers/ventaViewRouter');
 const userViewRouter = require('./routers/userViewRouter');
 const mesasViewRouter = require('./routers/mesasViewRouter');
- // Login, Register, Dashboard
+const pagosRouter = require('./routers/pagosRouter');
 
+// Vistas principales
 app.use('/clientes', clienteViewRouter);
 app.use('/platos', platosViewRouter);
 app.use('/ventas', ventaViewRouter);
 app.use('/mesas', mesasViewRouter);
-app.use('/', userViewRouter); // rutas de usuario
+app.use('/carta', cartaViewRouter);
+app.use('/pagos', pagosRouter);
+app.use('/', userViewRouter); // login, register, dashboard general
 
-// ===== Rutas de vistas principales =====
+// =====================================================================
+// ======== VISTA PERSONALIZADA DEL CAJERO =============================
+// =====================================================================
+// (crea el archivo views/dashboard-cajero.ejs si no existe)
+app.get('/dashboard_cajero', verifyToken, (req, res) => {
+  res.render('dashboard_cajero', { usuario: req.user });
+});
+
+// =====================================================================
+// ======== RUTAS PRINCIPALES (dashboard general y raíz) ===============
+// =====================================================================
 
 // Ruta raíz → login o dashboard según token
 app.get('/', async (req, res) => {
@@ -93,16 +106,19 @@ app.get('/', async (req, res) => {
     res.redirect('/login');
   }
 });
-// Ruta protegida (solo con token válido)
+
+// Dashboard principal (genérico)
 app.get('/dashboard', verifyToken, (req, res) => {
-    res.render('dashboard', { usuario: req.user });
+  res.render('dashboard', { usuario: req.user });
 });
 
-// ===== Manejo de errores básicos =====
+// MANEJO DE ERRORES
 app.use((req, res) => {
-    res.status(404).json({ error: 'Ruta no encontrada' });
+  res.status(404).json({ error: 'Ruta no encontrada' });
 });
 
-// ===== Servidor =====
+// SERVIDOR
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`✅ Servidor corriendo en http://localhost:${PORT}`));
+app.listen(PORT, () =>
+  console.log(`✅ Servidor corriendo en http://localhost:${PORT}`)
+);

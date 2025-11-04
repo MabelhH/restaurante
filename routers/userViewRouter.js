@@ -60,6 +60,24 @@ router.get('/dashboard_mesero', verifyToken, async (req, res) => {
 });
 
 
+//  Dashboard de cajero
+router.get('/dashboard_cajero', verifyToken, async (req, res) => {
+  try {
+    const users = await Usuario.find();
+    res.render('dashboard_cajero', {
+      usuario: req.user || {},
+      users,
+      error: null
+    });
+  } catch (error) {
+    res.render('dashboard_cajero', {
+      usuario: req.user || {},
+      users: [],
+      error: 'Error al cargar usuarios'
+    });
+  }
+});
+
 
 
 router.get('/logout', (req, res) => {
