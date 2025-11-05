@@ -1,7 +1,7 @@
 // controllers/mesasController.js
 const MesasService = require('../services/mesasService');
 const Mesa = require('../models/mesasModel');
-//const Pedido = require('../models/Pedido');
+const Pedido = require('../models/pedidosModel');
 
 const mesasService = new MesasService();
 
@@ -31,7 +31,10 @@ class MesasController {
   async crear(req, res) {
     try {
       const nuevaMesa = await mesasService.create(req.body);
-      res.json(nuevaMesa);
+      res.status(201).json({
+        mensaje: 'Mesa creada con éxito',
+        mesa: nuevaMesa
+      });
     } catch (error) {
       res.status(400).json({ error: error.message });
     }
@@ -39,9 +42,12 @@ class MesasController {
 
   // 4️⃣ Actualizar mesa
   async actualizar(req, res) {
-    try {
+      try {
       const mesaActualizada = await mesasService.update(req.params.id, req.body);
-      res.json(mesaActualizada);
+      res.json({
+        mensaje: 'Mesa actualizada con éxito',
+        mesa: mesaActualizada
+      });
     } catch (error) {
       res.status(400).json({ error: error.message });
     }

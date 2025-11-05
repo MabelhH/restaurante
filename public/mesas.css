@@ -282,9 +282,15 @@ body {
 }
 
 .card.atendida {
-  border-left: 5px solid #ffc107;
-  background: linear-gradient(145deg, #fffaf0, #feebc8);
+  border-left: 5px solid #19c23e;
+  background: linear-gradient(145deg, #fffaf0, #c8feee);
 }
+
+.card.reparacion {
+  border-left: 5px solid #4356c0;
+  background: linear-gradient(145deg, #fffaf0, #b6b6b5);
+}
+
 
 /* ======= BOTONES DE ACCIÓN ======= */
 .card-actions {
@@ -327,7 +333,7 @@ body {
 .empty-state {
   text-align: center;
   padding: 3rem 2rem;
-  color: #666;
+  color: #8d8b8b;
   grid-column: 1 / -1;
   background: rgba(255, 255, 255, 0.9);
   border-radius: 15px;
@@ -438,6 +444,7 @@ body {
   }
 }
 
+
 /* Botón para toggle sidebar en móviles */
 .sidebar-toggle {
   display: none;
@@ -479,4 +486,50 @@ body {
 
 .card {
   animation: fadeInUp 0.5s ease;
+}
+
+#toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 2000;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 250px;
+  background: #4caf50;
+  color: white;  /* fixed typo */
+  padding: 12px 18px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  margin-top: 10px;
+  font-weight: 500;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: slideIn 0.3s forwards, fadeOut 0.5s ease 3.5s forwards;
+}
+
+.toast.error {
+  background: #e74c3c;
+}
+
+.toast i {
+  font-size: 18px;
+}
+
+@keyframes slideIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+    transform: translateY(10px);
+  }
 }

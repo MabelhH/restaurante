@@ -17,35 +17,57 @@ class MesasService {
 
   // Crear una nueva mesa
   async create(data) {
-    // Encontrar el último número de mesa para autoincrementar
-    const ultimaMesa = await Mesa.findOne().sort({ numeroMesa: -1 });
-    const siguienteNumero = ultimaMesa ? ultimaMesa.numeroMesa + 1 : 1;
+    // Validar que se haya proporcionado un número de mesa
+      if (!data.numeroMesa || data.numeroMesa < 1) {
+          throw new Error('El número de mesa debe ser mayor o igual a 1.');
+      }
 
-    // Validar piso
-    if (!['piso 1', 'piso 2', 'piso 3'].includes(data.piso)) {
-      throw new Error('Piso inválido');
-    }
+      // Validar que no exista una mesa con ese número
+      const mesaExistente = await Mesa.findOne({ numeroMesa: data.numeroMesa });
+      if (mesaExistente) {
+          throw new Error(`El número de mesa ${data.numeroMesa} ya existe.`);
+      }
 
-    // Validar sector
-    if (!['vid', 'valcon', 'normal'].includes(data.sector)) {
-      throw new Error('Sector inválido');
-    }
+      // Validar piso
+      if (!['piso 1', 'piso 2', 'piso 3'].includes(data.piso)) {
+          throw new Error('Piso inválido');
+      }
 
-    // Crear nueva mesa
-    const mesa = new Mesa({
-      numeroMesa: siguienteNumero,
-      piso: data.piso,
-      sector: data.sector,
-      estado: data.estado || 'liberada'
-    });
+      // Validar sector
+      if (!['vid', 'valcon', 'normal'].includes(data.sector)) {
+          throw new Error('Sector inválido');
+      }
 
-    return await mesa.save();
+      // Crear nueva mesa
+      const mesa = new Mesa({
+          numeroMesa: data.numeroMesa,
+          piso: data.piso,
+          sector: data.sector,
+          estado: data.estado || 'liberada'
+      });
+
+      return await mesa.save();
   }
+
 
   // Actualizar mesa
   async update(id, data) {
     const mesa = await Mesa.findById(id);
     if (!mesa) throw new Error('Mesa no encontrada');
+
+    if (data.numeroMesa) {
+        if (data.numeroMesa < 1) {
+            throw new Error('El número de mesa no puede ser menor a 1.');
+        }
+
+        // Buscar otra mesa con el mismo número distinto al id actual
+        const mesaExistente = await Mesa.findOne({ numeroMesa: data.numeroMesa, _id: { $ne: id } });
+        if (mesaExistente) {
+            throw new Error(`El número de mesa ${data.numeroMesa} ya existe.`);
+        }
+
+        mesa.numeroMesa = data.numeroMesa;
+    }
 
     if (data.piso) {
       if (!['piso 1', 'piso 2', 'piso 3'].includes(data.piso)) {
@@ -62,7 +84,7 @@ class MesasService {
     }
 
     if (data.estado) {
-      if (!['atendida', 'liberada', 'ocupada'].includes(data.estado)) {
+      if (!['atendida', 'liberada', 'ocupada','reparacion'].includes(data.estado)) {
         throw new Error('Estado inválido');
       }
       mesa.estado = data.estado;

@@ -28,11 +28,11 @@ class PlatoController {
             const data = req.body;
 
             if (data.imagenUrl && data.imagenUrl.trim() !== '') {
-            data.imagen = data.imagenUrl;
+                data.imagen = data.imagenUrl;
             } else if (req.file) {
-            data.imagen = '/uploads/' + req.file.filename;
+                data.imagen = '/uploads/' + req.file.filename;
             } else {
-            data.imagen = '';
+                data.imagen = '';
             }
 
             const nuevo = await platoService.create(data);
@@ -53,11 +53,11 @@ class PlatoController {
             // Si subieron archivo con Multer
             if (req.file) {
                 data.imagen = '/uploads/' + req.file.filename;
-            } 
+            }
             // Si enviaron imagenUrl en el body
             else if (data.imagenUrl) {
                 data.imagen = data.imagenUrl;
-            } 
+            }
             // Si no enviaron nada, mantenemos la anterior
             else {
                 data.imagen = platoExistente.imagen;
@@ -71,8 +71,6 @@ class PlatoController {
             res.status(500).json({ message: 'Error al actualizar plato', error });
         }
     }
-
-
 
     async eliminar(req, res) {
         try {
@@ -91,6 +89,16 @@ class PlatoController {
             res.status(500).json({ message: 'Error al verificar stock', error });
         }
     }
+    async cambiarEstado(req, res) {
+        try {
+            const actualizado = await platoService.toggleEstado(req.params.id);
+            res.json(actualizado);
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: 'Error al cambiar estado del plato', error });
+        }
+    }
+
 }
 
 module.exports = new PlatoController();
