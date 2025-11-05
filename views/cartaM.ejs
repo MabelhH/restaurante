@@ -20,6 +20,7 @@
         <a href="/dashboard_mesero" class="active"><i class="fas fa-home"></i> <span>Dashboard</span></a>
         <a href="/mesas"><i class="fas fa-chair"></i> <span>Mesas</span></a>
         <a href="/carta"><i class="fas fa-book-open"></i> <span>Carta</span></a>
+        <a href="/pedidos/ver"><i class="fas fa-receipt"></i> <span>Pedidos</span></a>
         <a href="/logout"><i class="fas fa-sign-out-alt"></i> <span>Cerrar sesión</span></a>
       </nav>
     </aside>
@@ -88,7 +89,10 @@
             <p><%= plato.descripcion %></p>
             <div class="price-row">
               <span class="price">S/. <%= plato.precio %></span>
-              <button class="add-btn"><i class="fas fa-plus"></i></button>
+              <button class="add-btn" data-id="<%= plato._id %>">
+                <i class="fas fa-plus"></i>
+              </button>
+
             </div>
           </div>
         <% }) %>
@@ -151,5 +155,37 @@
       });
     });
   </script>
+  <script>
+    document.querySelectorAll('.add-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const card = btn.closest('.food-card');
+        const platoId = btn.dataset.id;
+        const nombre = card.querySelector('h4').textContent;
+        const precioText = card.querySelector('.price').textContent.replace('S/.', '').trim();
+        const precio = parseFloat(precioText);
+        const cantidad = 1; // Por defecto agregamos uno
+
+        try {
+          const res = await fetch('/pedidos/agregar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: platoId, nombre, precio, cantidad })
+          });
+
+          if (res.ok) {
+            alert(`${nombre} agregado al pedido`);
+          } else {
+            const err = await res.text();
+            alert('Error al agregar el plato: ' + err);
+          }
+        } catch (err) {
+          console.error(err);
+          alert('Error al conectar con el servidor');
+        }
+      });
+    });
+  </script>
+
+
 </body>
 </html>

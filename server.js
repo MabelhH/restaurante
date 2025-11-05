@@ -5,7 +5,7 @@ const cookieParser = require('cookie-parser');
 const path = require('path');
 const jwt = require('jsonwebtoken');
 const Usuario = require('./models/userModel');
-
+const session = require('express-session');
 
 require('./database/connection'); // conexión a MongoDB
 
@@ -17,6 +17,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 app.use(cookieParser());
+
+// ===== CONFIGURAR SESSIONS (MOVED: debe ir antes de los routers) =====
+app.use(session({
+  secret: 'mi_clave_secreta_para_sesiones',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false } // secure: true solo si usas HTTPS
+}));
 
 // ===== Archivos estáticos =====
 app.use(express.static(path.join(__dirname, 'public')));
@@ -54,6 +62,8 @@ const userRouter = require('./routers/userRouters');
 const cartaViewRouter = require('./routers/cartaViewRouter');
 const mesasRouter = require('./routers/mesasRouter');
 const categoriaRoutes = require('./routers/categoriaRoutes');
+const pedidoRouter = require('./routers/pedidoRouter');
+
 // CRUD API usuarios
 
 app.use('/api/clientes', clienteRouter);
@@ -63,21 +73,25 @@ app.use('/api/users', userRouter); // API REST protegida con JWT
 app.use('/carta', cartaViewRouter);
 app.use('/api/categorias', categoriaRoutes);
 app.use('/api/mesas', mesasRouter); 
+app.use('/pedidos', pedidoRouter);
 
 // ===== Routers de vistas =====
 const clienteViewRouter = require('./routers/clienteViewRouter');
 const platosViewRouter = require('./routers/platosViewRouter');
 const ventaViewRouter = require('./routers/ventaViewRouter');
 const userViewRouter = require('./routers/userViewRouter');
+const pagosRouter = require('./routers/pagosRouter');
 const mesasViewRouter = require('./routers/mesasViewRouter');
- // Login, Register, Dashboard
+// Login, Register, Dashboard
 
 app.use('/clientes', clienteViewRouter);
 app.use('/platos', platosViewRouter);
 app.use('/ventas', ventaViewRouter);
 app.use('/mesas', mesasViewRouter);
 app.use('/api/categorias', categoriaRoutes);
+app.use('/pagos', pagosRouter); 
 app.use('/', userViewRouter); // rutas de usuario
+
 
 // ===== Rutas de vistas principales =====
 
