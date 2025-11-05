@@ -3,7 +3,9 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const SECRET_KEY = 'tu_clave_secreta_aqui';
+
 const Plato = require('../models/platosModel');
+const Categoria = require('../models/categoriaModel'); // 👈 Asegúrate de tener este modelo creado
 
 // Middleware para verificar el token
 function verifyToken(req, res, next) {
@@ -23,9 +25,13 @@ function verifyToken(req, res, next) {
 // Ruta /carta (según rol)
 router.get('/', verifyToken, async (req, res) => {
   try {
-    const platos = await Plato.find();
-    const categorias = await Plato.distinct('categoria');
+    // ✅ Poblar el campo "categoria" para mostrar nombres en lugar de ObjectIds
+    const platos = await Plato.find().populate('categoria', 'nombre');
 
+    // ✅ Obtener todas las categorías (solo el nombre)
+    const categorias = await Categoria.find({}, 'nombre');
+
+    // ✅ Renderizado según el rol del usuario
     if (req.user.rol === 'admin') {
       res.render('carta', { usuario: req.user, platos, categorias });
     } else if (req.user.rol === 'mesero') {

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestión de Platos - Restaurante</title>
+  <title>Carta - Mesero</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="/carta.css">
 </head>
@@ -22,146 +22,134 @@
         <a href="/carta"><i class="fas fa-book-open"></i> <span>Carta</span></a>
         <a href="/logout"><i class="fas fa-sign-out-alt"></i> <span>Cerrar sesión</span></a>
       </nav>
-
     </aside>
+
     <!-- Contenido principal -->
-<main class="main-content">
-  <header class="main-header">
-    <div class="welcome">
-      <h2>Bienvenido </h2>
-      <p>Descubre lo que necesites</p>
-    </div>
-    <div class="search-bar">
-      <input type="text" placeholder="Buscar plato..." />
-      <i class="fas fa-search"></i>
-    </div>
-  </header>
+    <main class="main-content">
+      <header class="main-header">
+        <div class="welcome">
+          <h2>Bienvenido, <%= usuario.nombre %></h2>
+          <p>Selecciona un plato para agregar al pedido</p>
+        </div>
+        <div class="search-bar">
+          <input type="text" placeholder="Buscar plato..." />
+          <i class="fas fa-search"></i>
+        </div>
+      </header>
 
-  <!-- Sección principal -->
-  <section class="hero">
-    <div class="hero-text">
-      <h1>No es solo comida,<br> es una experiencia</h1>
-      <p>Ordena tu plato favorito y disfruta tu día</p>
-    </div>
-    <div class="hero-img">
-      <img src="/img/platos-tipicos.jpg" alt="platos">
-    </div>
-  </section>
+      <!-- Sección principal -->
+      <section class="hero">
+        <div class="hero-text">
+          <h1>No es solo comida,<br> es una experiencia</h1>
+          <p>Ordena tu plato favorito y disfruta tu día</p>
+        </div>
+        <div class="hero-img">
+          <img src="/img/platos-tipicos.jpg" alt="platos">
+        </div>
+      </section>
 
-<!-- Categorías -->
-    <section class="categories">
-      <button class="category active" data-categoria="todas">
-        <i class="fas fa-th-large"></i> Todas
-      </button>
-      <% if (categorias && categorias.length > 0) { %>
-        <% categorias.forEach(categoria => { %>
-          <button class="category" data-categoria="<%= categoria %>">
-            <i class="fas fa-bowl-food"></i> <%= categoria %>
-          </button>
-        <% }) %>
-      <% } else { %>
-        <p>No hay categorías disponibles.</p>
-      <% } %>
-    </section>
+      <!-- Categorías -->
+      <section class="categories">
+        <button class="category active" data-categoria="todas">
+          <i class="fas fa-th-large"></i> Todas
+        </button>
+        <% if (categorias && categorias.length > 0) { %>
+          <% categorias.forEach(categoria => { %>
+            <button class="category" data-categoria="<%= categoria.nombre %>">
+              <i class="fas fa-bowl-food"></i> <%= categoria.nombre %>
+            </button>
+          <% }) %>
+        <% } else { %>
+          <p>No hay categorías disponibles.</p>
+        <% } %>
+      </section>
 
-<!-- En la sección de food-card, modifica el stock-normal: -->
-  <section class="food-list">
-    <% platos.forEach(plato=> { %>
-      <div class="food-card <%= plato.stock <= plato.stockMinimo ? 'stock-bajo' : '' %>"
-        data-categoria="<%= plato.categoria %>">
-        <!-- Alerta de stock bajo -->
-        <% if (plato.stock <=plato.stockMinimo) { %>
-          <div class="stock-alert">
-            <i class="fas fa-exclamation-triangle"></i>
-            <span>Stock bajo: <%= plato.stock %> unidades</span>
-          </div>
-          <% } else { %>
-            <!-- Mostrar cantidad normal en verde con efectos especiales -->
-            <div class="stock-normal">
-              <i class="fas fa-check-circle"></i>
-              <span>Stock: <%= plato.stock %></span>
-            </div>
+      <!-- Lista de platos -->
+      <section class="food-list">
+        <% platos.forEach(plato => { %>
+          <div class="food-card <%= plato.stock <= plato.stockMinimo ? 'stock-bajo' : '' %>"
+            data-categoria="<%= plato.categoria ? plato.categoria.nombre : '' %>">
+
+            <!-- Alerta de stock bajo -->
+            <% if (plato.stock <= plato.stockMinimo) { %>
+              <div class="stock-alert">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>Stock bajo: <%= plato.stock %> unidades</span>
+              </div>
+            <% } else { %>
+              <div class="stock-normal">
+                <i class="fas fa-check-circle"></i>
+                <span>Stock: <%= plato.stock %></span>
+              </div>
             <% } %>
 
-              <img src="<%= plato.imagen %>" alt="<%= plato.nombre %>">
-              <h4>
-                <%= plato.nombre %>
-              </h4>
-              <p>
-                <%= plato.descripcion %>
-              </p>
-              <div class="price-row">
-                <span class="price">S/. <%= plato.precio %></span>
-                <button class="add-btn"><i class="fas fa-plus"></i></button>
-              </div>
-      </div>
-      <% }) %>
-  </section>
-</main>
+            <img src="<%= plato.imagen %>" alt="<%= plato.nombre %>">
+            <h4><%= plato.nombre %></h4>
+            <p><%= plato.descripcion %></p>
+            <div class="price-row">
+              <span class="price">S/. <%= plato.precio %></span>
+              <button class="add-btn"><i class="fas fa-plus"></i></button>
+            </div>
+          </div>
+        <% }) %>
+      </section>
+    </main>
   </div>
 
-<script>
-  // Esperar que cargue todo
-  document.addEventListener('DOMContentLoaded', function () {
-    const inputBusqueda = document.querySelector('.search-bar input');
-    const tarjetas = document.querySelectorAll('.food-card');
-    const botonesCategoria = document.querySelectorAll('.category');
-    let categoriaActiva = 'todas';
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const inputBusqueda = document.querySelector('.search-bar input');
+      const tarjetas = document.querySelectorAll('.food-card');
+      const botonesCategoria = document.querySelectorAll('.category');
+      let categoriaActiva = 'todas';
 
-    // Función para filtrar por categoría
-    function filtrarPorCategoria(categoria) {
-      categoriaActiva = categoria;
-      
-      tarjetas.forEach(card => {
-        const categoriaPlato = card.getAttribute('data-categoria');
-        
-        if (categoria === 'todas' || categoriaPlato === categoria) {
-          card.style.display = 'block';
-        } else {
-          card.style.display = 'none';
-        }
-      });
+      function filtrarPorCategoria(categoria) {
+        categoriaActiva = categoria;
 
-      // Actualizar botones activos
+        tarjetas.forEach(card => {
+          const categoriaPlato = card.getAttribute('data-categoria');
+          if (categoria === 'todas' || categoriaPlato === categoria) {
+            card.style.display = 'block';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+
+        botonesCategoria.forEach(btn => {
+          if (btn.getAttribute('data-categoria') === categoria) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        });
+      }
+
       botonesCategoria.forEach(btn => {
-        if (btn.getAttribute('data-categoria') === categoria) {
-          btn.classList.add('active');
-        } else {
-          btn.classList.remove('active');
-        }
+        btn.addEventListener('click', function() {
+          const categoria = this.getAttribute('data-categoria');
+          filtrarPorCategoria(categoria);
+        });
       });
-    }
 
-    // Event listeners para botones de categoría
-    botonesCategoria.forEach(btn => {
-      btn.addEventListener('click', function() {
-        const categoria = this.getAttribute('data-categoria');
-        filtrarPorCategoria(categoria);
-      });
-    });
+      inputBusqueda.addEventListener('input', function () {
+        const texto = inputBusqueda.value.toLowerCase();
 
-    // Función de búsqueda
-    inputBusqueda.addEventListener('input', function () {
-      const texto = inputBusqueda.value.toLowerCase();
+        tarjetas.forEach(card => {
+          const nombre = card.querySelector('h4').textContent.toLowerCase();
+          const descripcion = card.querySelector('p').textContent.toLowerCase();
+          const categoriaPlato = card.getAttribute('data-categoria');
 
-      tarjetas.forEach(card => {
-        const nombre = card.querySelector('h4').textContent.toLowerCase();
-        const descripcion = card.querySelector('p').textContent.toLowerCase();
-        const categoriaPlato = card.getAttribute('data-categoria');
-        
-        // Verificar si coincide con búsqueda Y con categoría activa
-        const coincideBusqueda = nombre.includes(texto) || descripcion.includes(texto);
-        const coincideCategoria = categoriaActiva === 'todas' || categoriaPlato === categoriaActiva;
+          const coincideBusqueda = nombre.includes(texto) || descripcion.includes(texto);
+          const coincideCategoria = categoriaActiva === 'todas' || categoriaPlato === categoriaActiva;
 
-        if (coincideBusqueda && coincideCategoria) {
-          card.style.display = 'block';
-        } else {
-          card.style.display = 'none';
-        }
+          if (coincideBusqueda && coincideCategoria) {
+            card.style.display = 'block';
+          } else {
+            card.style.display = 'none';
+          }
+        });
       });
     });
-  });
-</script>
-
+  </script>
 </body>
 </html>
