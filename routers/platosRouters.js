@@ -15,6 +15,6 @@ router.delete('/:id', platosController.eliminar);
 
 // Stock bajo
 router.get('/verificar/stock', platosController.verificarStock);
-router.put('/toggle-estado/:id', platosController.cambiarEstado);
+router.put('/:id/toggle-estado', platosController.cambiarEstado);
 
 module.exports = router;

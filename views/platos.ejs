@@ -1099,36 +1099,27 @@
                 }
             }
              if (button.classList.contains('toggle-estado')) {
-              try {
-                  // Obtener el producto actual
-                  const res = await fetch(`/api/platos/${id}`);
-                  if (!res.ok) throw new Error('Error al cargar el producto');
-                  
-                  const producto = await res.json();
-                  const nuevoEstado = producto.estado === 'activo' ? 'inactivo' : 'activo';
-                  
-                  // Actualizar solo el estado
-                  const updateResponse = await fetch(`/api/platos/${id}`, {
-                      method: 'PUT',
-                      headers: {
-                          'Content-Type': 'application/json',
-                      },
-                      body: JSON.stringify({
-                          ...producto, // Mantener todos los datos existentes
-                          estado: nuevoEstado // Solo cambiar el estado
-                      })
-                  });
+                try {
+                    // ✅ USAR LA NUEVA RUTA ESPECÍFICA
+                    const updateResponse = await fetch(`/api/platos/${id}/toggle-estado`, {
+                        method: 'PUT'
+                    });
 
-                  if (!updateResponse.ok) throw new Error('Error al cambiar el estado');
+                    if (!updateResponse.ok) {
+                        const errorData = await updateResponse.json();
+                        throw new Error(errorData.message || 'Error al cambiar el estado');
+                    }
 
-                  mostrarExito(`Producto ${nuevoEstado === 'activo' ? 'activado' : 'desactivado'} correctamente`);
-                  await cargarProductos();
-                  
-              } catch (error) {
-                  console.error('Error:', error);
-                  mostrarError('Error al cambiar el estado del producto');
-              }
-          }
+                    const productoActualizado = await updateResponse.json();
+                    
+                    mostrarExito(`Producto ${productoActualizado.estado === 'activo' ? 'activado' : 'desactivado'} correctamente`);
+                    await cargarProductos();
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    mostrarError(error.message || 'Error al cambiar el estado del producto');
+                }
+            }
         });
 
         // Evento submit del formulario
