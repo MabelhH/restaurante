@@ -134,8 +134,8 @@ exports.login = async (req, res) => {
         return res.redirect('/dashboard_mesero');
       case 'cajero':
         return res.redirect('/dashboard_cajero');
-      // case 'cocinero':
-      //   return res.redirect('/cocinero');
+      case 'cocinero':
+        return res.redirect('/dashboard_cocinero');
       default:
         return res.redirect('/login');
     }

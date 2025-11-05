@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Productos platos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/stylePlatos.css">
+</head>
+
+<body>
+
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <h2 class="logo">
+                <i class="fas fa-utensils"></i><br> Restaurante
+            </h2>
+
+      <nav>
+        <a href="/dashboard_cocinero"><i class="fas fa-home"></i> <span>Dashboard</span></a>
+        <a href="/platosc"class="active"><i class="fas fa-bowl-food"></i> <span>Platos</span></a>
+        <a href="/logout"><i class="fas fa-sign-out-alt"></i> <span>Cerrar sesión</span></a>
+      </nav>
+    </aside>
+
+        <main class="main-content">
+            <!-- Header -->
+            <header class="top-header">
+                <div class="welcome-section">
+                    <h1>Bienvenido</h1>
+                    <p>Gestiona tus platos de manera eficiente</p>
+                </div>
+
+                <div class="user-actions">
+                    <!-- EL WIDGET DE NOTIFICACIONES VA AQUÍ DENTRO -->
+                    <div class="notification-widget">
+                        <div class="notification-trigger" id="notificationIcon">
+                            <div class="notification-icon-wrapper">
+                                <i class="fas fa-bell"></i>
+                                <span class="notification-pulse"></span>
+                                <span class="notification-badge" id="notificationBadge">0</span>
+                            </div>
+                            <span class="notification-label">Alertas de Stock</span>
+                        </div>
+
+                        <div class="notification-panel" id="notificationDropdown">
+                            <div class="panel-header">
+                                <div class="panel-title">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <h4>Alertas de Stock Bajo</h4>
+                                </div>
+                                <span class="panel-counter" id="panelCounter">0 productos</span>
+                            </div>
+
+                            <div class="notification-content">
+                                <div class="notification-list" id="notificationList">
+                                    <!-- Los platos con stock bajo aparecerán aquí -->
+                                </div>
+
+                                <div class="panel-footer">
+                                    <div class="stock-summary">
+                                        <div class="summary-item critical">
+                                            <span class="summary-dot"></span>
+                                            <span>Crítico: <strong id="criticalCount">0</strong></span>
+                                        </div>
+                                        <div class="summary-item low">
+                                            <span class="summary-dot"></span>
+                                            <span>Bajo: <strong id="lowCount">0</strong></span>
+                                        </div>
+                                    </div>
+                                    <button class="view-all-btn" onclick="cargarProductos()">
+                    <i class="fas fa-list"></i>
+                    Ver todos los platos
+                  </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- FIN DEL WIDGET DE NOTIFICACIONES -->
+                </div>
+            </header>
+            <div class="content">
+                <main>
+                    <!-- Formulario para agregar productos -->
+                    <section class="form-section">
+                        <h3>Registrar nuevo producto</h3>
+                        <form id="formProducto">
+                            <input type="text" id="nombre" placeholder="Nombre del producto" required>
+                            <div class="categoria-container">
+                                <div class="categoria-inputs">
+                                    <select id="categoria" required>
+                                    <option  value="" disabled selected>Seleccione una categoría</option>
+                                    <!-- Las categorías se cargarán aquí -->
+                                    </select>
+                                    <button type="button" id="addCategoriaBtn" class="add-categoria-btn">
+                                    <i class="fas fa-plus"></i>
+                                    </button>
+                                    <!-- Dentro de <section class="form-section">, después del formulario o en otro lugar -->
+                                    <button type="button" id="btnVerCategorias" class="btn-ver-categorias">
+                                        <i class="fas fa-list"></i>
+                                    </button>
+                                </div>
+                                </div>
+                                <!-- Modal para listar categorías -->
+                                 <div id="modalCategorias" class="modal">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h4><i class="fas fa-list"></i> Lista de Categorías</h4>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div id="alertContainer"></div>
+                                            <div id="loadingCategorias" class="loading" style="display: none;">
+                                                <div class="spinner"></div>
+                                            </div>
+                                            <table class="categorias-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Nombre</th>
+                                                        <th>Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="listaCategoriasContainer">
+                                                    <!-- Las categorías se cargarán aquí -->
+                                                </tbody>
+                                            </table>
+                                            
+                                            <div class="modal-actions">
+                                                <button id="cerrarModalBtn" class="btn cancel-btn">
+                                                    <i class="fas fa-times"></i> Cerrar
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Modal simple para nueva categoría -->
+                                <div id="nuevaCategoriaModal" class="modal" style="display: none;">
+                                    <div class="modal-content">
+                                        <h4>Agregar nueva categoría</h4>
+                                        <input type="text" id="nuevaCategoriaNombre" placeholder="Nombre de la categoría">
+                                        <div class="modal-actions">
+                                        <button id="guardarCategoriaBtn" class="btn save-btn">Guardar</button>
+                                        <button id="cancelarCategoriaBtn" class="btn cancel-btn">Cancelar</button>
+                                        </div>
+                                    </div>
+                                    </div>
+                            <input type="text" id="descripcion" placeholder="Descripción" required>
+                            <input type="number" id="precio" placeholder="Precio" step="0.01" min="0" required>
+                            <input type="number" id="stock" placeholder="Stock" required>
+                            <input type="number" id="stockMinimo" placeholder="Stock Mínimo" required>
+                            <select id="estado" required>
+                              <option value="activo" selected>Activo</option>
+                              <option value="inactivo">Inactivo</option>
+                            </select>
+                            <input type="text" name="imagenUrl" placeholder="Ingrese URL de imagen">
+                            <div class="file-button-container">
+                                <input type="file" name="imagenFile" accept="image/*" id="imagenFile" class="file-input-hidden">
+                                <button type="button" class="file-select-button" id="fileSelectButton">
+                                  <i class="fas fa-image"></i>
+                                  Seleccionar Imagen
+                                </button>
+                                <span class="file-name" id="fileName">Sin archivo seleccionado</span>
+                            </div>
+                            <button type="submit">Agregar Producto</button>
+                        </form>
+                    </section>
+
+                    <!-- Tabla de productos -->
+                    <section class="list-section">
+                        <h3>Lista de productos</h3>
+                        <div id="productosContainer" class="cards-container"></div>
+                    </section>
+                </main>
+            </div>
+        </main>
+    </div>
+    <script>
+        const form = document.getElementById('formProducto');
+        const tabla = document.querySelector('#tablaProductos tbody');
+        const container = document.getElementById('productosContainer');
+        let editarId = null;
+
+
+        // ========== FUNCIONALIDAD PARA EL BOTÓN DE ARCHIVO ==========
+        const fileInput = document.getElementById('imagenFile');
+        const fileSelectButton = document.getElementById('fileSelectButton');
+        const fileName = document.getElementById('fileName');
+
+        // ========== FUNCIONALIDAD DE NOTIFICACIONES ==========
+        const notificationIcon = document.getElementById('notificationIcon');
+        const notificationBadge = document.getElementById('notificationBadge');
+        const notificationDropdown = document.getElementById('notificationDropdown');
+        const notificationList = document.getElementById('notificationList');
+
+        // Función para actualizar las notificaciones
+        async function actualizarNotificaciones() {
+            try {
+                const res = await fetch('/api/platos');
+                if (!res.ok) throw new Error('Error al cargar productos');
+
+                const productos = await res.json();
+
+                // Filtrar productos con stock bajo
+                const productosStockBajo = productos.filter(p => p.stock <= p.stockMinimo);
+
+                // Actualizar badge
+                notificationBadge.textContent = productosStockBajo.length;
+
+                // Actualizar contadores del panel
+                document.getElementById('panelCounter').textContent = `${productosStockBajo.length} producto${productosStockBajo.length !== 1 ? 's' : ''}`;
+                document.getElementById('criticalCount').textContent = productosCriticos.length;
+                document.getElementById('lowCount').textContent = productosBajos.length;
+
+                // Actualizar lista de notificaciones
+                actualizarListaNotificaciones(productosStockBajo);
+
+            } catch (error) {
+                console.error('Error al actualizar notificaciones:', error);
+            }
+        }
+
+        // Función para actualizar la lista de notificaciones
+        function actualizarListaNotificaciones(productosStockBajo) {
+            if (productosStockBajo.length === 0) {
+                notificationList.innerHTML = `
+                  <div class="notification-empty">
+                    <i class="fas fa-check-circle"></i>
+                    <p>¡Todo en orden!</p>
+                    <p>No hay platos con stock bajo</p>
+                  </div>
+                `;
+                return;
+            }
+
+            notificationList.innerHTML = productosStockBajo.map(p => {
+                const esCritico = p.stock === 0;
+                const claseStock = esCritico ? 'critical' : '';
+                const claseItem = esCritico ? 'stock-critical' : 'stock-low';
+
+                return `
+                    <div class="notification-item ${claseItem}">
+                      <div class="notification-product">${p.nombre}</div>
+                      <div class="notification-stock ${claseStock}">
+                        Stock: ${p.stock} | Mínimo: ${p.stockMinimo}
+                        ${esCritico ? ' - ¡AGOTADO!' : ''}
+                      </div>
+                    </div>
+                  `;
+            }).join('');
+        }
+
+        // Función para ordenar productos (stock bajo primero)
+        function ordenarProductosConStockBajoPrimero(productos) {
+            return productos.sort((a, b) => {
+                const aStockBajo = a.stock <= a.stockMinimo;
+                const bStockBajo = b.stock <= b.stockMinimo;
+
+                if (aStockBajo && !bStockBajo) return -1;
+                if (!aStockBajo && bStockBajo) return 1;
+
+                // Si ambos tienen stock bajo o ambos no, ordenar por nombre
+                return a.nombre.localeCompare(b.nombre);
+            });
+        }
+        
+
+        // Modificar la función cargarProductos para ordenar con stock bajo primero
+        async function cargarProductos() {
+            try {
+                const res = await fetch('/api/platos');
+                if (!res.ok) throw new Error('Error al cargar productos');
+
+                const productos = await res.json();
+
+                // Ordenar productos: stock bajo primero
+                const productosOrdenados = ordenarProductosConStockBajoPrimero(productos);
+
+                container.innerHTML = '';
+
+                if (productosOrdenados.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                          <i class="fas fa-utensils"></i>
+                          <p>No hay productos registrados</p>
+                          <p>Comienza agregando tu primer producto</p>
+                        </div>
+                      `;
+                    return;
+                }
+
+                productosOrdenados.forEach(p => {
+                    const stockBajo = p.stock <= p.stockMinimo;
+                    const card = document.createElement('div');
+                    card.classList.add('card');
+
+                    if (stockBajo) {
+                        card.classList.add('stock-bajo');
+                    }
+
+                    card.innerHTML = `
+                        <img src="${p.imagen || 'https://via.placeholder.com/150'}" alt="${p.nombre}" 
+                            onerror="this.src='https://via.placeholder.com/150'">
+                        <h4>${p.nombre}</h4>
+                        <p><strong>Categoría:</strong> ${p.categoria?.nombre || 'Sin categoría'}</p>
+                        <p><strong>Precio:</strong> S/. ${p.precio.toFixed(2)}</p>
+                        <p class="${stockBajo ? 'stock-low' : ''}">
+                          <strong>Stock:</strong> ${p.stock} 
+                          ${stockBajo ? '<span class="stock-warning">(!)</span>' : ''}
+                        </p>
+                        <p><strong>Stock Mínimo:</strong> ${p.stockMinimo}</p>
+                        <div class="card-actions">
+                          <button class="editar" data-id="${p._id}">
+                            <i class="fas fa-edit"></i>
+                            Editar
+                          </button>
+                          <button class="eliminar" data-id="${p._id}">
+                            <i class="fas fa-trash"></i>
+                            Eliminar
+                          </button>
+                          <button class="toggle-estado" data-id="${p._id}">
+                            ${p.estado === 'activo' ? 'Desactivar' : 'Activar'}
+                          </button>
+                        </div>
+                      `;
+                    container.appendChild(card);
+                });
+
+            } catch (error) {
+                console.error('Error:', error);
+                mostrarError('Error al cargar los productos');
+            }
+        }
+
+        // Event listeners para las notificaciones
+        notificationIcon.addEventListener('click', function(e) {
+            e.stopPropagation();
+            notificationDropdown.classList.toggle('show');
+        });
+
+        // Cerrar dropdown al hacer click fuera
+        document.addEventListener('click', function(e) {
+            if (!notificationIcon.contains(e.target) && !notificationDropdown.contains(e.target)) {
+                notificationDropdown.classList.remove('show');
+            }
+        });
+
+        // Actualizar notificaciones cuando se carga la página
+        document.addEventListener('DOMContentLoaded', function() {
+            cargarProductos();
+            cargarCategorias();
+            actualizarNotificaciones();
+        });
+
+        // Actualizar notificaciones después de agregar/editar/eliminar productos
+        async function enviarProducto(e) {
+            e.preventDefault();
+
+            // ... (código existente para enviar producto)
+
+            // Después de guardar, actualizar notificaciones
+            await cargarProductos();
+            await actualizarNotificaciones();
+        }
+
+        // En la función de eliminar producto, también actualizar notificaciones
+        container.addEventListener('click', async(e) => {
+            const button = e.target.closest('button');
+            if (!button) return;
+
+            const id = button.dataset.id;
+            if (!id) return;
+
+            if (button.classList.contains('eliminar')) {
+                if (confirm('¿Estás seguro de que deseas eliminar este producto?')) {
+                    try {
+                        const response = await fetch(`/api/platos/${id}`, {
+                            method: 'DELETE'
+                        });
+
+                        if (!response.ok) throw new Error('Error al eliminar el producto');
+
+                        mostrarExito('Producto eliminado correctamente');
+                        await cargarProductos();
+                        await actualizarNotificaciones(); // ← Agregar esta línea
+                    } catch (error) {
+                        console.error('Error:', error);
+                        mostrarError('Error al eliminar el producto');
+                    }
+                }
+            }
+
+            // ... (resto del código existente)
+        });
+        // Función para actualizar las notificaciones
+        async function actualizarNotificaciones() {
+            try {
+                const res = await fetch('/api/platos');
+                if (!res.ok) throw new Error('Error al cargar productos');
+
+                const productos = await res.json();
+
+                // Filtrar productos con stock bajo
+                const productosStockBajo = productos.filter(p => p.stock <= p.stockMinimo);
+                const productosCriticos = productosStockBajo.filter(p => p.stock === 0);
+                const productosBajos = productosStockBajo.filter(p => p.stock > 0 && p.stock <= p.stockMinimo);
+
+                // Actualizar badge
+                notificationBadge.textContent = productosStockBajo.length;
+
+                // Actualizar contadores del panel
+                document.getElementById('panelCounter').textContent = `${productosStockBajo.length} producto${productosStockBajo.length !== 1 ? 's' : ''}`;
+                document.getElementById('criticalCount').textContent = productosCriticos.length;
+                document.getElementById('lowCount').textContent = productosBajos.length;
+
+                // Actualizar lista de notificaciones
+                actualizarListaNotificaciones(productosStockBajo);
+
+            } catch (error) {
+                console.error('Error al actualizar notificaciones:', error);
+            }
+        }
+
+        // Función para cargar categorías en el select
+        async function cargarCategorias() {
+            try {
+                const res = await fetch('/api/categorias');
+                if (!res.ok) throw new Error('Error al cargar categorías');
+                
+                const categorias = await res.json();
+                const selectCategoria = document.getElementById('categoria');
+                
+                // Mantener la opción por defecto y limpiar las demás
+                selectCategoria.innerHTML = '<option value="" disabled selected>Seleccione una categoría</option>';
+                
+                categorias.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat._id;
+                    option.textContent = cat.nombre;
+                    selectCategoria.appendChild(option);
+                });
+                
+            } catch (error) {
+                console.error('Error al cargar categorías:', error);
+                mostrarError('Error al cargar las categorías');
+            }
+        }
+
+        // Función para crear nueva categoría
+        async function crearCategoria(nombreCategoria) {
+            try {
+                const res = await fetch('/api/categorias', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ nombre: nombreCategoria })
+                });
+
+                if (!res.ok) {
+                    const errorData = await res.json();
+                    throw new Error(errorData.error || 'Error al crear categoría');
+                }
+
+                const nuevaCategoria = await res.json();
+                return nuevaCategoria;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                throw error;
+            }
+        }
+
+        // Función para abrir el modal de nueva categoría
+        function abrirModalCategoria() {
+            const modal = document.getElementById('nuevaCategoriaModal');
+            modal.style.display = 'block';
+            document.getElementById('nuevaCategoriaNombre').value = '';
+            document.getElementById('nuevaCategoriaNombre').focus();
+        }
+
+        // Función para cerrar el modal de categoría
+        function cerrarModalCategoria() {
+            const modal = document.getElementById('nuevaCategoriaModal');
+            modal.style.display = 'none';
+        }
+        
+        
+        // Función para guardar nueva categoría
+        async function guardarNuevaCategoria() {
+            const nombre = document.getElementById('nuevaCategoriaNombre').value.trim();
+            
+            if (!nombre) {
+                mostrarError('El nombre de la categoría es requerido');
+                return;
+            }
+
+            try {
+                const nuevaCategoria = await crearCategoria(nombre);
+                
+                // Cerrar modal
+                cerrarModalCategoria();
+                
+                // Recargar categorías en el select
+                await cargarCategorias();
+                
+                // Seleccionar la nueva categoría
+                const selectCategoria = document.getElementById('categoria');
+                selectCategoria.value = nuevaCategoria._id;
+                
+                mostrarExito('Categoría creada correctamente');
+                
+            } catch (error) {
+                mostrarError(error.message || 'Error al crear la categoría');
+            }
+        }
+
+        // ========== EVENT LISTENERS PARA CATEGORÍAS ==========
+        document.getElementById('addCategoriaBtn').addEventListener('click', abrirModalCategoria);
+        document.getElementById('guardarCategoriaBtn').addEventListener('click', guardarNuevaCategoria);
+        document.getElementById('cancelarCategoriaBtn').addEventListener('click', cerrarModalCategoria);
+
+        // Cerrar modal al hacer click fuera
+        document.getElementById('nuevaCategoriaModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                cerrarModalCategoria();
+            }
+        });
+
+        // Cerrar modal con ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                cerrarModalCategoria();
+            }
+        });
+
+        // Elementos del DOM para categorías
+        const modalCategorias = document.getElementById('modalCategorias');
+        const btnVerCategorias = document.getElementById('btnVerCategorias');
+        const listaCategoriasContainer = document.getElementById('listaCategoriasContainer');
+        const alertContainer = document.getElementById('alertContainer');
+        const loadingCategorias = document.getElementById('loadingCategorias');
+        const cerrarModalBtn = document.getElementById('cerrarModalBtn');
+
+        // Función para abrir el modal de categorías
+        function abrirModalCategorias() {
+            modalCategorias.style.display = 'flex';
+            cargarCategoriasEnModal();
+        }
+
+        // Función para cerrar el modal de categorías
+        function cerrarModalCategorias() {
+            modalCategorias.style.display = 'none';
+            alertContainer.innerHTML = '';
+        }
+        // Función para mostrar alertas en el modal
+        function mostrarAlertaCategorias(mensaje, tipo) {
+            alertContainer.innerHTML = `
+                <div class="alert alert-${tipo}">
+                    <i class="fas fa-${tipo === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i>
+                    ${mensaje}
+                </div>
+            `;
+            
+            setTimeout(() => {
+                alertContainer.innerHTML = '';
+            }, 5000);
+        }
+
+        // Función para cargar categorías en el modal
+        async function cargarCategoriasEnModal() {
+            try {
+                loadingCategorias.style.display = 'flex';
+                listaCategoriasContainer.innerHTML = '';
+                
+                const response = await fetch('/api/categorias');
+                
+                if (!response.ok) {
+                    throw new Error('Error al cargar las categorías');
+                }
+                
+                const categorias = await response.json();
+                mostrarCategoriasEnModal(categorias);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                mostrarAlertaCategorias('Error al cargar las categorías', 'error');
+                listaCategoriasContainer.innerHTML = `
+                    <tr>
+                        <td colspan="3">
+                            <div class="empty-state">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <h5>Error al cargar categorías</h5>
+                                <p>${error.message}</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            } finally {
+                loadingCategorias.style.display = 'none';
+            }
+        }
+        // Función para mostrar categorías en la tabla del modal
+        function mostrarCategoriasEnModal(categorias) {
+            listaCategoriasContainer.innerHTML = '';
+            
+            if (categorias.length === 0) {
+                listaCategoriasContainer.innerHTML = `
+                    <tr>
+                        <td colspan="3">
+                            <div class="empty-state">
+                                <i class="fas fa-tags"></i>
+                                <h5>No hay categorías registradas</h5>
+                                <p>Comienza agregando tu primera categoría</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            categorias.forEach(categoria => {
+                const categoriaRow = document.createElement('tr');
+                categoriaRow.innerHTML = `
+                    <td>${categoria.nombre}</td>
+                    <td>
+                        <div class="categoria-actions">
+                            <button class="btn-eliminar eliminar-categoria" data-id="${categoria._id}" data-nombre="${categoria.nombre}">
+                                <i class="fas fa-trash"></i> Eliminar
+                            </button>
+                        </div>
+                    </td>
+                `;
+                
+                listaCategoriasContainer.appendChild(categoriaRow);
+            });
+            
+            // Agregar event listeners para los botones de eliminar
+            document.querySelectorAll('.eliminar-categoria').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const categoriaId = this.getAttribute('data-id');
+                    const categoriaNombre = this.getAttribute('data-nombre');
+                    eliminarCategoria(categoriaId, categoriaNombre);
+                });
+            });
+        }
+        // Función para eliminar una categoría
+        async function eliminarCategoria(id, nombre) {
+            if (confirm(`¿Está seguro de que desea eliminar la categoría "${nombre}"? Esta acción no se puede deshacer.`)) {
+                try {
+                    const response = await fetch(`/api/categorias/${id}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (!response.ok) {
+                        throw new Error(result.error || 'Error al eliminar la categoría');
+                    }
+                    
+                    // Actualizar la lista en el modal
+                    await cargarCategoriasEnModal();
+                    
+                    // Recargar categorías en el select del formulario
+                    await cargarCategorias();
+                    
+                    // Mostrar mensaje de éxito
+                    mostrarAlertaCategorias(`Categoría "${nombre}" eliminada correctamente`, 'success');
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    mostrarAlertaCategorias(error.message, 'error');
+                }
+            }
+        }
+        // ========== EVENT LISTENERS PARA EL MODAL DE CATEGORÍAS ==========
+
+        // Abrir modal al hacer clic en el botón
+        btnVerCategorias.addEventListener('click', abrirModalCategorias);
+
+        // Cerrar modal con el botón de cerrar
+        cerrarModalBtn.addEventListener('click', cerrarModalCategorias);
+
+        // Cerrar modal al hacer clic en la X
+        //document.querySelector('#modalCategorias .close').addEventListener('click', cerrarModalCategorias);
+
+        // Cerrar modal al hacer clic fuera del contenido
+        window.addEventListener('click', (event) => {
+            if (event.target === modalCategorias) {
+                cerrarModalCategorias();
+            }
+        });
+
+        // Cerrar modal con ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modalCategorias.style.display === 'flex') {
+                cerrarModalCategorias();
+            }
+        });
+
+        // Función para actualizar la lista de notificaciones
+        function actualizarListaNotificaciones(productosStockBajo) {
+            if (productosStockBajo.length === 0) {
+                notificationList.innerHTML = `
+      <div class="notification-empty">
+        <i class="fas fa-check-circle"></i>
+        <h5>¡Todo en orden!</h5>
+        <p>No hay productos con stock bajo</p>
+      </div>
+    `;
+                return;
+            }
+
+            notificationList.innerHTML = productosStockBajo.map(p => {
+                const esCritico = p.stock === 0;
+                const claseItem = esCritico ? 'stock-critical' : 'stock-low';
+                const icono = esCritico ? 'fa-fire' : 'fa-exclamation-triangle';
+                const textoStock = esCritico ? 'AGOTADO' : `Stock: ${p.stock}`;
+
+                return `
+      <div class="notification-item ${claseItem}">
+        <div class="notification-icon">
+          <i class="fas ${icono}"></i>
+        </div>
+        <div class="notification-details">
+          <div class="notification-product">${p.nombre}</div>
+          <div class="notification-stock">
+            <span class="stock-value">${textoStock}</span>
+            <span class="stock-minimum">Mínimo: ${p.stockMinimo}</span>
+          </div>
+        </div>
+      </div>
+    `;
+            }).join('');
+        }
+
+
+        // Crear contenedor para preview
+        const previewContainer = document.createElement('div');
+        previewContainer.className = 'file-preview-container';
+        previewContainer.id = 'filePreview';
+        form.insertBefore(previewContainer, form.querySelector('button[type="submit"]'));
+
+        // Botón abre el selector de archivos
+        fileSelectButton.addEventListener('click', function() {
+            fileInput.click();
+        });
+
+        // Cuando se selecciona un archivo
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                mostrarArchivoSeleccionado(file);
+            }
+        });
+
+        function mostrarArchivoSeleccionado(file) {
+            // Validar que sea una imagen
+            if (!file.type.startsWith('image/')) {
+                mostrarError('Por favor, selecciona solo archivos de imagen');
+                removerArchivo();
+                return;
+            }
+
+            // Validar tamaño (5MB máximo)
+            if (file.size > 5 * 1024 * 1024) {
+                mostrarError('La imagen es demasiado grande. Máximo 5MB permitido');
+                removerArchivo();
+                return;
+            }
+
+            // Actualizar nombre del archivo
+            fileName.textContent = file.name;
+            fileName.classList.add('has-file');
+
+            // Mostrar preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewContainer.innerHTML = `
+                <div class="file-preview-info">
+                  <img src="${e.target.result}" alt="Preview" class="file-preview-image">
+                  <div class="file-preview-details">
+                    <div class="file-preview-name">${file.name}</div>
+                    <div class="file-preview-size">${formatearTamañoArchivo(file.size)}</div>
+                  </div>
+                  <button type="button" class="file-preview-remove" onclick="removerArchivo()">
+                    <i class="fas fa-trash"></i>
+                    Eliminar imagen
+                  </button>
+                </div>
+              `;
+            };
+            reader.onerror = function() {
+                mostrarError('Error al cargar la imagen');
+                removerArchivo();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removerArchivo() {
+            fileInput.value = '';
+            fileName.textContent = 'Sin archivo seleccionado';
+            fileName.classList.remove('has-file');
+            previewContainer.innerHTML = '';
+        }
+
+        function formatearTamañoArchivo(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function mostrarError(mensaje) {
+            // Crear notificación de error
+            const errorDiv = document.createElement('div');
+            errorDiv.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #dc3545;
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
+    z-index: 10000;
+    animation: slideInRight 0.3s ease;
+    box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    max-width: 300px;
+  `;
+            errorDiv.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <i class="fas fa-exclamation-triangle"></i>
+      <span>${mensaje}</span>
+    </div>
+  `;
+
+            document.body.appendChild(errorDiv);
+
+            // Remover después de 4 segundos
+            setTimeout(() => {
+                errorDiv.style.animation = 'slideOutRight 0.3s ease';
+                setTimeout(() => {
+                    if (errorDiv.parentNode) {
+                        errorDiv.parentNode.removeChild(errorDiv);
+                    }
+                }, 300);
+            }, 4000);
+        }
+
+        // ========== FUNCIONES PRINCIPALES ==========
+
+        // Función para cargar productos
+        async function cargarProductos() {
+            try {
+                const res = await fetch('/api/platos');
+                if (!res.ok) throw new Error('Error al cargar productos');
+
+                const productos = await res.json();
+                container.innerHTML = '';
+
+                if (productos.length === 0) {
+                    container.innerHTML = `
+        <div class="empty-state">
+          <i class="fas fa-utensils"></i>
+          <p>No hay productos registrados</p>
+          <p>Comienza agregando tu primer producto</p>
+        </div>
+      `;
+                    return;
+                }
+
+                productos.forEach(p => {
+                    const card = document.createElement('div');
+                    card.classList.add('card');
+
+                    // Verificar si el stock está bajo
+                    const stockBajo = p.stock <= p.stockMinimo;
+                    if (stockBajo) {
+                        card.classList.add('stock-bajo');
+                    }
+
+                    card.innerHTML = `
+                        <img src="${p.imagen || 'https://via.placeholder.com/150'}" alt="${p.nombre}" 
+                            onerror="this.src='https://via.placeholder.com/150'">
+                        <h4>${p.nombre}</h4>
+                        <p><strong>Categoría:</strong>${p.categoria?.nombre || 'Sin categoría'}</p>
+                        <p><strong>Precio:</strong> S/. ${p.precio.toFixed(2)}</p>
+                        <p class="${stockBajo ? 'stock-low' : ''}">
+                          <strong>Stock:</strong> ${p.stock} 
+                          ${stockBajo ? '<span class="stock-warning">(!)</span>' : ''}
+                        </p>
+                        <p><strong>Stock Mínimo:</strong> ${p.stockMinimo}</p>
+                        <p><strong>Estado:</strong> 
+                          <span class="${p.estado === 'activo' ? 'activo' : 'inactivo'}">
+                            ${p.estado}
+                          </span>
+                        </p>
+                        <div class="card-actions">
+                          <button class="toggle-estado" data-id="${p._id}">
+                            <i class="fas fa-power-off"></i>
+                          </button>
+                          <button class="editar" data-id="${p._id}">
+                            <i class="fas fa-edit"></i>
+                            Editar
+                          </button>
+                          <button class="eliminar" data-id="${p._id}">
+                            <i class="fas fa-trash"></i>
+                            Eliminar
+                          </button>
+                        </div>
+                      `;
+                    container.appendChild(card);
+                });
+            } catch (error) {
+                console.error('Error:', error);
+                mostrarError('Error al cargar los productos');
+            }
+        }
+
+        // Función para crear o actualizar producto
+        async function enviarProducto(e) {
+            e.preventDefault();
+
+            // Validaciones básicas
+            if (!form.nombre.value.trim()) {
+                mostrarError('El nombre del producto es requerido');
+                return;
+            }
+
+            if (form.precio.value <= 0) {
+                mostrarError('El precio debe ser mayor a 0');
+                return;
+            }
+
+            if (form.stock.value < 0) {
+                mostrarError('El stock no puede ser negativo');
+                return;
+            }
+
+            try {
+                const formData = new FormData();
+
+                formData.append('nombre', form.nombre.value.trim());
+                formData.append('categoria', form.categoria.value.trim());
+                formData.append('descripcion', form.descripcion.value.trim());
+                formData.append('precio', parseFloat(form.precio.value));
+                formData.append('stock', parseInt(form.stock.value));
+                formData.append('stockMinimo', parseInt(form.stockMinimo.value));
+                formData.append('estado', form.estado.value);
+
+                // Priorizar archivo sobre URL
+                if (form.imagenFile.files[0]) {
+                    formData.append('imagenFile', form.imagenFile.files[0]);
+                } else if (form.imagenUrl.value.trim()) {
+                    formData.append('imagenUrl', form.imagenUrl.value.trim());
+                }
+
+                let url = '/api/platos';
+                let method = 'POST';
+                if (editarId) {
+                    url = `/api/platos/${editarId}`;
+                    method = 'PUT';
+                }
+
+                const response = await fetch(url, {
+                    method,
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Error al guardar el producto');
+                }
+
+                // Mostrar mensaje de éxito
+                mostrarExito(editarId ? 'Producto actualizado correctamente' : 'Producto agregado correctamente');
+
+                // Resetear formulario
+                resetearFormulario();
+                await cargarProductos();
+
+            } catch (error) {
+                console.error('Error:', error);
+                mostrarError(error.message || 'Error al guardar el producto');
+            }
+        }
+
+        function mostrarExito(mensaje) {
+            const exitoDiv = document.createElement('div');
+            exitoDiv.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #28a745;
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
+    z-index: 10000;
+    animation: slideInRight 0.3s ease;
+    box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    max-width: 300px;
+  `;
+            exitoDiv.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <i class="fas fa-check-circle"></i>
+      <span>${mensaje}</span>
+    </div>
+  `;
+
+            document.body.appendChild(exitoDiv);
+
+            setTimeout(() => {
+                exitoDiv.style.animation = 'slideOutRight 0.3s ease';
+                setTimeout(() => {
+                    if (exitoDiv.parentNode) {
+                        exitoDiv.parentNode.removeChild(exitoDiv);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        function resetearFormulario() {
+            form.reset();
+            editarId = null;
+            removerArchivo();
+            form.querySelector('button[type="submit"]').textContent = 'Agregar Producto';
+            form.querySelector('button[type="submit"]').innerHTML = 'Agregar Producto';
+        }
+
+        // Manejar botones Editar y Eliminar
+        container.addEventListener('click', async(e) => {
+            const button = e.target.closest('button');
+            if (!button) return;
+
+            const id = button.dataset.id;
+            if (!id) return;
+
+            if (button.classList.contains('eliminar')) {
+                if (confirm('¿Estás seguro de que deseas eliminar este producto?')) {
+                    try {
+                        const response = await fetch(`/api/platos/${id}`, {
+                            method: 'DELETE'
+                        });
+
+                        if (!response.ok) throw new Error('Error al eliminar el producto');
+
+                        mostrarExito('Producto eliminado correctamente');
+                        await cargarProductos();
+                    } catch (error) {
+                        console.error('Error:', error);
+                        mostrarError('Error al eliminar el producto');
+                    }
+                }
+            }
+
+            if (button.classList.contains('editar')) {
+                try {
+                    const res = await fetch(`/api/platos/${id}`);
+                    if (!res.ok) throw new Error('Error al cargar el producto');
+
+                    const p = await res.json();
+
+                    // Llenar formulario con datos del producto
+                    form.nombre.value = p.nombre || '';
+                    form.categoria.value = p.categoria?._id || '';
+                    form.descripcion.value = p.descripcion || '';
+                    form.precio.value = p.precio || '';
+                    form.stock.value = p.stock || '';
+                    form.stockMinimo.value = p.stockMinimo || '';
+                    form.imagenUrl.value = p.imagen || '';
+
+                    // Limpiar file input
+                    removerArchivo();
+
+                    // Cambiar texto del botón
+                    const submitButton = form.querySelector('button[type="submit"]');
+                    submitButton.innerHTML = '<i class="fas fa-save"></i> Actualizar Producto';
+                    submitButton.textContent = 'Actualizar Producto';
+
+                    editarId = id;
+
+                    // Scroll al formulario
+                    form.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+
+                } catch (error) {
+                    console.error('Error:', error);
+                    mostrarError('Error al cargar el producto para editar');
+                }
+            }
+             if (button.classList.contains('toggle-estado')) {
+                try {
+                    // ✅ USAR LA NUEVA RUTA ESPECÍFICA
+                    const updateResponse = await fetch(`/api/platos/${id}/toggle-estado`, {
+                        method: 'PUT'
+                    });
+
+                    if (!updateResponse.ok) {
+                        const errorData = await updateResponse.json();
+                        throw new Error(errorData.message || 'Error al cambiar el estado');
+                    }
+
+                    const productoActualizado = await updateResponse.json();
+                    
+                    mostrarExito(`Producto ${productoActualizado.estado === 'activo' ? 'activado' : 'desactivado'} correctamente`);
+                    await cargarProductos();
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    mostrarError(error.message || 'Error al cambiar el estado del producto');
+                }
+            }
+        });
+
+        // Evento submit del formulario
+        form.addEventListener('submit', enviarProducto);
+
+        // Animaciones CSS para las notificaciones
+        const style = document.createElement('style');
+        style.textContent = `
+  @keyframes slideInRight {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes slideOutRight {
+    from {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+  }
+  
+  .stock-low {
+    color: #dc3545;
+    font-weight: bold;
+  }
+  
+  .stock-warning {
+    color: #dc3545;
+    font-weight: bold;
+    margin-left: 5px;
+  }
+  
+  .empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #666;
+    grid-column: 1 / -1;
+  }
+  
+  .empty-state i {
+    font-size: 3rem;
+    color: #b22222;
+    margin-bottom: 1rem;
+    opacity: 0.7;
+  }
+  
+  .empty-state p:first-of-type {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+`;
+        document.head.appendChild(style);
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            cargarProductos();
+            cargarCategorias(); 
+            actualizarNotificaciones();
+        });
+    </script>
+</body>
+
+</html>

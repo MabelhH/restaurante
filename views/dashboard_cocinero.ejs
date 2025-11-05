@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Cajero - Restaurante</title>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <div class="dashboard-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <h2 class="logo">
+        <i class="fas fa-utensils"></i><br>
+        Restaurante
+      </h2>
+
+      <nav>
+        <a href="/dashboard_cocinero" class="active"><i class="fas fa-home"></i> <span>Dashboard</span></a>
+        <a href="/platosc"><i class="fas fa-bowl-food"></i><span>Platos</span></a>
+        <a href="/logout"><i class="fas fa-sign-out-alt"></i> <span>Cerrar sesión</span></a>
+      </nav>
+    </aside>
+
+    <!-- Main content -->
+    <main class="main-content">
+      <header>
+        <h1>Bienvenido, <%= usuario.nombre %></h1>
+        <div class="welcome-badge">Panel del cocinero</div>
+      </header>
+     
+    </main>
+  </div>
+</body>
+</html>

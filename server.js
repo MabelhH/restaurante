@@ -78,6 +78,7 @@ app.use('/pedidos', pedidoRouter);
 // ===== Routers de vistas =====
 const clienteViewRouter = require('./routers/clienteViewRouter');
 const platosViewRouter = require('./routers/platosViewRouter');
+const platosViewRoutercocinero = require('./routers/platosViewRoutercocinero');
 const ventaViewRouter = require('./routers/ventaViewRouter');
 const userViewRouter = require('./routers/userViewRouter');
 const pagosRouter = require('./routers/pagosRouter');
@@ -86,6 +87,7 @@ const mesasViewRouter = require('./routers/mesasViewRouter');
 
 app.use('/clientes', clienteViewRouter);
 app.use('/platos', platosViewRouter);
+app.use('/platosc', platosViewRoutercocinero);
 app.use('/ventas', ventaViewRouter);
 app.use('/mesas', mesasViewRouter);
 app.use('/api/categorias', categoriaRoutes);
