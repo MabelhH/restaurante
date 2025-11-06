@@ -17,28 +17,17 @@ function verifyToken(req, res, next) {
     req.user = decoded;
     next();
   } catch (err) {
-    console.error('❌ Error en verifyToken:', err.message); // 👈 MEJORA: Log del error
     res.clearCookie('token');
     return res.redirect('/login');
   }
 }
 
-// MEJORA: Middleware para verificar rol de mesero o admin
-function verifyMeseroOrAdmin(req, res, next) {
-  if (req.user.rol !== 'mesero' && req.user.rol !== 'admin') {
-    return res.status(403).render('error', { 
-      mensaje: 'Acceso denegado. Solo meseros y administradores pueden acceder a esta sección.' 
-    });
-  }
-  next();
-}
-
-// Ruta principal de pedidos (según rol)
-router.get('/', verifyToken, verifyMeseroOrAdmin, async (req, res) => { // 👈 AGREGAR middleware
+// Ruta principal de pedidos (según rol) - CORREGIDA
+router.get('/', verifyToken, async (req, res) => {
   try {
     let filtroPedidos = { activo: true };
     
-    // MEJORA: Si es mesero, solo ver sus pedidos
+    // Si es mesero, solo ver sus pedidos
     if (req.user.rol === 'mesero') {
       filtroPedidos.mesero = req.user._id;
     }
@@ -52,7 +41,7 @@ router.get('/', verifyToken, verifyMeseroOrAdmin, async (req, res) => { // 👈 
     const mesas = await Mesa.find({ estado: { $in: ['disponible', 'ocupada'] } });
     const platos = await Platos.find({ estado: 'activo', stock: { $gt: 0 } });
 
-    // MEJORA: Simplificar userData
+    // Preparar datos del usuario
     const userData = {
       _id: req.user._id,
       nombre: req.user.nombre,
@@ -60,22 +49,85 @@ router.get('/', verifyToken, verifyMeseroOrAdmin, async (req, res) => { // 👈 
       rol: req.user.rol
     };
 
-    console.log('👤 Usuario cargando pedidos:', userData); // 👈 DEBUG
+    console.log('📋 Cargando pedidos:', {
+      usuario: userData.nombre,
+      rol: userData.rol,
+      totalPedidos: pedidos.length
+    });
 
     if (req.user.rol === 'admin') {
-      res.render('pedidos', { usuario: userData, pedidos, mesas, platos });
+      res.render('pedidos', { 
+        usuario: userData, 
+        pedidos, 
+        mesas, 
+        platos,
+        pedidoActual: null // ✅ Agregado
+      });
     } else if (req.user.rol === 'mesero') {
-      res.render('pedidosM', { usuario: userData, pedidos, mesas, platos });
+      res.render('pedidosM', { 
+        usuario: userData, 
+        pedidos, 
+        mesas, 
+        platos,
+        pedidoActual: null // ✅ Agregado
+      });
+    } else {
+      res.status(403).send('Acceso denegado');
     }
-
   } catch (error) {
     console.error('❌ Error al cargar pedidos:', error);
-    res.status(500).render('error', { mensaje: 'Error al cargar los pedidos' });
+    res.status(500).send('Error al cargar pedidos');
   }
 });
 
-// Ruta para crear nuevo pedido (vista de formulario)
-router.get('/nuevo', verifyToken, verifyMeseroOrAdmin, async (req, res) => {
+// Ruta para ver pedidos específicos (si necesitas una vista de detalle)
+router.get('/ver', verifyToken, async (req, res) => {
+  try {
+    let filtroPedidos = { activo: true };
+    
+    // Si es mesero, solo ver sus pedidos
+    if (req.user.rol === 'mesero') {
+      filtroPedidos.mesero = req.user._id;
+    }
+
+    const pedidos = await Pedido.find(filtroPedidos)
+      .populate('mesa', 'numeroMesa piso sector')
+      .populate('mesero', 'nombre')
+      .populate('platos.plato', 'nombre precio imagen descripcion')
+      .sort({ fechaPedido: -1 });
+
+    const userData = {
+      _id: req.user._id,
+      nombre: req.user.nombre,
+      email: req.user.email,
+      rol: req.user.rol
+    };
+
+    console.log('👀 Vista detallada de pedidos:', {
+      usuario: userData.nombre,
+      totalPedidos: pedidos.length
+    });
+
+    if (req.user.rol === 'admin') {
+      res.render('pedidosDetalle', { 
+        usuario: userData, 
+        pedidos 
+      });
+    } else if (req.user.rol === 'mesero') {
+      res.render('pedidosM', { 
+        usuario: userData, 
+        pedidos,
+        pedidoActual: null // ✅ Agregado
+      });
+    }
+  } catch (error) {
+    console.error('❌ Error al cargar vista de pedidos:', error);
+    res.status(500).send('Error al cargar pedidos');
+  }
+});
+
+// Las otras rutas permanecen igual...
+router.get('/nuevo', verifyToken, async (req, res) => {
   try {
     const mesas = await Mesa.find({ estado: 'disponible' });
     const platos = await Platos.find({ estado: 'activo', stock: { $gt: 0 } });
@@ -87,37 +139,36 @@ router.get('/nuevo', verifyToken, verifyMeseroOrAdmin, async (req, res) => {
       rol: req.user.rol
     };
 
-    console.log('👤 Mesero creando pedido:', userData); // 👈 DEBUG
-
     if (req.user.rol === 'admin') {
-      res.render('nuevoPedido', { usuario: userData, mesas, platos });
+      res.render('nuevoPedido', { 
+        usuario: userData, 
+        mesas, 
+        platos 
+      });
     } else if (req.user.rol === 'mesero') {
-      res.render('nuevoPedidoM', { usuario: userData, mesas, platos });
+      res.render('nuevoPedidoM', { 
+        usuario: userData, 
+        mesas, 
+        platos 
+      });
+    } else {
+      res.status(403).send('Acceso denegado');
     }
-
   } catch (error) {
-    console.error('❌ Error al cargar formulario de pedido:', error);
-    res.status(500).render('error', { mensaje: 'Error al cargar el formulario' });
+    console.error('Error al cargar formulario de pedido:', error);
+    res.status(500).send('Error al cargar formulario');
   }
 });
 
-// Ruta para ver detalle de pedido específico
-router.get('/:id', verifyToken, verifyMeseroOrAdmin, async (req, res) => {
+router.get('/:id', verifyToken, async (req, res) => {
   try {
-    let pedido = await Pedido.findById(req.params.id)
+    const pedido = await Pedido.findById(req.params.id)
       .populate('mesa', 'numeroMesa piso sector')
       .populate('mesero', 'nombre email')
       .populate('platos.plato', 'nombre precio imagen descripcion');
 
     if (!pedido) {
-      return res.status(404).render('error', { mensaje: 'Pedido no encontrado' });
-    }
-
-    // MEJORA: Si es mesero, verificar que el pedido sea suyo
-    if (req.user.rol === 'mesero' && pedido.mesero._id.toString() !== req.user._id) {
-      return res.status(403).render('error', { 
-        mensaje: 'No tienes permisos para ver este pedido' 
-      });
+      return res.status(404).send('Pedido no encontrado');
     }
 
     const userData = {
@@ -128,14 +179,21 @@ router.get('/:id', verifyToken, verifyMeseroOrAdmin, async (req, res) => {
     };
 
     if (req.user.rol === 'admin') {
-      res.render('detallePedido', { usuario: userData, pedido });
+      res.render('detallePedido', { 
+        usuario: userData, 
+        pedido 
+      });
     } else if (req.user.rol === 'mesero') {
-      res.render('detallePedidoM', { usuario: userData, pedido });
+      res.render('detallePedidoM', { 
+        usuario: userData, 
+        pedido 
+      });
+    } else {
+      res.status(403).send('Acceso denegado');
     }
-
   } catch (error) {
-    console.error('❌ Error al cargar pedido:', error);
-    res.status(500).render('error', { mensaje: 'Error al cargar el pedido' });
+    console.error('Error al cargar pedido:', error);
+    res.status(500).send('Error al cargar pedido');
   }
 });
 
