@@ -34,7 +34,7 @@ class MesasService {
       }
 
       // Validar sector
-      if (!['vid', 'valcon', 'normal'].includes(data.sector)) {
+      if (!['vip', 'balcon', 'normal'].includes(data.sector)) {
           throw new Error('Sector inválido');
       }
 
@@ -77,14 +77,14 @@ class MesasService {
     }
 
     if (data.sector) {
-      if (!['vid', 'valcon', 'normal'].includes(data.sector)) {
+      if (!['vip', 'balcon', 'normal'].includes(data.sector)) {
         throw new Error('Sector inválido');
       }
       mesa.sector = data.sector;
     }
 
     if (data.estado) {
-      if (!['atendida', 'liberada', 'ocupada','reparacion'].includes(data.estado)) {
+      if (!['liberada', 'ocupada','reparacion'].includes(data.estado)) {
         throw new Error('Estado inválido');
       }
       mesa.estado = data.estado;

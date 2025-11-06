@@ -102,7 +102,6 @@ async function cargarMesas() {
       const card = document.createElement('div');
       card.classList.add('card');
       if (m.estado === 'ocupada') card.classList.add('ocupada');
-      if (m.estado === 'atendida') card.classList.add('atendida');
 
       card.innerHTML = `
         <h4>Mesa N° ${m.numeroMesa}</h4>

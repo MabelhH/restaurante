@@ -45,7 +45,6 @@
             <option value="">Selecciona Estado</option>
             <option value="liberada">Liberada</option>
             <option value="ocupada">Ocupada</option>
-            <option value="atendida">Atendida</option>
             <option value="reparacion">Reparación</option>
           </select>
 
@@ -59,8 +58,8 @@
 
           <select id="sector" required>
             <option value="">Selecciona Sector</option>
-            <option value="vid">Vid</option>
-            <option value="valcon">Valcon</option>
+            <option value="vip">Vip</option>
+            <option value="balcon">Balcon</option>
             <option value="normal">Normal</option>
           </select>
 
@@ -99,7 +98,6 @@ async function cargarMesas() {
     const card = document.createElement('div');
     card.classList.add('card');
     if (m.estado === 'ocupada') card.classList.add('ocupada');
-    if (m.estado === 'atendida') card.classList.add('atendida');
     if (m.estado === 'reparacion') card.classList.add('reparacion');
 
     card.innerHTML = `

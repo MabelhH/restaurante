@@ -10,7 +10,7 @@ const mesasSchema = new Schema({
   },
   estado: {
     type: String,
-    enum: ['atendida', 'liberada', 'ocupada', 'reparacion'],
+    enum: ['liberada', 'ocupada', 'reparacion'],
     default: 'liberada',
     required: true
   },
@@ -21,7 +21,7 @@ const mesasSchema = new Schema({
   },
   sector: {
     type: String,
-    enum: ['vid', 'valcon', 'normal'],
+    enum: ['vip', 'balcon', 'normal'],
     required: true
   }
 });
