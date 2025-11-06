@@ -5,13 +5,34 @@ const Usuario = require('../models/userModel');
 const Mesa = require('../models/mesasModel');
 const Platos = require('../models/platosModel');
 const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
+
+const SECRET_KEY = 'tu_clave_secreta_aqui';
+
+// Middleware para verificar token
+function verifyToken(req, res, next) {
+    const token = req.cookies.token;
+    if (!token) {
+        return res.status(401).json({ error: 'Token no proporcionado' });
+    }
+
+    try {
+        const decoded = jwt.verify(token, SECRET_KEY);
+        req.user = decoded;
+        next();
+    } catch (err) {
+        res.clearCookie('token');
+        return res.status(401).json({ error: 'Token inválido' });
+    }
+}
 
 // Ruta para crear pedidos - RF010: Registro de pedidos por cliente o mesa
-router.post('/', async (req, res) => {
+router.post('/', verifyToken, async (req, res) => {
   try {
-    const { mesaId, platos, meseroId, observacionesGenerales } = req.body;
+    const { mesaId, platos, observacionesGenerales } = req.body;
 
     console.log('📦 Datos recibidos para nuevo pedido:', req.body);
+    console.log('👤 Usuario autenticado:', req.user);
 
     // Validaciones básicas
     if (!mesaId || !mongoose.Types.ObjectId.isValid(mesaId)) {
@@ -20,9 +41,12 @@ router.post('/', async (req, res) => {
       });
     }
 
+    // USAR el _id del usuario autenticado en lugar de recibirlo en el body
+    const meseroId = req.user._id;
+
     if (!meseroId) {
       return res.status(400).json({ 
-        error: 'ID de mesero inválido o vacío' 
+        error: 'No se pudo identificar al mesero desde el token' 
       });
     }
 
@@ -32,23 +56,11 @@ router.post('/', async (req, res) => {
       });
     }
 
-    // CORREGIDO: Buscar mesero por ID
-    let mesero;
-    if (mongoose.Types.ObjectId.isValid(meseroId)) {
-      mesero = await Usuario.findById(meseroId);
-    } else {
-      mesero = await Usuario.findOne({ 
-        $or: [
-          { _id: meseroId },
-          { nombre: meseroId },
-          { email: meseroId }
-        ]
-      });
-    }
-
+    // Buscar mesero por ID del token
+    const mesero = await Usuario.findById(meseroId);
     if (!mesero) {
       return res.status(404).json({ 
-        error: 'Mesero no encontrado' 
+        error: 'Mesero no encontrado en la base de datos' 
       });
     }
 
@@ -97,7 +109,7 @@ router.post('/', async (req, res) => {
     // Calcular total
     const total = platosConDetalles.reduce((sum, plato) => sum + plato.subtotal, 0);
 
-    // Crear el pedido - CORREGIDO: Usar _id del mesero
+    // Crear el pedido - CORREGIDO: Usar _id del mesero del token
     const pedido = new Pedido({
       mesa: mesaId,
       platos: platosConDetalles,
@@ -156,7 +168,7 @@ router.post('/', async (req, res) => {
 });
 
 // RF012: Adición de nuevos pedidos a mesas existentes
-router.post('/:pedidoId/agregar-platos', async (req, res) => {
+router.post('/:pedidoId/agregar-platos', verifyToken, async (req, res) => {
   try {
     const { pedidoId } = req.params;
     const { platos } = req.body;
@@ -209,7 +221,7 @@ router.post('/:pedidoId/agregar-platos', async (req, res) => {
 });
 
 // RF014: Consulta de estado de pedidos
-router.get('/mesa/:mesaId', async (req, res) => {
+router.get('/mesa/:mesaId', verifyToken, async (req, res) => {
   try {
     const { mesaId } = req.params;
 
@@ -233,7 +245,7 @@ router.get('/mesa/:mesaId', async (req, res) => {
 });
 
 // RF013: Finalización de atención por mesa
-router.put('/mesa/:mesaId/liberar', async (req, res) => {
+router.put('/mesa/:mesaId/liberar', verifyToken, async (req, res) => {
   try {
     const { mesaId } = req.params;
 
@@ -257,7 +269,7 @@ router.put('/mesa/:mesaId/liberar', async (req, res) => {
 });
 
 // Obtener todos los pedidos
-router.get('/', async (req, res) => {
+router.get('/', verifyToken, async (req, res) => {
   try {
     const { estado } = req.query;
     const filtro = { activo: true };
@@ -284,7 +296,7 @@ router.get('/', async (req, res) => {
 });
 
 // Obtener pedido por ID
-router.get('/:id', async (req, res) => {
+router.get('/:id', verifyToken, async (req, res) => {
   try {
     const pedido = await Pedido.findById(req.params.id)
       .populate('mesa', 'numeroMesa piso sector')
