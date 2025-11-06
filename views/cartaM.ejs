@@ -198,7 +198,11 @@
     // Inicialización cuando el DOM está listo
     document.addEventListener('DOMContentLoaded', function() {
       console.log('✅ Carta cargada correctamente');
-      console.log('Usuario:', { id: '<%= usuario.id %>', nombre: '<%= usuario.nombre %>' });
+      console.log('Usuario:', { 
+        _id: '<%= usuario._id %>', 
+        nombre: '<%= usuario.nombre %>',
+        rol: '<%= usuario.rol %>'
+      });
       
       // Cerrar carrito al hacer clic fuera de él
       document.addEventListener('click', function(event) {
@@ -456,11 +460,13 @@
       }
     }
 
-    // Función para confirmar el pedido - MEJORADA
+    // Función para confirmar el pedido - CORREGIDA
     async function confirmarPedido() {
-      // Verificar que el mesero esté identificado
-      if (!'<%= usuario.id %>') {
+      // Verificar que el mesero esté identificado - USANDO _id CORRECTAMENTE
+      const usuarioId = '<%= usuario._id %>';
+      if (!usuarioId || usuarioId === 'undefined' || usuarioId === 'null') {
         alert('❌ No se pudo identificar al mesero. Por favor, inicie sesión nuevamente.');
+        console.error('❌ Error: usuario._id es:', usuarioId);
         return;
       }
 
@@ -478,13 +484,6 @@
         return;
       }
 
-      // Verificar que el usuario tenga ID
-      const usuarioId = '<%= usuario.id %>';
-      if (!usuarioId) {
-        mostrarNotificacion('❌ Error: No se pudo identificar al mesero', 'error');
-        return;
-      }
-
       console.log('📦 Confirmando pedido...', {
         mesaId,
         usuarioId,
@@ -492,18 +491,16 @@
         observacionesGenerales
       });
 
-      // Preparar los datos del pedido
+      // Preparar los datos del pedido - ELIMINADO meseroId (ya no se envía)
       const pedidoData = {
         mesaId: mesaId,
         platos: carrito.map(item => ({
           platoId: item.platoId,
-          nombre: item.nombre,
-          precio: item.precio,
           cantidad: item.cantidad,
           observaciones: item.observaciones
         })),
-        meseroId: usuarioId,
         observacionesGenerales: observacionesGenerales
+        // NOTA: meseroId ya no se envía - se obtiene del token en el servidor
       };
 
       console.log('📤 Enviando pedido al servidor:', pedidoData);
