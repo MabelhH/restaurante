@@ -54,6 +54,9 @@
         <button class="category active" data-categoria="todas">
           <i class="fas fa-th-large"></i> Todas
         </button>
+        <button class="category" data-categoria="Sin categoría">
+          <i class="fas fa-question-circle"></i> Sin categoría
+        </button>
         <% if (categorias && categorias.length > 0) { %>
           <% categorias.forEach(categoria => { %>
             <button class="category" data-categoria="<%= categoria.nombre %>">
@@ -71,7 +74,7 @@
           <% platos.forEach(plato => { %>
             <% if (plato.estado === 'activo' && plato.disponible) { %>
               <div class="food-card <%= plato.stock <= plato.stockMinimo ? 'stock-bajo' : '' %> <%= plato.stock <= 0 ? 'sin-stock' : '' %>"
-                  data-categoria="<%= plato.categoria.nombre %>"
+                  data-categoria="<%= plato.categoria && plato.categoria.nombre ? plato.categoria.nombre : 'Sin categoría' %>"
                   data-plato-id="<%= plato._id %>">
 
                 <!-- Estado de stock -->
@@ -92,6 +95,12 @@
                   </div>
                 <% } %>
 
+                <!-- Categoría del plato (para debug) -->
+                <div class="plato-categoria" style="display: none;">
+                  Categoría ID: <%= plato.categoria %><br>
+                  Categoría Nombre: <%= plato.categoria && plato.categoria.nombre ? plato.categoria.nombre : 'NULO' %>
+                </div>
+
                 <!-- Imagen del plato -->
                 <img src="<%= plato.imagen || '/img/placeholder.jpg' %>" alt="<%= plato.nombre %>" 
                      onerror="this.src='/img/placeholder.jpg'">
@@ -99,6 +108,14 @@
                 <!-- Información del plato -->
                 <h4><%= plato.nombre %></h4>
                 <p><%= plato.descripcion %></p>
+                
+                <!-- Categoría visible -->
+                <div class="categoria-plato">
+                  <small>
+                    <i class="fas fa-tag"></i> 
+                    <%= plato.categoria && plato.categoria.nombre ? plato.categoria.nombre : 'Sin categoría' %>
+                  </small>
+                </div>
                 
                 <!-- Precio y botón agregar -->
                 <div class="price-row">
