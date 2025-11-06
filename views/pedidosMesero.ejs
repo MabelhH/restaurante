@@ -29,23 +29,6 @@
   <main>
     <h2>Gestión de Pedidos</h2>
 
-    <!-- =======================
-         🛒 SECCIÓN 1: Pedido Actual
-    ======================== -->
-    <section class="cards-section">
-      <div class="search-container">
-        <h3><i class="fas fa-cart-arrow-down"></i> Pedido Actual</h3>
-        <form action="/pedidos/registrar" method="POST" style="display:flex; gap:10px; align-items:center;">
-          <label for="mesa">N° Mesa</label>
-          <input type="number" id="mesa" name="mesa" placeholder="ej. 2" required style="padding:8px; border-radius:6px;">
-          <button type="submit" class="filter-btn success">Registrar pedido</button>
-        </form>
-
-        <form action="/pedidos/limpiar" method="POST" style="display:inline;">
-          <button type="submit" class="filter-btn danger">🗑 Limpiar</button>
-        </form>
-      </div>
-
       <div class="cards-container">
         <% if (!pedidoActual || !pedidoActual.platos || pedidoActual.platos.length === 0) { %>
           <div class="empty-state">

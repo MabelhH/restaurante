@@ -1,14 +1,21 @@
+// routers/pagosRouter.js
 const express = require('express');
 const router = express.Router();
-const pagoController = require('../controllers/pagoController');
+const PagosController = require('../controllers/pagosController');
 
-// Mostrar todos los pedidos pendientes (vista de pagos)
-router.get('/', pagoController.verPagos);
+// Mostrar pedidos pendientes de pago (API)
+router.get('/', PagosController.verPagos);
 
-// Registrar un pago
-router.post('/pagar/:id', pagoController.pagarPedido);
+// Registrar pago completo
+router.post('/pagar/:id', PagosController.pagarPedido);
 
-// Cancelar un pedido
-router.post('/cancelar/:id', pagoController.cancelarPedido);
+// Pago parcial
+router.post('/pago-parcial/:id', PagosController.pagoParcial);
+
+// Cancelar pedido
+router.post('/cancelar/:id', PagosController.cancelarPedido);
+
+// Obtener historial de pagos de un pedido
+router.get('/historial/:id', PagosController.historialPagos);
 
 module.exports = router;

@@ -3,7 +3,9 @@ const Categoria = require('../models/categoriaModel');
 
 class PlatoService {
     async getAll() {
-        return await Platos.find({}).populate('categoria', 'nombre');
+        return await Platos.find({})
+            .populate('categoria', 'nombre')
+            .sort({ nombre: 1 });
     }
 
     async getById(id) {
@@ -11,54 +13,66 @@ class PlatoService {
     }
 
     async create(data) {
-        // ✅ VERIFICAR SI data.categoria ES UN ID VÁLIDO (que viene del frontend)
-        if (!data.categoria || !data.categoria.match(/^[0-9a-fA-F]{24}$/)) {
-            throw new Error('ID de categoría inválido');
+        // CAMBIO: Validar que la categoría existe
+        if (!data.categoria) {
+            throw new Error('La categoría es requerida');
         }
 
-        // ✅ VERIFICAR QUE LA CATEGORÍA EXISTA
         const categoriaExistente = await Categoria.findById(data.categoria);
         if (!categoriaExistente) {
             throw new Error('Categoría no encontrada');
         }
 
-        // ✅ CREAR PLATO CON EL ID DE CATEGORÍA
-        const plato = new Platos(data);
+        // CAMBIO: Crear con campos del modelo actualizado
+        const plato = new Platos({
+            nombre: data.nombre,
+            categoria: data.categoria,
+            descripcion: data.descripcion,
+            precio: data.precio,
+            stock: data.stock || 0,
+            stockMinimo: data.stockMinimo || 5,
+            imagen: data.imagen,
+            tiempoPreparacion: data.tiempoPreparacion || 15,
+            estado: data.estado || 'activo',
+            disponible: data.disponible !== undefined ? data.disponible : true
+        });
+
         const platoGuardado = await plato.save();
-        
-        // ✅ HACER POPULATE PARA DEVOLVER LA CATEGORÍA COMPLETA
         return await Platos.findById(platoGuardado._id).populate('categoria', 'nombre');
     }
 
     async update(id, data) {
+        // CAMBIO: Validar categoría si se está actualizando
         if (data.categoria) {
-            // ✅ VERIFICAR SI ES UN ID VÁLIDO
-            if (!data.categoria.match(/^[0-9a-fA-F]{24}$/)) {
-                throw new Error('ID de categoría inválido');
-            }
-
-            // ✅ VERIFICAR QUE LA CATEGORÍA EXISTA
             const categoriaExistente = await Categoria.findById(data.categoria);
             if (!categoriaExistente) {
                 throw new Error('Categoría no encontrada');
             }
         }
 
-        // ✅ ACTUALIZAR Y HACER POPULATE
-        const platoActualizado = await Platos.findByIdAndUpdate(id, data, { 
-            new: true 
-        }).populate('categoria', 'nombre');
+        const platoActualizado = await Platos.findByIdAndUpdate(
+            id, 
+            data, 
+            { new: true, runValidators: true }
+        ).populate('categoria', 'nombre');
+
+        if (!platoActualizado) {
+            throw new Error('Plato no encontrado');
+        }
 
         return platoActualizado;
     }
 
     async delete(id) {
-        return await Platos.findByIdAndDelete(id);
+        const plato = await Platos.findByIdAndDelete(id);
+        if (!plato) throw new Error('Plato no encontrado');
+        return plato;
     }
 
+    // CAMBIO: Verificar stock mínimo corregido
     async verificarStockMinimo() {
         return await Platos.find({ 
-            stock: { $lte: '$stockMinimo' } 
+            stock: { $lte: { $expr: '$stockMinimo' } } // CORRECCIÓN: Sintaxis corregida
         }).populate('categoria', 'nombre');
     }
 
@@ -67,10 +81,36 @@ class PlatoService {
         if (!plato) throw new Error('Plato no encontrado');
 
         plato.estado = plato.estado === 'activo' ? 'inactivo' : 'activo';
-        const platoActualizado = await plato.save();
+        // CAMBIO: Actualizar disponibilidad según estado
+        if (plato.estado === 'inactivo') {
+            plato.disponible = false;
+        }
         
-        // ✅ HACER POPULATE DESPUÉS DE GUARDAR
+        const platoActualizado = await plato.save();
         return await Platos.findById(platoActualizado._id).populate('categoria', 'nombre');
+    }
+
+    // NUEVO: Método para verificar disponibilidad
+    async verificarDisponibilidad(id, cantidad = 1) {
+        const plato = await Platos.findById(id);
+        if (!plato) throw new Error('Plato no encontrado');
+
+        return {
+            disponible: plato.disponible && plato.estado === 'activo',
+            stock: plato.stock,
+            suficiente: plato.stock >= cantidad
+        };
+    }
+
+    // NUEVO: Método para actualizar stock
+    async actualizarStock(id, nuevoStock) {
+        const plato = await Platos.findById(id);
+        if (!plato) throw new Error('Plato no encontrado');
+
+        plato.stock = nuevoStock;
+        plato.disponible = nuevoStock > 0;
+        
+        return await plato.save();
     }
 }
 

@@ -14,6 +14,7 @@ class ProductoService {
     return await producto.save();
   }
 
+  
   async update(id, data) {
     return await Producto.findByIdAndUpdate(id, data, { new: true });
   }

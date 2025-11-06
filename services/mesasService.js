@@ -1,8 +1,6 @@
-// services/mesasService.js
 const Mesa = require('../models/mesasModel');
 
 class MesasService {
-
   // Traer todas las mesas
   async getAll() {
     return await Mesa.find().sort({ numeroMesa: 1 });
@@ -17,78 +15,46 @@ class MesasService {
 
   // Crear una nueva mesa
   async create(data) {
-    // Validar que se haya proporcionado un número de mesa
-      if (!data.numeroMesa || data.numeroMesa < 1) {
-          throw new Error('El número de mesa debe ser mayor o igual a 1.');
-      }
+    // CAMBIO: Validar que el número de mesa sea único
+    const mesaExistente = await Mesa.findOne({ numeroMesa: data.numeroMesa });
+    if (mesaExistente) {
+      throw new Error(`El número de mesa ${data.numeroMesa} ya existe.`);
+    }
 
-      // Validar que no exista una mesa con ese número
-      const mesaExistente = await Mesa.findOne({ numeroMesa: data.numeroMesa });
-      if (mesaExistente) {
-          throw new Error(`El número de mesa ${data.numeroMesa} ya existe.`);
-      }
+    // CAMBIO: Usar el modelo actualizado con los campos correctos
+    const mesa = new Mesa({
+      numeroMesa: data.numeroMesa,
+      piso: data.piso,
+      sector: data.sector,
+      capacidad: data.capacidad || 4,
+      estado: data.estado || 'disponible'
+    });
 
-      // Validar piso
-      if (!['piso 1', 'piso 2', 'piso 3'].includes(data.piso)) {
-          throw new Error('Piso inválido');
-      }
-
-      // Validar sector
-      if (!['vid', 'valcon', 'normal'].includes(data.sector)) {
-          throw new Error('Sector inválido');
-      }
-
-      // Crear nueva mesa
-      const mesa = new Mesa({
-          numeroMesa: data.numeroMesa,
-          piso: data.piso,
-          sector: data.sector,
-          estado: data.estado || 'liberada'
-      });
-
-      return await mesa.save();
+    return await mesa.save();
   }
-
 
   // Actualizar mesa
   async update(id, data) {
     const mesa = await Mesa.findById(id);
     if (!mesa) throw new Error('Mesa no encontrada');
 
-    if (data.numeroMesa) {
-        if (data.numeroMesa < 1) {
-            throw new Error('El número de mesa no puede ser menor a 1.');
-        }
-
-        // Buscar otra mesa con el mismo número distinto al id actual
-        const mesaExistente = await Mesa.findOne({ numeroMesa: data.numeroMesa, _id: { $ne: id } });
-        if (mesaExistente) {
-            throw new Error(`El número de mesa ${data.numeroMesa} ya existe.`);
-        }
-
-        mesa.numeroMesa = data.numeroMesa;
-    }
-
-    if (data.piso) {
-      if (!['piso 1', 'piso 2', 'piso 3'].includes(data.piso)) {
-        throw new Error('Piso inválido');
+    // CAMBIO: Validar número de mesa único al actualizar
+    if (data.numeroMesa && data.numeroMesa !== mesa.numeroMesa) {
+      const mesaExistente = await Mesa.findOne({ 
+        numeroMesa: data.numeroMesa, 
+        _id: { $ne: id } 
+      });
+      if (mesaExistente) {
+        throw new Error(`El número de mesa ${data.numeroMesa} ya existe.`);
       }
-      mesa.piso = data.piso;
+      mesa.numeroMesa = data.numeroMesa;
     }
 
-    if (data.sector) {
-      if (!['vid', 'valcon', 'normal'].includes(data.sector)) {
-        throw new Error('Sector inválido');
-      }
-      mesa.sector = data.sector;
-    }
-
-    if (data.estado) {
-      if (!['atendida', 'liberada', 'ocupada','reparacion'].includes(data.estado)) {
-        throw new Error('Estado inválido');
-      }
-      mesa.estado = data.estado;
-    }
+    // CAMBIOS: Actualizar campos según el modelo actualizado
+    if (data.piso) mesa.piso = data.piso;
+    if (data.sector) mesa.sector = data.sector;
+    if (data.estado) mesa.estado = data.estado;
+    if (data.capacidad) mesa.capacidad = data.capacidad;
 
     return await mesa.save();
   }
@@ -98,6 +64,30 @@ class MesasService {
     const mesa = await Mesa.findByIdAndDelete(id);
     if (!mesa) throw new Error('Mesa no encontrada');
     return mesa;
+  }
+
+  // NUEVO: Liberar mesa (RF013)
+  async liberarMesa(id) {
+    const mesa = await Mesa.findById(id);
+    if (!mesa) throw new Error('Mesa no encontrada');
+
+    mesa.estado = 'liberada';
+    mesa.pedidoActual = null;
+    return await mesa.save();
+  }
+
+  // NUEVO: Marcar mesa como atendida
+  async marcarAtendida(id) {
+    const mesa = await Mesa.findById(id);
+    if (!mesa) throw new Error('Mesa no encontrada');
+
+    mesa.estado = 'atendida';
+    return await mesa.save();
+  }
+
+  // NUEVO: Obtener mesas por estado
+  async getByEstado(estado) {
+    return await Mesa.find({ estado }).sort({ numeroMesa: 1 });
   }
 }
 

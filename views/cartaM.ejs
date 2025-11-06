@@ -17,10 +17,10 @@
       </h2>
 
       <nav>
-        <a href="/dashboard_mesero" class="active"><i class="fas fa-home"></i> <span>Dashboard</span></a>
+        <a href="/dashboard_mesero"><i class="fas fa-home"></i> <span>Dashboard</span></a>
         <a href="/mesas"><i class="fas fa-chair"></i> <span>Mesas</span></a>
-        <a href="/carta"><i class="fas fa-book-open"></i> <span>Carta</span></a>
-        <a href="/pedidos/ver"><i class="fas fa-receipt"></i> <span>Pedidos</span></a>
+        <a href="/carta" class="active"><i class="fas fa-book-open"></i> <span>Carta</span></a>
+        <a href="/pedidos"><i class="fas fa-receipt"></i> <span>Pedidos</span></a>
         <a href="/logout"><i class="fas fa-sign-out-alt"></i> <span>Cerrar sesión</span></a>
       </nav>
     </aside>
@@ -33,7 +33,7 @@
           <p>Selecciona un plato para agregar al pedido</p>
         </div>
         <div class="search-bar">
-          <input type="text" placeholder="Buscar plato..." />
+          <input type="text" placeholder="Buscar plato..." id="search-input" />
           <i class="fas fa-search"></i>
         </div>
       </header>
@@ -67,42 +67,186 @@
 
       <!-- Lista de platos -->
       <section class="food-list">
-        <% platos.forEach(plato => { %>
-          <div class="food-card <%= plato.stock <= plato.stockMinimo ? 'stock-bajo' : '' %>"
-            data-categoria="<%= plato.categoria ? plato.categoria.nombre : '' %>">
+        <% if (platos && platos.length > 0) { %>
+          <% platos.forEach(plato => { %>
+            <% if (plato.estado === 'activo' && plato.disponible) { %>
+              <div class="food-card <%= plato.stock <= plato.stockMinimo ? 'stock-bajo' : '' %> <%= plato.stock <= 0 ? 'sin-stock' : '' %>"
+                  data-categoria="<%= plato.categoria.nombre %>"
+                  data-plato-id="<%= plato._id %>">
 
-            <!-- Alerta de stock bajo -->
-            <% if (plato.stock <= plato.stockMinimo) { %>
-              <div class="stock-alert">
-                <i class="fas fa-exclamation-triangle"></i>
-                <span>Stock bajo: <%= plato.stock %> unidades</span>
-              </div>
-            <% } else { %>
-              <div class="stock-normal">
-                <i class="fas fa-check-circle"></i>
-                <span>Stock: <%= plato.stock %></span>
+                <!-- Estado de stock -->
+                <% if (plato.stock <= 0) { %>
+                  <div class="stock-agotado">
+                    <i class="fas fa-times-circle"></i>
+                    <span>AGOTADO</span>
+                  </div>
+                <% } else if (plato.stock <= plato.stockMinimo) { %>
+                  <div class="stock-alert">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Stock bajo: <%= plato.stock %> unidades</span>
+                  </div>
+                <% } else { %>
+                  <div class="stock-normal">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Stock: <%= plato.stock %></span>
+                  </div>
+                <% } %>
+
+                <!-- Imagen del plato -->
+                <img src="<%= plato.imagen || '/img/placeholder.jpg' %>" alt="<%= plato.nombre %>" 
+                     onerror="this.src='/img/placeholder.jpg'">
+                
+                <!-- Información del plato -->
+                <h4><%= plato.nombre %></h4>
+                <p><%= plato.descripcion %></p>
+                
+                <!-- Precio y botón agregar -->
+                <div class="price-row">
+                  <span class="price">S/. <%= plato.precio.toFixed(2) %></span>
+                  <button class="add-btn" 
+                          data-id="<%= plato._id %>"
+                          data-nombre="<%= plato.nombre %>"
+                          data-precio="<%= plato.precio %>"
+                          <%= plato.stock <= 0 ? 'disabled' : '' %>>
+                    <i class="fas fa-plus"></i>
+                  </button>
+                </div>
               </div>
             <% } %>
-
-            <img src="<%= plato.imagen %>" alt="<%= plato.nombre %>">
-            <h4><%= plato.nombre %></h4>
-            <p><%= plato.descripcion %></p>
-            <div class="price-row">
-              <span class="price">S/. <%= plato.precio %></span>
-              <button class="add-btn" data-id="<%= plato._id %>">
-                <i class="fas fa-plus"></i>
-              </button>
-
-            </div>
+          <% }) %>
+        <% } else { %>
+          <div class="no-platos">
+            <i class="fas fa-utensils"></i>
+            <h3>No hay platos disponibles</h3>
+            <p>Por favor, contacta al administrador</p>
           </div>
-        <% }) %>
+        <% } %>
       </section>
     </main>
+
+    <!-- Botón para toggle del carrito -->
+    <button class="cart-toggle" onclick="toggleCart()">
+      <i class="fas fa-shopping-cart"></i>
+      <span class="cart-count" id="cart-count">0</span>
+    </button>
+
+    <!-- Sidebar del carrito -->
+    <div class="cart-sidebar" id="cart-sidebar">
+      <div class="cart-header">
+        <h2>Carrito de Pedidos</h2>
+        <button class="close-cart" onclick="toggleCart()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <div class="cart-content">
+        <div id="cart-items">
+          <div class="cart-empty" id="cart-empty">
+            <i class="fas fa-shopping-cart"></i>
+            <p>El carrito está vacío</p>
+          </div>
+        </div>
+        
+        <div class="cart-summary">
+          <div class="cart-total">
+            <strong>Total: S/. <span id="cart-total">0.00</span></strong>
+          </div>
+          
+          <div class="observaciones-generales">
+            <label for="observaciones-generales">Observaciones generales del pedido:</label>
+            <textarea id="observaciones-generales" placeholder="Ej: Sin sal, sin cebolla, para llevar, etc." rows="3"></textarea>
+          </div>
+          
+          <div class="mesa-selection">
+            <label for="mesa-select">Seleccionar Mesa:</label>
+            <select id="mesa-select" required>
+              <option value="">-- Selecciona una mesa --</option>
+              <% if (mesas && mesas.length > 0) { %>
+                <% mesas.forEach(mesa => { %>
+                  <% if (mesa.estado === 'disponible' || mesa.estado === 'liberada') { %>
+                    <option value="<%= mesa._id %>">
+                      Mesa <%= mesa.numeroMesa %> - <%= mesa.piso %> - <%= mesa.sector %>
+                      <% if (mesa.estado === 'liberada') { %> (Recién liberada) <% } %>
+                    </option>
+                  <% } %>
+                <% }) %>
+              <% } else { %>
+                <option value="">No hay mesas disponibles</option>
+              <% } %>
+            </select>
+          </div>
+        </div>
+        
+        <div class="cart-actions">
+          <button class="btn-confirm" onclick="confirmarPedido()">
+            <i class="fas fa-check-circle"></i>
+            Confirmar Pedido
+          </button>
+          <button class="btn-clear" onclick="limpiarCarrito()">
+            <i class="fas fa-trash"></i>
+            Limpiar Carrito
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      const inputBusqueda = document.querySelector('.search-bar input');
+    // Carrito en memoria
+    let carrito = [];
+
+    // Inicialización cuando el DOM está listo
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('✅ Carta cargada correctamente');
+      console.log('Usuario:', { id: '<%= usuario.id %>', nombre: '<%= usuario.nombre %>' });
+      
+      // Cerrar carrito al hacer clic fuera de él
+      document.addEventListener('click', function(event) {
+        const cartSidebar = document.getElementById('cart-sidebar');
+        const cartToggle = document.querySelector('.cart-toggle');
+        
+        if (cartSidebar && cartSidebar.classList.contains('open') && 
+            !cartSidebar.contains(event.target) && 
+            !cartToggle.contains(event.target)) {
+          toggleCart();
+        }
+      });
+
+      // Event delegation para los botones de agregar al carrito
+      const foodList = document.querySelector('.food-list');
+      if (foodList) {
+        foodList.addEventListener('click', function(e) {
+          if (e.target.closest('.add-btn')) {
+            const btn = e.target.closest('.add-btn');
+            
+            // Verificar si el botón está deshabilitado
+            if (btn.disabled) {
+              alert('❌ Este plato no tiene stock disponible');
+              return;
+            }
+            
+            const id = btn.dataset.id;
+            const nombre = btn.dataset.nombre;
+            const precio = parseFloat(btn.dataset.precio);
+            
+            agregarAlCarrito(id, nombre, precio);
+          }
+        });
+      }
+
+      // Inicializar filtros de búsqueda y categorías
+      inicializarFiltros();
+      
+      // Mostrar notificación si no hay mesas disponibles
+      const mesaSelect = document.getElementById('mesa-select');
+      if (mesaSelect && mesaSelect.options.length <= 1) {
+        console.warn('⚠️ No hay mesas disponibles');
+      }
+    });
+
+    // Función para inicializar filtros de búsqueda y categorías
+    function inicializarFiltros() {
+      const inputBusqueda = document.getElementById('search-input');
       const tarjetas = document.querySelectorAll('.food-card');
       const botonesCategoria = document.querySelectorAll('.category');
       let categoriaActiva = 'todas';
@@ -136,7 +280,7 @@
       });
 
       inputBusqueda.addEventListener('input', function () {
-        const texto = inputBusqueda.value.toLowerCase();
+        const texto = inputBusqueda.value.toLowerCase().trim();
 
         tarjetas.forEach(card => {
           const nombre = card.querySelector('h4').textContent.toLowerCase();
@@ -153,39 +297,313 @@
           }
         });
       });
-    });
-  </script>
-  <script>
-    document.querySelectorAll('.add-btn').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const card = btn.closest('.food-card');
-        const platoId = btn.dataset.id;
-        const nombre = card.querySelector('h4').textContent;
-        const precioText = card.querySelector('.price').textContent.replace('S/.', '').trim();
-        const precio = parseFloat(precioText);
-        const cantidad = 1; // Por defecto agregamos uno
+    }
 
-        try {
-          const res = await fetch('/pedidos/agregar', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: platoId, nombre, precio, cantidad })
-          });
+    // Función para toggle del carrito
+    function toggleCart() {
+      const cartSidebar = document.getElementById('cart-sidebar');
+      cartSidebar.classList.toggle('open');
+      
+      // Actualizar el carrito cuando se abre
+      if (cartSidebar.classList.contains('open')) {
+        actualizarCarrito();
+      }
+    }
 
-          if (res.ok) {
-            alert(`${nombre} agregado al pedido`);
-          } else {
-            const err = await res.text();
-            alert('Error al agregar el plato: ' + err);
-          }
-        } catch (err) {
-          console.error(err);
-          alert('Error al conectar con el servidor');
+    // Función para agregar plato al carrito
+    function agregarAlCarrito(id, nombre, precio) {
+      console.log('➕ Agregando al carrito:', { id, nombre, precio });
+
+      // Verificar stock antes de agregar
+      const platoCard = document.querySelector(`[data-plato-id="${id}"]`);
+      if (!platoCard) {
+        console.error('❌ No se encontró la tarjeta del plato');
+        alert('❌ Error: No se pudo encontrar el plato');
+        return;
+      }
+      
+      // Verificar si el plato está agotado
+      if (platoCard.classList.contains('sin-stock')) {
+        alert('❌ Este plato está agotado');
+        return;
+      }
+
+      // Verificar si el plato ya está en el carrito
+      const existingItem = carrito.find(item => item.platoId === id);
+      if (existingItem) {
+        existingItem.cantidad += 1;
+      } else {
+        carrito.push({ 
+          platoId: id, 
+          nombre: nombre, 
+          precio: precio, 
+          cantidad: 1,
+          observaciones: ''
+        });
+      }
+      
+      actualizarCarrito();
+      
+      // Mostrar notificación de éxito
+      mostrarNotificacion(`✅ ${nombre} agregado al carrito`, 'success');
+      
+      // Abrir el carrito automáticamente
+      if (!document.getElementById('cart-sidebar').classList.contains('open')) {
+        toggleCart();
+      }
+    }
+
+    // Función para eliminar plato del carrito
+    function eliminarDelCarrito(platoId) {
+      carrito = carrito.filter(item => item.platoId !== platoId);
+      actualizarCarrito();
+      mostrarNotificacion('❌ Plato eliminado del carrito', 'warning');
+    }
+
+    // Función para actualizar la cantidad de un plato en el carrito
+    function actualizarCantidad(platoId, nuevaCantidad) {
+      const item = carrito.find(item => item.platoId === platoId);
+      if (item) {
+        item.cantidad = nuevaCantidad;
+        if (item.cantidad <= 0) {
+          eliminarDelCarrito(platoId);
+        } else {
+          actualizarCarrito();
+        }
+      }
+    }
+
+    // Función para actualizar observaciones
+    function actualizarObservaciones(platoId, observaciones) {
+      const item = carrito.find(item => item.platoId === platoId);
+      if (item) {
+        item.observaciones = observaciones;
+      }
+    }
+
+    // Función para actualizar la visualización del carrito
+    function actualizarCarrito() {
+      const cartItems = document.getElementById('cart-items');
+      const cartTotal = document.getElementById('cart-total');
+      const cartCount = document.getElementById('cart-count');
+      const cartEmpty = document.getElementById('cart-empty');
+
+      // Limpiar el contenedor de ítems
+      cartItems.innerHTML = '';
+
+      // Mostrar mensaje si el carrito está vacío
+      if (carrito.length === 0) {
+        cartItems.innerHTML = `
+          <div class="cart-empty" id="cart-empty">
+            <i class="fas fa-shopping-cart"></i>
+            <p>El carrito está vacío</p>
+          </div>
+        `;
+        cartTotal.textContent = '0.00';
+        cartCount.textContent = '0';
+        return;
+      }
+
+      // Calcular total y actualizar ítems
+      let total = 0;
+      carrito.forEach(item => {
+        const subtotal = item.precio * item.cantidad;
+        total += subtotal;
+        
+        const itemElement = document.createElement('div');
+        itemElement.className = 'cart-item';
+        itemElement.innerHTML = `
+          <div class="cart-item-info">
+            <strong>${item.nombre}</strong>
+            <div class="item-subtotal">S/. ${item.precio.toFixed(2)} x ${item.cantidad} = S/. ${subtotal.toFixed(2)}</div>
+            <input type="text" 
+                   class="observaciones-input" 
+                   placeholder="Observaciones específicas (opcional)" 
+                   value="${item.observaciones}"
+                   onchange="actualizarObservaciones('${item.platoId}', this.value)">
+          </div>
+          <div class="cart-item-actions">
+            <button class="btn-quantity" onclick="actualizarCantidad('${item.platoId}', ${item.cantidad - 1})">
+              <i class="fas fa-minus"></i>
+            </button>
+            <span class="quantity">${item.cantidad}</span>
+            <button class="btn-quantity" onclick="actualizarCantidad('${item.platoId}', ${item.cantidad + 1})">
+              <i class="fas fa-plus"></i>
+            </button>
+            <button class="btn-delete" onclick="eliminarDelCarrito('${item.platoId}')">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        `;
+        cartItems.appendChild(itemElement);
+      });
+
+      cartTotal.textContent = total.toFixed(2);
+      cartCount.textContent = carrito.reduce((sum, item) => sum + item.cantidad, 0);
+    }
+
+    // Función para limpiar el carrito
+    function limpiarCarrito() {
+      if (carrito.length === 0) {
+        mostrarNotificacion('ℹ️ El carrito ya está vacío', 'info');
+        return;
+      }
+      
+      if (confirm('¿Estás seguro de que quieres limpiar el carrito?\nSe eliminarán todos los platos agregados.')) {
+        carrito = [];
+        actualizarCarrito();
+        mostrarNotificacion('🗑️ Carrito limpiado correctamente', 'info');
+      }
+    }
+
+    // Función para confirmar el pedido - MEJORADA
+    async function confirmarPedido() {
+      // Verificar que el mesero esté identificado
+      if (!'<%= usuario.id %>') {
+        alert('❌ No se pudo identificar al mesero. Por favor, inicie sesión nuevamente.');
+        return;
+      }
+
+      const mesaId = document.getElementById('mesa-select').value;
+      const observacionesGenerales = document.getElementById('observaciones-generales').value;
+
+      // Validaciones
+      if (!mesaId) {
+        mostrarNotificacion('❌ Por favor, selecciona una mesa', 'error');
+        return;
+      }
+      
+      if (carrito.length === 0) {
+        mostrarNotificacion('❌ El carrito está vacío', 'error');
+        return;
+      }
+
+      // Verificar que el usuario tenga ID
+      const usuarioId = '<%= usuario.id %>';
+      if (!usuarioId) {
+        mostrarNotificacion('❌ Error: No se pudo identificar al mesero', 'error');
+        return;
+      }
+
+      console.log('📦 Confirmando pedido...', {
+        mesaId,
+        usuarioId,
+        items: carrito.length,
+        observacionesGenerales
+      });
+
+      // Preparar los datos del pedido
+      const pedidoData = {
+        mesaId: mesaId,
+        platos: carrito.map(item => ({
+          platoId: item.platoId,
+          nombre: item.nombre,
+          precio: item.precio,
+          cantidad: item.cantidad,
+          observaciones: item.observaciones
+        })),
+        meseroId: usuarioId,
+        observacionesGenerales: observacionesGenerales
+      };
+
+      console.log('📤 Enviando pedido al servidor:', pedidoData);
+
+      try {
+        // Mostrar loading
+        const btnConfirm = document.querySelector('.btn-confirm');
+        const originalText = btnConfirm.innerHTML;
+        btnConfirm.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+        btnConfirm.disabled = true;
+
+        const response = await fetch('/api/pedidos', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(pedidoData)
+        });
+
+        const result = await response.json();
+        
+        // Restaurar botón
+        btnConfirm.innerHTML = originalText;
+        btnConfirm.disabled = false;
+
+        if (response.ok) {
+          console.log('✅ Pedido registrado exitosamente:', result);
+          mostrarNotificacion('✅ Pedido registrado con éxito', 'success');
+          
+          // Limpiar carrito y cerrar sidebar
+          carrito = [];
+          actualizarCarrito();
+          toggleCart();
+          
+          // Redirigir a la vista de pedidos después de 2 segundos
+          setTimeout(() => {
+            window.location.href = '/pedidos';
+          }, 2000);
+          
+        } else {
+          console.error('❌ Error del servidor:', result);
+          mostrarNotificacion('❌ Error: ' + (result.error || 'No se pudo registrar el pedido'), 'error');
+        }
+      } catch (error) {
+        console.error('❌ Error de conexión:', error);
+        mostrarNotificacion('❌ Error de conexión: ' + error.message, 'error');
+        
+        // Restaurar botón en caso de error
+        const btnConfirm = document.querySelector('.btn-confirm');
+        btnConfirm.innerHTML = '<i class="fas fa-check-circle"></i> Confirmar Pedido';
+        btnConfirm.disabled = false;
+      }
+    }
+
+    // Función para mostrar notificaciones
+    function mostrarNotificacion(mensaje, tipo = 'info') {
+      // Crear elemento de notificación
+      const notificacion = document.createElement('div');
+      notificacion.className = `notificacion notificacion-${tipo}`;
+      notificacion.innerHTML = `
+        <div class="notificacion-contenido">
+          <span>${mensaje}</span>
+          <button onclick="this.parentElement.parentElement.remove()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      `;
+      
+      // Agregar al documento
+      document.body.appendChild(notificacion);
+      
+      // Auto-eliminar después de 5 segundos
+      setTimeout(() => {
+        if (notificacion.parentElement) {
+          notificacion.remove();
+        }
+      }, 5000);
+    }
+
+    // Función para buscar platos (mejorada)
+    function buscarPlatos(termino) {
+      const platos = document.querySelectorAll('.food-card');
+      let encontrados = 0;
+      
+      platos.forEach(plato => {
+        const nombre = plato.querySelector('h4').textContent.toLowerCase();
+        const descripcion = plato.querySelector('p').textContent.toLowerCase();
+        const categoria = plato.getAttribute('data-categoria');
+        
+        if (nombre.includes(termino) || descripcion.includes(termino) || categoria.includes(termino)) {
+          plato.style.display = 'block';
+          encontrados++;
+        } else {
+          plato.style.display = 'none';
         }
       });
-    });
+      
+      return encontrados;
+    }
   </script>
-
 
 </body>
 </html>

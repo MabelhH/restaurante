@@ -1,3 +1,4 @@
+// controllers/platosController.js
 const PlatoService = require('../services/platosService');
 const platoService = new PlatoService();
 
@@ -89,6 +90,7 @@ class PlatoController {
             res.status(500).json({ message: 'Error al verificar stock', error });
         }
     }
+
     async cambiarEstado(req, res) {
         try {
             const actualizado = await platoService.toggleEstado(req.params.id);
@@ -99,6 +101,44 @@ class PlatoController {
         }
     }
 
+    // Nuevo método para verificar disponibilidad
+    async verificarDisponibilidad(req, res) {
+        try {
+            const { id } = req.params;
+            const { cantidad } = req.body;
+
+            const disponible = await platoService.verificarDisponibilidad(id, cantidad);
+            res.json({ disponible });
+        } catch (error) {
+            res.status(500).json({ message: 'Error al verificar disponibilidad', error });
+        }
+    }
+
+    // Nuevo método para reducir stock
+    async reducirStock(req, res) {
+        try {
+            const { id } = req.params;
+            const { cantidad } = req.body;
+
+            const plato = await platoService.reducirStock(id, cantidad);
+            res.json(plato);
+        } catch (error) {
+            res.status(500).json({ message: 'Error al reducir stock', error });
+        }
+    }
+
+    // Nuevo método para aumentar stock
+    async aumentarStock(req, res) {
+        try {
+            const { id } = req.params;
+            const { cantidad } = req.body;
+
+            const plato = await platoService.aumentarStock(id, cantidad);
+            res.json(plato);
+        } catch (error) {
+            res.status(500).json({ message: 'Error al aumentar stock', error });
+        }
+    }
 }
 
 module.exports = new PlatoController();

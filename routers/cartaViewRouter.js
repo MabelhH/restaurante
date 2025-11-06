@@ -5,7 +5,8 @@ const jwt = require('jsonwebtoken');
 const SECRET_KEY = 'tu_clave_secreta_aqui';
 
 const Plato = require('../models/platosModel');
-const Categoria = require('../models/categoriaModel'); // 👈 Asegúrate de tener este modelo creado
+const Categoria = require('../models/categoriaModel');
+const Mesa = require('../models/mesasModel');
 
 // Middleware para verificar el token
 function verifyToken(req, res, next) {
@@ -25,17 +26,30 @@ function verifyToken(req, res, next) {
 // Ruta /carta (según rol)
 router.get('/', verifyToken, async (req, res) => {
   try {
-    // ✅ Poblar el campo "categoria" para mostrar nombres en lugar de ObjectIds
+    // Poblar el campo "categoria" para mostrar nombres
     const platos = await Plato.find().populate('categoria', 'nombre');
 
-    // ✅ Obtener todas las categorías (solo el nombre)
+    // Obtener todas las categorías
     const categorias = await Categoria.find({}, 'nombre');
 
-    // ✅ Renderizado según el rol del usuario
+    // ✅ Obtener mesas disponibles para el carrito
+    const mesas = await Mesa.find({ estado: 'disponible' });
+
+    // Renderizado según el rol del usuario
     if (req.user.rol === 'admin') {
-      res.render('carta', { usuario: req.user, platos, categorias });
+      res.render('carta', { 
+        usuario: req.user, 
+        platos, 
+        categorias, 
+        mesas 
+      });
     } else if (req.user.rol === 'mesero') {
-      res.render('cartaM', { usuario: req.user, platos, categorias });
+      res.render('cartaM', { 
+        usuario: req.user, 
+        platos, 
+        categorias, 
+        mesas 
+      });
     } else {
       res.status(403).send('Acceso denegado');
     }

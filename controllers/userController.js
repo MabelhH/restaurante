@@ -119,9 +119,14 @@ exports.login = async (req, res) => {
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.render('login', { error: 'Contraseña incorrecta' });
 
-    // Crear token con datos del usuario y rol
+// En la función login, cambiamos la creación del token
     const token = jwt.sign(
-      { id: user._id, nombre: user.nombre, email: user.email, rol: user.rol },
+      { 
+        id: user._id.toString(), // Convertir a string
+        nombre: user.nombre, 
+        email: user.email, 
+        rol: user.rol 
+      },
       SECRET_KEY,
       { expiresIn: '1h' }
     );

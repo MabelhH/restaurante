@@ -26,9 +26,9 @@ app.use(session({
   cookie: { secure: false } // secure: true solo si usas HTTPS
 }));
 
-// ===== Archivos estáticos =====
-app.use(express.static(path.join(__dirname, 'public')));
+// Y esta configuración para archivos estáticos:
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // ===== Motor de plantillas EJS =====
 app.set('view engine', 'ejs');
@@ -59,39 +59,40 @@ const clienteRouter = require('./routers/clientesRouters');
 const platosRouter = require('./routers/platosRouters');
 const ventaRouter = require('./routers/ventasRouters');
 const userRouter = require('./routers/userRouters'); 
-const cartaViewRouter = require('./routers/cartaViewRouter');
 const mesasRouter = require('./routers/mesasRouter');
 const categoriaRoutes = require('./routers/categoriaRoutes');
-const pedidoRouter = require('./routers/pedidoRouter');
+const pedidosRouter = require('./routers/pedidosRouter'); // ✅ Corregido nombre
+const pagosRouter = require('./routers/pagosRouter');    // ✅ Agregado
 
-// CRUD API usuarios
-
-app.use('/api/clientes', clienteRouter);
-app.use('/api/platos', platosRouter);
-app.use('/api/ventas', ventaRouter);
-app.use('/api/users', userRouter); // API REST protegida con JWT
-app.use('/carta', cartaViewRouter);
-app.use('/api/categorias', categoriaRoutes);
-app.use('/api/mesas', mesasRouter); 
-app.use('/pedidos', pedidoRouter);
-
-// ===== Routers de vistas =====
+// ===== Routers de VISTAS =====
 const clienteViewRouter = require('./routers/clienteViewRouter');
 const platosViewRouter = require('./routers/platosViewRouter');
 const ventaViewRouter = require('./routers/ventaViewRouter');
 const userViewRouter = require('./routers/userViewRouter');
-const pagosRouter = require('./routers/pagosRouter');
 const mesasViewRouter = require('./routers/mesasViewRouter');
-// Login, Register, Dashboard
+const cartaViewRouter = require('./routers/cartaViewRouter');
+const pedidosViewRouter = require('./routers/pedidosViewRouter'); // ✅ Nuevo
+const pagosViewRouter = require('./routers/pagosViewRouter');    // ✅ Nuevo
 
+// ===== USAR ROUTERS API =====
+app.use('/api/clientes', clienteRouter);
+app.use('/api/platos', platosRouter);
+app.use('/api/ventas', ventaRouter);
+app.use('/api/users', userRouter);
+app.use('/api/mesas', mesasRouter); 
+app.use('/api/categorias', categoriaRoutes);
+app.use('/api/pedidos', pedidosRouter);  // ✅ API de pedidos
+app.use('/api/pagos', pagosRouter);      // ✅ API de pagos
+
+// ===== USAR ROUTERS DE VISTAS =====
 app.use('/clientes', clienteViewRouter);
 app.use('/platos', platosViewRouter);
 app.use('/ventas', ventaViewRouter);
 app.use('/mesas', mesasViewRouter);
-app.use('/api/categorias', categoriaRoutes);
-app.use('/pagos', pagosRouter); 
-app.use('/', userViewRouter); // rutas de usuario
-
+app.use('/carta', cartaViewRouter);
+app.use('/pedidos', pedidosViewRouter); // ✅ Vistas de pedidos
+app.use('/pagos', pagosViewRouter);     // ✅ Vistas de pagos
+app.use('/', userViewRouter); // rutas de usuario (login, register, dashboard)
 
 // ===== Rutas de vistas principales =====
 
@@ -110,6 +111,7 @@ app.get('/', async (req, res) => {
     res.redirect('/login');
   }
 });
+
 // Ruta protegida (solo con token válido)
 app.get('/dashboard', verifyToken, (req, res) => {
     res.render('dashboard', { usuario: req.user });
