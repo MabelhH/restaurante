@@ -82,6 +82,7 @@ const platosViewRoutercocinero = require('./routers/platosViewRoutercocinero');
 const ventaViewRouter = require('./routers/ventaViewRouter');
 const userViewRouter = require('./routers/userViewRouter');
 const pagosRouter = require('./routers/pagosRouter');
+const pedidoscviewrouter = require('./routers/pedidocViewRouter');
 const mesasViewRouter = require('./routers/mesasViewRouter');
 // Login, Register, Dashboard
 
@@ -92,6 +93,8 @@ app.use('/ventas', ventaViewRouter);
 app.use('/mesas', mesasViewRouter);
 app.use('/api/categorias', categoriaRoutes);
 app.use('/pagos', pagosRouter); 
+app.use('/pedidosc', pedidoscviewrouter);
+app.use('/platosc', platosViewRoutercocinero);
 app.use('/', userViewRouter); // rutas de usuario
 
 
