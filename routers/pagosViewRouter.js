@@ -42,7 +42,7 @@ router.get('/', verifyToken, async (req, res) => {
     if (req.user.rol === 'admin') {
       res.render('pagos', { usuario: userData, pedidos });
     } else if (req.user.rol === 'cajero') {
-      res.render('pagosCajero', { usuario: userData, pedidos });
+      res.render('pagos', { usuario: userData, pedidos });
     } else if (req.user.rol === 'mesero') {
       res.render('pagosM', { usuario: userData, pedidos });
     } else {

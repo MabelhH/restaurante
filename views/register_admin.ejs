@@ -10,6 +10,11 @@
 </head>
 
 <body>
+    <% if (success) { %>
+        <div id="successMessage" class="success-message">
+        <i class="fas fa-check-circle"></i> <%= success %>
+        </div>
+    <% } %>
     <div class="Register-container">
         <!-- Sidebar -->
         <aside class="sidebar">
@@ -224,6 +229,14 @@
                 alert('Error al cargar usuario para editar');
             }
         }
+        document.addEventListener('DOMContentLoaded', () => {
+            const successMessage = document.getElementById('successMessage');
+            if (successMessage) {
+            setTimeout(() => {
+                successMessage.style.display = 'none';
+            }, 3000);
+            }
+        });
     </script>
 
 </body>
