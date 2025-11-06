@@ -15,7 +15,7 @@ router.post('/register', userController.register);
 
 router.get('/register_admin', verifyToken, async (req, res) => {
   const users = await Usuario.find();
-  res.render('register_admin', { user: req.user, users, error: null });
+  res.render('register_admin', { user: req.user, users, error: null,success: null  });
 });
 
 router.post('/register_admin', verifyToken, async (req, res) => {
@@ -25,10 +25,15 @@ router.post('/register_admin', verifyToken, async (req, res) => {
     const nuevoUsuario = new Usuario({ nombre, apellido, email, password: hashedPassword, rol });
     await nuevoUsuario.save();
     const users = await Usuario.find();
-    res.render('register_admin', { user: req.user, users, error: null });
+    res.render('register_admin', { 
+      user: req.user, 
+      users, 
+      error: null, 
+      success: 'Usuario registrado correctamente' 
+    });
   } catch (error) {
     const users = await Usuario.find();
-    res.render('register_admin', { user: req.user, users, error: 'Error al registrar usuario' });
+    res.render('register_admin', { user: req.user, users, error: 'Error al registrar usuario' ,success: null});
   }
 });
 
