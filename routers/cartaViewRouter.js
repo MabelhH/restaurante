@@ -1,4 +1,3 @@
-// routers/cartaViewRouter.js
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
@@ -26,26 +25,44 @@ function verifyToken(req, res, next) {
 // Ruta /carta (según rol)
 router.get('/', verifyToken, async (req, res) => {
   try {
+    console.log('👤 Usuario accediendo a carta:', req.user);
+
     // Poblar el campo "categoria" para mostrar nombres
-    const platos = await Plato.find().populate('categoria', 'nombre');
+    const platos = await Plato.find({ estado: 'activo' })
+      .populate('categoria', 'nombre')
+      .sort({ nombre: 1 });
 
     // Obtener todas las categorías
-    const categorias = await Categoria.find({}, 'nombre');
+    const categorias = await Categoria.find({ estado: 'activo' }, 'nombre');
 
     // ✅ Obtener mesas disponibles para el carrito
-    const mesas = await Mesa.find({ estado: 'disponible' });
+    const mesas = await Mesa.find({ 
+      estado: { $in: ['disponible', 'liberada'] } 
+    }).sort({ numeroMesa: 1 });
+
+    console.log('📊 Datos cargados:', {
+      platos: platos.length,
+      categorias: categorias.length,
+      mesas: mesas.length
+    });
+
+    // CORREGIDO: Pasar el usuario con _id
+    const userData = {
+      ...req.user,
+      _id: req.user._id || req.user.id // Compatibilidad con ambos
+    };
 
     // Renderizado según el rol del usuario
     if (req.user.rol === 'admin') {
       res.render('carta', { 
-        usuario: req.user, 
+        usuario: userData, 
         platos, 
         categorias, 
         mesas 
       });
     } else if (req.user.rol === 'mesero') {
       res.render('cartaM', { 
-        usuario: req.user, 
+        usuario: userData, 
         platos, 
         categorias, 
         mesas 
@@ -54,7 +71,7 @@ router.get('/', verifyToken, async (req, res) => {
       res.status(403).send('Acceso denegado');
     }
   } catch (err) {
-    console.error('Error al cargar la carta:', err);
+    console.error('❌ Error al cargar la carta:', err);
     res.status(500).send('Error al cargar la carta');
   }
 });

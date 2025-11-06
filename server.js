@@ -55,7 +55,6 @@ function verifyToken(req, res, next) {
 }
 
 // ===== Routers API =====
-const clienteRouter = require('./routers/clientesRouters');
 const platosRouter = require('./routers/platosRouters');
 const ventaRouter = require('./routers/ventasRouters');
 const userRouter = require('./routers/userRouters'); 
@@ -65,7 +64,6 @@ const pedidosRouter = require('./routers/pedidosRouter'); // ✅ Corregido nombr
 const pagosRouter = require('./routers/pagosRouter');    // ✅ Agregado
 
 // ===== Routers de VISTAS =====
-const clienteViewRouter = require('./routers/clienteViewRouter');
 const platosViewRouter = require('./routers/platosViewRouter');
 const ventaViewRouter = require('./routers/ventaViewRouter');
 const userViewRouter = require('./routers/userViewRouter');
@@ -75,7 +73,7 @@ const pedidosViewRouter = require('./routers/pedidosViewRouter'); // ✅ Nuevo
 const pagosViewRouter = require('./routers/pagosViewRouter');    // ✅ Nuevo
 
 // ===== USAR ROUTERS API =====
-app.use('/api/clientes', clienteRouter);
+
 app.use('/api/platos', platosRouter);
 app.use('/api/ventas', ventaRouter);
 app.use('/api/users', userRouter);
@@ -85,7 +83,7 @@ app.use('/api/pedidos', pedidosRouter);  // ✅ API de pedidos
 app.use('/api/pagos', pagosRouter);      // ✅ API de pagos
 
 // ===== USAR ROUTERS DE VISTAS =====
-app.use('/clientes', clienteViewRouter);
+
 app.use('/platos', platosViewRouter);
 app.use('/ventas', ventaViewRouter);
 app.use('/mesas', mesasViewRouter);

@@ -1,4 +1,3 @@
-// routers/ventasViewRouter.js
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
@@ -44,9 +43,15 @@ router.get('/', verifyToken, async (req, res) => {
 
     const totalHoy = ventas.reduce((sum, venta) => sum + venta.total, 0);
 
+    // CORREGIDO: Pasar el usuario con _id
+    const userData = {
+      ...req.user,
+      _id: req.user._id || req.user.id // Compatibilidad con ambos
+    };
+
     if (req.user.rol === 'admin') {
       res.render('ventas', { 
-        usuario: req.user, 
+        usuario: userData, 
         ventas, 
         totalHoy,
         filtros: { fecha, metodoPago }
@@ -69,10 +74,14 @@ router.get('/estadisticas', verifyToken, async (req, res) => {
 
     const { fechaInicio, fechaFin } = req.query;
     
-    // Aquí puedes agregar la lógica para estadísticas
-    // Por ahora renderizamos la vista básica
+    // CORREGIDO: Pasar el usuario con _id
+    const userData = {
+      ...req.user,
+      _id: req.user._id || req.user.id // Compatibilidad con ambos
+    };
+
     res.render('estadisticasVentas', { 
-      usuario: req.user,
+      usuario: userData,
       fechaInicio: fechaInicio || '',
       fechaFin: fechaFin || ''
     });

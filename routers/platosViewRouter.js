@@ -1,4 +1,3 @@
-// routers/platosViewRouter.js
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
@@ -21,8 +20,14 @@ function verifyToken(req, res, next) {
 
 // Ruta principal de platos
 router.get('/', verifyToken, (req, res) => {
+  // CORREGIDO: Pasar el usuario con _id
+  const userData = {
+    ...req.user,
+    _id: req.user._id || req.user.id // Compatibilidad con ambos
+  };
+
   if (req.user.rol === 'admin') {
-    res.render('platos', { usuario: req.user });
+    res.render('platos', { usuario: userData });
   } else {
     res.status(403).send('Acceso denegado');
   }

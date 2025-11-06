@@ -119,10 +119,10 @@ exports.login = async (req, res) => {
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.render('login', { error: 'Contraseña incorrecta' });
 
-// En la función login, cambiamos la creación del token
+    // CORREGIDO: Crear token con _id en lugar de id
     const token = jwt.sign(
       { 
-        id: user._id.toString(), // Convertir a string
+        _id: user._id, // CAMBIO: Usar _id en lugar de id
         nombre: user.nombre, 
         email: user.email, 
         rol: user.rol 
@@ -139,8 +139,6 @@ exports.login = async (req, res) => {
         return res.redirect('/dashboard_mesero');
       case 'cajero':
         return res.redirect('/dashboard_cajero');
-      // case 'cocinero':
-      //   return res.redirect('/cocinero');
       default:
         return res.redirect('/login');
     }
@@ -149,7 +147,6 @@ exports.login = async (req, res) => {
     res.render('login', { error: err.message });
   }
 };
-
 // ==================== Middleware de autorización por rol ====================
 exports.onlyAdmin = (req, res, next) => {
   if (req.user.rol !== 'admin') {

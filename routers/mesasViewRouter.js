@@ -1,9 +1,7 @@
-// routers/mesasViewRouter.js
 const express = require('express');
 const router = express.Router();
-
 const jwt = require('jsonwebtoken');
-const SECRET_KEY = 'tu_clave_secreta_aqui'; // o usa process.env.SECRET_KEY
+const SECRET_KEY = 'tu_clave_secreta_aqui';
 
 function verifyToken(req, res, next) {
   const token = req.cookies.token;
@@ -23,10 +21,16 @@ function verifyToken(req, res, next) {
 
 // Ruta dinámica según rol
 router.get('/', verifyToken, (req, res) => {
+  // CORREGIDO: Pasar el usuario con _id
+  const userData = {
+    ...req.user,
+    _id: req.user._id || req.user.id // Compatibilidad con ambos
+  };
+
   if (req.user.rol === 'admin') {
-    res.render('mesas', { usuario: req.user });
+    res.render('mesas', { usuario: userData });
   } else if (req.user.rol === 'mesero') {
-    res.render('mesasM', { usuario: req.user });
+    res.render('mesasM', { usuario: userData });
   } else {
     res.status(403).send('Acceso denegado');
   }

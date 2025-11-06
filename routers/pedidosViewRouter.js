@@ -1,4 +1,3 @@
-// routers/pedidosViewRouter.js
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
@@ -35,10 +34,16 @@ router.get('/', verifyToken, async (req, res) => {
     const mesas = await Mesa.find({ estado: { $in: ['disponible', 'ocupada'] } });
     const platos = await Platos.find({ estado: 'activo', stock: { $gt: 0 } });
 
+    // CORREGIDO: Pasar el usuario con _id
+    const userData = {
+      ...req.user,
+      _id: req.user._id || req.user.id // Compatibilidad con ambos
+    };
+
     if (req.user.rol === 'admin') {
-      res.render('pedidos', { usuario: req.user, pedidos, mesas, platos });
+      res.render('pedidos', { usuario: userData, pedidos, mesas, platos });
     } else if (req.user.rol === 'mesero') {
-      res.render('pedidosM', { usuario: req.user, pedidos, mesas, platos });
+      res.render('pedidosM', { usuario: userData, pedidos, mesas, platos });
     } else {
       res.status(403).send('Acceso denegado');
     }
@@ -54,10 +59,16 @@ router.get('/nuevo', verifyToken, async (req, res) => {
     const mesas = await Mesa.find({ estado: 'disponible' });
     const platos = await Platos.find({ estado: 'activo', stock: { $gt: 0 } });
 
+    // CORREGIDO: Pasar el usuario con _id
+    const userData = {
+      ...req.user,
+      _id: req.user._id || req.user.id // Compatibilidad con ambos
+    };
+
     if (req.user.rol === 'admin') {
-      res.render('nuevoPedido', { usuario: req.user, mesas, platos });
+      res.render('nuevoPedido', { usuario: userData, mesas, platos });
     } else if (req.user.rol === 'mesero') {
-      res.render('nuevoPedidoM', { usuario: req.user, mesas, platos });
+      res.render('nuevoPedidoM', { usuario: userData, mesas, platos });
     } else {
       res.status(403).send('Acceso denegado');
     }
@@ -79,10 +90,16 @@ router.get('/:id', verifyToken, async (req, res) => {
       return res.status(404).send('Pedido no encontrado');
     }
 
+    // CORREGIDO: Pasar el usuario con _id
+    const userData = {
+      ...req.user,
+      _id: req.user._id || req.user.id // Compatibilidad con ambos
+    };
+
     if (req.user.rol === 'admin') {
-      res.render('detallePedido', { usuario: req.user, pedido });
+      res.render('detallePedido', { usuario: userData, pedido });
     } else if (req.user.rol === 'mesero') {
-      res.render('detallePedidoM', { usuario: req.user, pedido });
+      res.render('detallePedidoM', { usuario: userData, pedido });
     } else {
       res.status(403).send('Acceso denegado');
     }
