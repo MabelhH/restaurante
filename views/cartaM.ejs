@@ -67,36 +67,38 @@
 
       <!-- Lista de platos -->
       <section class="food-list">
-        <% platos.forEach(plato => { %>
-          <div class="food-card <%= plato.stock <= plato.stockMinimo ? 'stock-bajo' : '' %>"
-            data-categoria="<%= plato.categoria ? plato.categoria.nombre : '' %>">
+        <% const platosActivos = platos.filter(p => p.estado === 'activo'); %>
 
-            <!-- Alerta de stock bajo -->
-            <% if (plato.stock <= plato.stockMinimo) { %>
-              <div class="stock-alert">
-                <i class="fas fa-exclamation-triangle"></i>
-                <span>Stock bajo: <%= plato.stock %> unidades</span>
+        <% if (platosActivos.length === 0) { %>
+          <p class="no-data">No hay platos activos disponibles.</p>
+        <% } else { %>
+          <% platosActivos.forEach(plato => { %>
+            <div class="food-card <%= plato.stock <= plato.stockMinimo ? 'stock-bajo' : '' %>"
+                data-categoria="<%= plato.categoria.nombre %>">
+
+              <% if (plato.stock <= plato.stockMinimo) { %>
+                <div class="stock-alert">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  <span>Stock bajo: <%= plato.stock %> unidades</span>
+                </div>
+              <% } else { %>
+                <div class="stock-normal">
+                  <i class="fas fa-check-circle"></i>
+                  <span>Stock: <%= plato.stock %></span>
+                </div>
+              <% } %>
+
+              <img src="<%= plato.imagen %>" alt="<%= plato.nombre %>">
+              <h4><%= plato.nombre %></h4>
+              <p><%= plato.descripcion %></p>
+              <div class="price-row">
+                <span class="price">S/. <%= plato.precio %></span>
               </div>
-            <% } else { %>
-              <div class="stock-normal">
-                <i class="fas fa-check-circle"></i>
-                <span>Stock: <%= plato.stock %></span>
-              </div>
-            <% } %>
-
-            <img src="<%= plato.imagen %>" alt="<%= plato.nombre %>">
-            <h4><%= plato.nombre %></h4>
-            <p><%= plato.descripcion %></p>
-            <div class="price-row">
-              <span class="price">S/. <%= plato.precio %></span>
-              <button class="add-btn" data-id="<%= plato._id %>">
-                <i class="fas fa-plus"></i>
-              </button>
-
             </div>
-          </div>
-        <% }) %>
+          <% }) %>
+        <% } %>
       </section>
+
     </main>
   </div>
 
