@@ -121,7 +121,7 @@ exports.login = async (req, res) => {
 
     // Crear token con datos del usuario y rol
     const token = jwt.sign(
-      { id: user._id, nombre: user.nombre, email: user.email, rol: user.rol },
+      { id: user._id, nombre: user.nombre, rol: user.rol },
       SECRET_KEY,
       { expiresIn: '1h' }
     );

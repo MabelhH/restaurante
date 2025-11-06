@@ -35,7 +35,7 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 // ===== Clave secreta JWT =====
-const SECRET_KEY = 'tu_clave_secreta_aqui'; // ⚠️ pon esto en .env luego
+const SECRET_KEY = 'tu_clave_secreta_aqui'; 
 
 // ===== Middleware para verificar token =====
 function verifyToken(req, res, next) {
@@ -122,4 +122,4 @@ app.use((req, res) => {
 
 // ===== Servidor =====
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`✅ Servidor corriendo en http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`Servidor corriendo en http://localhost:${PORT}`));
