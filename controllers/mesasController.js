@@ -30,38 +30,49 @@ class MesasController {
 
   // 3️⃣ Crear una nueva mesa
   async crear(req, res) {
-    try {
-      const { numeroMesa, piso, sector, capacidad } = req.body;
+  try {
+    const { numeroMesa, piso, sector, capacidad } = req.body;
 
-      // CAMBIO: Validaciones mejoradas según modelo actualizado
-      if (!numeroMesa || !piso || !sector) {
-        return res.status(400).json({ error: 'Número de mesa, piso y sector son requeridos' });
-      }
-
-      // Verificar si el número de mesa ya existe
-      const mesaExistente = await Mesa.findOne({ numeroMesa });
-      if (mesaExistente) {
-        return res.status(400).json({ error: 'El número de mesa ya existe' });
-      }
-
-      const nuevaMesa = new Mesa({
-        numeroMesa,
-        piso,
-        sector,
-        capacidad: capacidad || 4,
-        estado: 'disponible'
+    // Validación unificada: número entero mayor a 0, piso y sector requeridos
+    if (
+      numeroMesa === undefined ||
+      typeof numeroMesa !== 'number' ||
+      !Number.isInteger(numeroMesa) ||
+      numeroMesa < 1 ||
+      !piso ||
+      !sector
+    ) {
+      return res.status(400).json({
+        error: 'Número de mesa debe ser un número entero mayor a 0, y piso y sector son requeridos'
       });
-
-      await nuevaMesa.save();
-      
-      res.status(201).json({
-        mensaje: 'Mesa creada con éxito',
-        mesa: nuevaMesa
-      });
-    } catch (error) {
-      res.status(400).json({ error: error.message });
     }
+
+    // Verificar si el número de mesa ya existe
+    const mesaExistente = await Mesa.findOne({ numeroMesa });
+    if (mesaExistente) {
+      return res.status(400).json({ error: 'El número de mesa ya existe' });
+    }
+
+    const nuevaMesa = new Mesa({
+      numeroMesa,
+      piso,
+      sector,
+      capacidad: capacidad || 4,
+      estado: 'disponible'
+    });
+
+    await nuevaMesa.save();
+
+    res.status(201).json({
+      mensaje: 'Mesa creada con éxito',
+      mesa: nuevaMesa
+    });
+
+  } catch (error) {
+    res.status(400).json({ error: error.message });
   }
+}
+
 
   // 4️⃣ Actualizar mesa
   async actualizar(req, res) {
