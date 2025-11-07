@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestión de Pedidos - Mesero</title>
+  <title>Gestión de Pedidos - Cocina</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="/styleVentas.css">
 </head>
+
 <body>
 
   <!-- Sidebar -->
@@ -17,26 +19,31 @@
     </h2>
 
     <nav>
-        <a href="/dashboard_cocinero" class="active"><i class="fas fa-home"></i> <span>Dashboard</span></a>
-        <a href="/platos"><i class="fas fa-bowl-food"></i> <span>Platos</span></a>
-        <a href="/carta"><i class="fas fa-book-open"></i> <span>Carta</span></a>
-        <a href="/pedidos"><i class="fas fa-receipt"></i> <span>Pedidos</span></a>
-        <a href="/logout"><i class="fas fa-sign-out-alt"></i> <span>Cerrar sesión</span></a>
+      <a href="/dashboard_cocinero" class="active"><i class="fas fa-home"></i> <span>Dashboard</span></a>
+      <a href="/platos"><i class="fas fa-bowl-food"></i> <span>Platos</span></a>
+      <a href="/carta"><i class="fas fa-book-open"></i> <span>Carta</span></a>
+      <a href="/pedidos"><i class="fas fa-receipt"></i> <span>Pedidos</span></a>
+      <a href="/logout"><i class="fas fa-sign-out-alt"></i> <span>Cerrar sesión</span></a>
     </nav>
   </aside>
 
   <!-- Main -->
   <main>
     <header class="main-header">
-      <h2>Gestión de Pedidos</h2>
+      <h2>Gestión de Pedidos - Cocina</h2>
       <div class="welcome">
-        <p>Bienvenido, <strong><%= usuario.nombre %></strong></p>
-        <p>Total de pedidos: <strong><%= pedidos.length %></strong></p>
+        <p>Bienvenido, <strong>
+            <%= usuario.nombre %>
+          </strong></p>
+        <p>Total de pedidos: <strong>
+            <%= pedidos.length %>
+          </strong></p>
       </div>
     </header>
+
     <section class="cards-section">
       <div class="search-container">
-        <h3><i class="fas fa-clipboard-list"></i> Mis Pedidos Registrados</h3>
+        <h3><i class="fas fa-clipboard-list"></i> Pedidos para Preparar</h3>
         <div class="search-box">
           <i class="fas fa-search"></i>
           <input type="text" id="searchInput" placeholder="Buscar por mesa...">
@@ -44,318 +51,434 @@
         <div class="filter-buttons">
           <button class="filter-btn active" data-filter="todos">Todos</button>
           <button class="filter-btn" data-filter="pendiente">Pendientes</button>
-          <button class="filter-btn" data-filter="preparacion">En preparación</button>
-          <button class="filter-btn" data-filter="entregado">Entregados</button>
+          <button class="filter-btn" data-filter="en preparacion">En preparación</button>
+          <button class="filter-btn" data-filter="listo">Listos</button>
         </div>
       </div>
-</div>
-
 
       <div class="cards-container" id="cardsContainer">
-        <% if (!pedidos || pedidos.length === 0) { %>
+        <% if (!pedidos || pedidos.length===0) { %>
           <div class="empty-state">
             <i class="fas fa-clipboard-check"></i>
-            <h3>No hay pedidos registrados</h3>
-            <p>Cuando realices pedidos desde la carta, aparecerán aquí.</p>
-            <a href="/carta" class="btn-primary">
-              <i class="fas fa-book-open"></i> Ir a la Carta
-            </a>
+            <h3>No hay pedidos para preparar</h3>
+            <p>Los pedidos pagados aparecerán aquí para su preparación.</p>
           </div>
-        <% } else { %>
-          <% pedidos.forEach(pedido => { %>
-            <div class="sale-card" data-estado="<%= pedido.estadoPedido %>">
-              <div class="sale-header">
-                <div class="client-avatar" style="background-color: #4CAF50;">
-                  <i class="fas fa-utensils"></i>
+          <% } else { %>
+            <% pedidos.forEach(pedido=> { %>
+              <div class="sale-card" data-estado="<%= pedido.estadoPedido %>">
+                <div class="sale-header">
+                  <div class="client-avatar" style="background-color: #4CAF50;">
+                    <i class="fas fa-utensils"></i>
+                  </div>
+                  <div class="sale-info">
+                    <div class="client-name">
+                      <% if (pedido.mesa && pedido.mesa.numeroMesa) { %>
+                        Mesa <%= pedido.mesa.numeroMesa %>
+                          <% } else { %>
+                            Mesa no asignada
+                            <% } %>
+                              <span class="badge <%= pedido.estadoPedido === 'pendiente' ? 'warning' : 
+                                          pedido.estadoPedido === 'en preparacion' ? 'info' : 
+                                          pedido.estadoPedido === 'listo' ? 'success' : 'secondary' %>">
+                                <%= pedido.estadoPedido %>
+                              </span>
+                    </div>
+                    <div class="sale-date">
+                      <i class="far fa-clock"></i>
+                      <%= new Date(pedido.fechaPedido).toLocaleString('es-ES') %>
+                    </div>
+                    <div class="sale-meta">
+                      <small>
+                        <i class="fas fa-user"></i> Mesero: <%= pedido.mesero && pedido.mesero.nombre ?
+                          pedido.mesero.nombre : 'No asignado' %>
+                      </small>
+                    </div>
+                  </div>
                 </div>
-                <div class="sale-info">
-                  <div class="client-name">
-                    <% if (pedido.mesa && pedido.mesa.numeroMesa) { %>
-                      Mesa <%= pedido.mesa.numeroMesa %>
-                    <% } else { %>
-                      Mesa no asignada
-                    <% } %>
-                    <span class="badge <%= pedido.estadoPedido === 'pendiente' ? 'warning' : 
-                                          pedido.estadoPedido === 'preparacion' ? 'info' : 
-                                          pedido.estadoPedido === 'entregado' ? 'success' : 'secondary' %>">
-                      <%= pedido.estadoPedido %>
-                    </span>
-                  </div>
-                  <div class="sale-date">
-                    <i class="far fa-clock"></i> 
-                    <%= new Date(pedido.fechaPedido).toLocaleString('es-ES') %>
-                  </div>
-                  <div class="sale-meta">
-                    <small>
-                      <i class="fas fa-user"></i> Mesero: <%= pedido.mesero && pedido.mesero.nombre ? pedido.mesero.nombre : 'Tú' %>
-                    </small>
-                  </div>
-                </div>
-              </div>
 
-              <div class="sale-products">
-                <h4>Platos del pedido:</h4>
-                <% pedido.platos.forEach(plato => { %>
-                  <div class="product-item">
-                    <div class="product-info">
-                      <span class="product-name">
-                        <strong><%= plato.nombre %></strong> 
-                        x <%= plato.cantidad %>
-                      </span>
-                      <% if (plato.observaciones) { %>
-                        <small class="observaciones">(<%= plato.observaciones %>)</small>
-                      <% } %>
-                    </div>
-                    <span class="product-price">
-                      S/ <%= (plato.precio * plato.cantidad).toFixed(2) %>
-                    </span>
-                    <div class="plato-estado">
-                      <span class="badge small <%= plato.estado === 'pendiente' ? 'warning' : 
-                                                plato.estado === 'preparacion' ? 'info' : 
-                                                plato.estado === 'listo' ? 'success' : 'secondary' %>">
-                        <%= plato.estado %>
-                      </span>
-                    </div>
+                <!-- Botón para cambiar estado general del pedido -->
+                <% if (pedido.estadoPedido==='pendiente' ) { %>
+                  <div class="pedido-actions">
+                    <button class="btn-pedido-preparacion" data-pedido-id="<%= pedido._id %>">
+                      <i class="fas fa-play"></i> Iniciar Preparación del Pedido
+                    </button>
                   </div>
-                <% }) %>
-                
-                <% if (pedido.observacionesGenerales) { %>
-                  <div class="observaciones-generales">
-                    <strong>Observaciones:</strong> <%= pedido.observacionesGenerales %>
-                  </div>
-                <% } %>
-                
-                <hr>
-                <div class="product-item total">
-                  <strong>Total del pedido:</strong>
-                  <span class="product-price">S/ <%= pedido.total.toFixed(2) %></span>
-                </div>
-                
-                <div class="pago-status">
-                  <strong>Estado de pago:</strong>
-                  <span class="badge <%= pedido.estadoPago === 'pagado' ? 'success' : 'warning' %>">
-                    <%= pedido.estadoPago %>
-                  </span>
-                </div>
+                  <% } %>
+
+                    <div class="sale-products">
+                      <h4>Platos del pedido:</h4>
+                      <% pedido.platos.forEach((plato, index)=> { %>
+                        <div class="product-item plato-item" data-plato-index="<%= index %>">
+                          <div class="product-info">
+                            <span class="product-name">
+                              <strong>
+                                <%= plato.nombre %>
+                              </strong>
+                              x <%= plato.cantidad %>
+                            </span>
+                            <% if (plato.observaciones) { %>
+                              <small class="observaciones">(<%= plato.observaciones %>)</small>
+                              <% } %>
+                          </div>
+                          <span class="product-price">
+                            S/ <%= (plato.precio * plato.cantidad).toFixed(2) %>
+                          </span>
+
+                          <!-- Estados individuales del plato -->
+                          <div class="plato-actions">
+                            <span class="badge small plato-estado-badge <%= 
+                        plato.estado === 'pendiente' ? 'warning' : 
+                        plato.estado === 'en preparacion' ? 'info' : 
+                        plato.estado === 'listo' ? 'success' : 
+                        plato.estado === 'entregado' ? 'primary' : 'secondary' 
+                      %>">
+                              <%= plato.estado %>
+                            </span>
+
+                            <div class="plato-buttons">
+                              <% if (plato.estado==='pendiente' ) { %>
+                                <button class="btn-plato btn-preparacion" data-pedido-id="<%= pedido._id %>"
+                                  data-plato-index="<%= index %>">
+                                  <i class="fas fa-utensils"></i> Preparar
+                                </button>
+                                <% } else if (plato.estado==='en preparacion' ) { %>
+                                  <button class="btn-plato btn-listo" data-pedido-id="<%= pedido._id %>"
+                                    data-plato-index="<%= index %>">
+                                    <i class="fas fa-check"></i> Listo
+                                  </button>
+                                  <% } else if (plato.estado==='listo' ) { %>
+                                    <button class="btn-plato btn-entregado" data-pedido-id="<%= pedido._id %>"
+                                      data-plato-index="<%= index %>">
+                                      <i class="fas fa-check-circle"></i> Entregado
+                                    </button>
+                                    <% } else if (plato.estado==='entregado' ) { %>
+                                      <span class="plato-completado">
+                                        <i class="fas fa-check-double"></i> Completado
+                                      </span>
+                                      <% } %>
+                            </div>
+                          </div>
+                        </div>
+                        <% }) %>
+
+                          <% if (pedido.observacionesGenerales) { %>
+                            <div class="observaciones-generales">
+                              <strong>Observaciones:</strong>
+                              <%= pedido.observacionesGenerales %>
+                            </div>
+                            <% } %>
+
+                              <hr>
+                              <div class="product-item total">
+                                <strong>Total del pedido:</strong>
+                                <span class="product-price">S/ <%= pedido.total.toFixed(2) %></span>
+                              </div>
+
+                              <div class="pago-status">
+                                <strong>Estado de pago:</strong>
+                                <span class="badge <%= pedido.estadoPago === 'pagado' ? 'success' : 'warning' %>">
+                                  <%= pedido.estadoPago %>
+                                </span>
+                              </div>
+                    </div>
+
+                    <!-- Feedback para el pedido -->
+                    <div class="estado-feedback" id="feedback-<%= pedido._id %>"></div>
               </div>
-                <% if (pedido.estadoPedido === 'pendiente' || pedido.estadoPedido === 'preparacion') { %>
-                <div class="card-actions">
-                  <% if (pedido.estadoPedido === 'pendiente') { %>
-                    <button class="btn-card preparacion" data-pedido-id="<%= pedido._id %>" data-nuevo-estado="preparacion">
-                      <i class="fas fa-utensils"></i> Enviar a Cocina
-                    </button>
-                  <% } %>
-                  
-                  <% if (pedido.estadoPedido === 'preparacion') { %>
-                    <button class="btn-card entregado" data-pedido-id="<%= pedido._id %>" data-nuevo-estado="entregado">
-                      <i class="fas fa-check"></i> Marcar Entregado
-                    </button>
-                  <% } %>
-                </div>
-                
-                <div class="estado-feedback" id="feedback-<%= pedido._id %>"></div>
-                
-              <% } else if (pedido.estadoPedido === 'entregado') { %>
-                <div class="estado-mensaje entregado">
-                  <i class="fas fa-check-circle"></i> Pedido entregado - Esperando pago
-                </div>
-              <% } else if (pedido.estadoPedido === 'pagado') { %>
-                <div class="estado-mensaje pagado">
-                  <i class="fas fa-receipt"></i> Pedido completado y pagado 
-                  </div>
-              <% } %>
-              
-            </div>
-          <% }) %>
-        <% } %>
+              <% }) %>
+                <% } %>
       </div>
     </section>
   </main>
 
   <script>
-  const searchInput = document.getElementById('searchInput');
-  const cardsContainer = document.getElementById('cardsContainer');
-  const filterButtons = document.querySelectorAll('.filter-btn');
+    // Funciones de búsqueda y filtrado
+    const searchInput = document.getElementById('searchInput');
+    const cardsContainer = document.getElementById('cardsContainer');
+    const filterButtons = document.querySelectorAll('.filter-btn');
 
-  searchInput.addEventListener('input', () => {
-    const query = searchInput.value.toLowerCase();
-    document.querySelectorAll('.sale-card').forEach(card => {
-      const mesa = card.querySelector('.client-name').textContent.toLowerCase();
-      card.style.display = mesa.includes(query) ? 'block' : 'none';
-    });
-  });
-
-  filterButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      filterButtons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const filter = btn.dataset.filter;
+    searchInput.addEventListener('input', () => {
+      const query = searchInput.value.toLowerCase();
       document.querySelectorAll('.sale-card').forEach(card => {
-        card.style.display = (filter === 'todos' || card.dataset.estado === filter) ? 'block' : 'none';
+        const mesa = card.querySelector('.client-name').textContent.toLowerCase();
+        card.style.display = mesa.includes(query) ? 'block' : 'none';
       });
     });
-  });
 
-  // Función para cambiar el estado del pedido
-  document.addEventListener('click', async (e) => {
-  if (e.target.classList.contains('btn-card')) {
-    const button = e.target;
-    const pedidoId = button.dataset.pedidoId;
-    const nuevoEstado = button.dataset.nuevoEstado;
-    const feedback = document.getElementById(`feedback-${pedidoId}`);
-    
-    // Deshabilitar botón
-    button.disabled = true;
-    const originalText = button.innerHTML;
-    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Actualizando...';
-
-    try {
-      const response = await fetch(`/api/pedidos/${pedidoId}/estado`, {
-        method: 'PUT',              // PUT, no POST
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ estado: nuevoEstado }) // enviar JSON
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const filter = btn.dataset.filter;
+        document.querySelectorAll('.sale-card').forEach(card => {
+          card.style.display = (filter === 'todos' || card.dataset.estado === filter) ? 'block' : 'none';
+        });
       });
+    });
 
+    // Función para cambiar estado del pedido completo
+    document.addEventListener('click', async (e) => {
+      if (e.target.classList.contains('btn-pedido-preparacion')) {
+        const button = e.target;
+        const pedidoId = button.dataset.pedidoId;
+        const feedback = document.getElementById(`feedback-${pedidoId}`);
 
+        button.disabled = true;
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Actualizando...';
 
-      // aquí actualmente haces window.location.reload()
-    } catch (error) {
-      console.error(error);
-      feedback.className = 'estado-feedback error';
-      feedback.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Error: ${error.message}`;
-      button.disabled = false;
-      button.innerHTML = originalText;
-    }
-  }
-});
+        try {
+          const response = await fetch(`/api/pedidos/${pedidoId}/estado`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ estado: 'en preparacion' })
+          });
 
+          const data = await response.json();
 
-  // Función para crear cajas de pedido
-  function crearCajaPedido(pedido) {
-    const div = document.createElement('div');
-    div.className = 'caja';
-    div.innerHTML = `
-      <strong>Mesa:</strong> ${pedido.mesa ? pedido.mesa.numeroMesa : 'No asignada'}<br>
-      <strong>ID:</strong> ${pedido._id}<br>
-      <strong>Total:</strong> S/ ${pedido.total.toFixed(2)}<br>
-      <strong>Estado Pedido:</strong> ${pedido.estadoPedido}<br>
-      <strong>Estado Pago:</strong> ${pedido.estadoPago}
-    `;
-    return div;
-  }
+          if (data.success) {
+            feedback.className = 'estado-feedback success';
+            feedback.innerHTML = '<i class="fas fa-check-circle"></i> Pedido enviado a preparación';
+            setTimeout(() => {
+              window.location.reload();
+            }, 1500);
+          } else {
+            throw new Error(data.error || 'Error al actualizar estado');
+          }
+        } catch (error) {
+          console.error(error);
+          feedback.className = 'estado-feedback error';
+          feedback.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Error: ${error.message}`;
+          button.disabled = false;
+          button.innerHTML = originalText;
+        }
+      }
+    });
 
-  async function cargarPedidosPagados() {
-    try {
-      const response = await fetch('/api/pedidos/pagados');
-      const data = await response.json();
-      const container = document.getElementById('diagramaContainer');
-      container.innerHTML = '';
-      data.pedidos.forEach(pedido => {
-        const caja = crearCajaPedido(pedido);
-        container.appendChild(caja);
-      });
-    } catch (error) {
-      console.error('Error cargando pedidos pagados:', error);
-    }
-  }
+    // Función para cambiar estado individual del plato
+    document.addEventListener('click', async (e) => {
+      if (e.target.classList.contains('btn-plato')) {
+        const button = e.target;
+        const pedidoId = button.dataset.pedidoId;
+        const platoIndex = button.dataset.platoIndex;
+        const action = button.classList[1]; // btn-preparacion, btn-listo, btn-entregado
+        const feedback = document.getElementById(`feedback-${pedidoId}`);
 
-  // Cargar al iniciar
-  cargarPedidosPagados();
-</script>
+        let nuevoEstado = '';
+        if (action === 'btn-preparacion') nuevoEstado = 'en preparacion';
+        else if (action === 'btn-listo') nuevoEstado = 'listo';
+        else if (action === 'btn-entregado') nuevoEstado = 'entregado';
+
+        button.disabled = true;
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+        try {
+          const response = await fetch(`/api/pedidos/${pedidoId}/platos/${platoIndex}/estado`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ estado: nuevoEstado })
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            feedback.className = 'estado-feedback success';
+            feedback.innerHTML = `<i class="fas fa-check-circle"></i> Plato actualizado a: ${nuevoEstado}`;
+
+            // Verificar si todos los platos están listos para actualizar estado del pedido
+            const todosListos = data.pedido.platos.every(plato =>
+              plato.estado === 'listo' || plato.estado === 'entregado'
+            );
+
+            const todosEntregados = data.pedido.platos.every(plato =>
+              plato.estado === 'entregado'
+            );
+
+            if (todosListos && data.pedido.estadoPedido !== 'listo') {
+              // Actualizar estado del pedido a "listo"
+              await fetch(`/api/pedidos/${pedidoId}/estado`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ estado: 'listo' })
+              });
+            }
+
+            if (todosEntregados && data.pedido.estadoPedido !== 'entregado') {
+              // Actualizar estado del pedido a "entregado"
+              await fetch(`/api/pedidos/${pedidoId}/estado`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ estado: 'entregado' })
+              });
+            }
+
+            setTimeout(() => {
+              window.location.reload();
+            }, 1500);
+          } else {
+            throw new Error(data.error || 'Error al actualizar estado del plato');
+          }
+        } catch (error) {
+          console.error(error);
+          feedback.className = 'estado-feedback error';
+          feedback.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Error: ${error.message}`;
+          button.disabled = false;
+          button.innerHTML = originalText;
+        }
+      }
+    });
+  </script>
 
   <style>
-    .diagrama-pedidos { margin: 20px 0; }
-    #diagramaContainer { display: flex; flex-wrap: wrap; gap: 10px; }
-    .caja { 
-      background: #fff; padding: 10px 15px; border-radius: 8px; 
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2); width: 180px; font-size: 14px;
+    .pedido-actions {
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 6px;
+      margin: 10px 0;
+      text-align: center;
     }
-    .card-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 15px;
-      padding-top: 15px;
-      border-top: 1px solid #e9ecef;
-    }
-    
-    .btn-card {
-      flex: 1;
-      padding: 10px 12px;
+
+    .btn-pedido-preparacion {
+      background: #17a2b8;
+      color: white;
       border: none;
+      padding: 10px 15px;
       border-radius: 6px;
       cursor: pointer;
-      font-size: 0.85em;
+      font-size: 0.9em;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .btn-pedido-preparacion:hover:not(:disabled) {
+      background: #138496;
+      transform: translateY(-2px);
+    }
+
+    .plato-item {
+      border: 1px solid #e9ecef;
+      border-radius: 6px;
+      padding: 10px;
+      margin-bottom: 8px;
+      background: #f8f9fa;
+    }
+
+    .plato-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #dee2e6;
+    }
+
+    .plato-buttons {
+      display: flex;
+      gap: 5px;
+    }
+
+    .btn-plato {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8em;
       transition: all 0.3s ease;
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 5px;
-      text-align: center;
+      gap: 3px;
     }
-    
-    .btn-card.preparacion {
+
+    .btn-preparacion {
       background: #17a2b8;
       color: white;
     }
-    
-    .btn-card.entregado {
+
+    .btn-listo {
       background: #28a745;
       color: white;
     }
-    
-    .btn-card:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+
+    .btn-entregado {
+      background: #007bff;
+      color: white;
     }
-    
-    .btn-card:disabled {
+
+    .btn-plato:hover:not(:disabled) {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .btn-plato:disabled {
       background: #6c757d;
       cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
     }
-    
-    .estado-mensaje {
-      text-align: center;
-      padding: 8px;
-      margin-top: 10px;
-      border-radius: 6px;
-      font-size: 0.85em;
-    }
-    
-    .estado-mensaje.entregado {
-      background: #d4edda;
-      color: #155724;
-      border: 1px solid #c3e6cb;
-    }
-    
-    .estado-mensaje.pagado {
-      background: #e2e3e5;
-      color: #383d41;
-      border: 1px solid #d6d8db;
-    }
-    
-    .estado-feedback {
-      margin-top: 8px;
+
+    .plato-completado {
+      color: #28a745;
       font-size: 0.8em;
-      padding: 5px;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .plato-estado-badge {
+      font-size: 0.75em;
+      padding: 4px 8px;
+    }
+
+    .estado-feedback {
+      margin-top: 10px;
+      padding: 8px;
       border-radius: 4px;
       text-align: center;
+      font-size: 0.85em;
       display: none;
     }
-    
+
     .estado-feedback.success {
       background: #d4edda;
       color: #155724;
-      display: block;
-    }
-     .estado-feedback.error {
-      background: #f8d7da;
-      color: #721c24;
+      border: 1px solid #c3e6cb;
       display: block;
     }
 
+    .estado-feedback.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+      display: block;
+    }
+
+    .badge.warning {
+      background: #ffc107;
+      color: #212529;
+    }
+
+    .badge.info {
+      background: #17a2b8;
+      color: white;
+    }
+
+    .badge.success {
+      background: #28a745;
+      color: white;
+    }
+
+    .badge.primary {
+      background: #007bff;
+      color: white;
+    }
+
+    .badge.secondary {
+      background: #6c757d;
+      color: white;
+    }
   </style>
 
 </body>
+
 </html>

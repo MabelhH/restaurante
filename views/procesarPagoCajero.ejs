@@ -324,7 +324,7 @@
         if (response.ok) {
           // Mostrar mensaje de éxito y redirigir
           alert('✅ Pago registrado exitosamente');
-          window.location.href = '/dashboard_cajero';
+          window.location.href = '/pagos';
         } else {
           throw new Error(result.error || 'Error al procesar el pago');
         }
