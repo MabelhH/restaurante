@@ -80,6 +80,14 @@ router.get('/', verifyToken, async (req, res) => {
         platos,
         pedidoActual: null
       });
+    }else if (req.user.rol === 'cocinero') {
+      res.render('pedidosc', { 
+        usuario: userData, 
+        pedidos, 
+        mesas, 
+        platos,
+        pedidoActual: null
+      });
     } else {
       res.status(403).send('Acceso denegado');
     }

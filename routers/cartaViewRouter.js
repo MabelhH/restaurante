@@ -28,7 +28,7 @@ router.get('/', verifyToken, async (req, res) => {
     console.log('👤 Usuario accediendo a carta:', req.user);
 
     // Poblar el campo "categoria" para mostrar nombres
-    const platos = await Plato.find({ estado: 'activo' })
+    const platos = await Plato.find({ estado: 'activo', disponible: true })
       .populate('categoria', 'nombre')
       .sort({ nombre: 1 });
 
@@ -49,7 +49,7 @@ router.get('/', verifyToken, async (req, res) => {
     // CORREGIDO: Pasar el usuario con _id
     const userData = {
       ...req.user,
-      _id: req.user._id || req.user.id // Compatibilidad con ambos
+      _id: req.user._id || req.user.id, // Compatibilidad con ambos
     };
 
     // Renderizado según el rol del usuario
@@ -67,6 +67,13 @@ router.get('/', verifyToken, async (req, res) => {
         categorias, 
         mesas 
       });
+    }else if (req.user.rol === 'cocinero') {
+      res.render('cartac', { 
+        usuario: userData, 
+        platos, 
+        categorias, 
+        mesas 
+      });
     } else {
       res.status(403).send('Acceso denegado');
     }
@@ -79,58 +86,43 @@ router.get('/', verifyToken, async (req, res) => {
 router.get('/', verifyToken, async (req, res) => {
   try {
     const { mesa, pedidoExistente } = req.query;
-    
-    const platos = await Platos.find({ estado: 'activo', disponible: true })
+
+    // Traer los platos
+    const platos = await Plato.find({ estado: 'activo', disponible: true })
       .populate('categoria', 'nombre')
       .sort({ nombre: 1 });
-      
-    const categorias = await Categoria.find({ estado: 'activo' });
-    const mesas = await Mesa.find({ estado: { $in: ['disponible', 'liberada', 'ocupada'] } });
 
+    // Traer categorías y mesas
+    const categorias = await Categoria.find({ estado: 'activo' }, 'nombre');
+    const mesas = await Mesa.find({ estado: { $in: ['disponible', 'liberada', 'ocupada'] } })
+      .sort({ numeroMesa: 1 });
+
+    // Datos del usuario
     const userData = {
-      _id: req.user._id,
+      _id: req.user._id || req.user.id,
       nombre: req.user.nombre,
       email: req.user.email,
       rol: req.user.rol
     };
 
-    // Si hay una mesa específica, buscarla para mostrar información
+    // Mesa pre-seleccionada
     let mesaSeleccionada = null;
     if (mesa) {
       mesaSeleccionada = await Mesa.findById(mesa);
     }
 
-    console.log('📖 Cargando carta:', {
-      usuario: userData.nombre,
-      mesaSeleccionada: mesaSeleccionada?.numeroMesa,
-      pedidoExistente: !!pedidoExistente
-    });
+    // Render según rol
+    const renderData = { usuario: userData, platos, categorias, mesas, mesaSeleccionada, esPedidoExistente: !!pedidoExistente };
 
-    if (req.user.rol === 'admin') {
-      res.render('carta', { 
-        usuario: userData, 
-        platos, 
-        categorias, 
-        mesas,
-        mesaSeleccionada,
-        esPedidoExistente: !!pedidoExistente
-      });
-    } else if (req.user.rol === 'mesero') {
-      res.render('cartaM', { 
-        usuario: userData, 
-        platos, 
-        categorias, 
-        mesas,
-        mesaSeleccionada,
-        esPedidoExistente: !!pedidoExistente
-      });
-    }
-  } catch (error) {
-    console.error('❌ Error al cargar carta:', error);
-    res.status(500).render('error', { 
-      mensaje: 'Error al cargar la carta',
-      usuario: req.user 
-    });
+    if (req.user.rol === 'admin') res.render('carta', renderData);
+    else if (req.user.rol === 'mesero') res.render('cartaM', renderData);
+    else if (req.user.rol === 'cocinero') res.render('cartac', renderData);
+    else res.status(403).send('Acceso denegado');
+
+  } catch (err) {
+    console.error('❌ Error al cargar la carta:', err);
+    res.status(500).send('Error al cargar la carta');
   }
 });
+
 module.exports = router;

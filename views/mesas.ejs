@@ -82,7 +82,8 @@ let editarId = null;
 // Cargar mesas
 async function cargarMesas() {
   const res = await fetch('/api/mesas');
-  const mesas = await res.json();
+  const data = await res.json();
+  const mesas = data.mesas;
   container.innerHTML = '';
 
   if (mesas.length === 0) {

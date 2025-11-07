@@ -4,7 +4,7 @@ const userController = require('../controllers/userController');
 
 // Dashboard protegido
 router.get('/dashboard', userController.verifyToken, userController.dashboard);
-//
+router.get('/dashboard_cocinero', userController.verifyToken, userController.dashboard);
 router.get('/dashboard_mesero', userController.verifyToken, userController.dashboard);
 // CRUD (solo admin)
 router.get('/', userController.verifyToken, userController.onlyAdmin, userController.getAllUsers);

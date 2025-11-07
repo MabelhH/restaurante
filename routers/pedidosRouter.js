@@ -553,6 +553,46 @@ router.get('/', verifyToken, async (req, res) => {
   }
 });
 
+// ✅ NUEVA RUTA: Obtener pedidos pagados
+router.get('/pagados', verifyToken, async (req, res) => {
+  try {
+    const { fecha } = req.query;
+    const filtro = { activo: true, estadoPago: 'pagado' };
+
+    // Filtrar por fecha actual si no se especifica fecha
+    if (!fecha) {
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      const manana = new Date(hoy);
+      manana.setDate(manana.getDate() + 1);
+
+      filtro.fechaPedido = { $gte: hoy, $lt: manana };
+    } else {
+      const fechaFiltro = new Date(fecha);
+      fechaFiltro.setHours(0, 0, 0, 0);
+      const fechaSiguiente = new Date(fechaFiltro);
+      fechaSiguiente.setDate(fechaSiguiente.getDate() + 1);
+      filtro.fechaPedido = { $gte: fechaFiltro, $lt: fechaSiguiente };
+    }
+
+    const pedidosPagados = await Pedido.find(filtro)
+      .populate('mesa', 'numeroMesa piso sector')
+      .populate('mesero', 'nombre email')
+      .populate('platos.plato', 'nombre precio imagen')
+      .sort({ fechaPedido: -1 });
+
+    res.json({
+      success: true,
+      pedidos: pedidosPagados
+    });
+
+  } catch (error) {
+    console.error('Error al obtener pedidos pagados:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+
 // Obtener pedido por ID
 router.get('/:id', verifyToken, async (req, res) => {
   try {
@@ -602,5 +642,7 @@ router.get('/hoy/pedidos', verifyToken, async (req, res) => {
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
+
+
 
 module.exports = router;

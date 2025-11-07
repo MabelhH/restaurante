@@ -86,7 +86,8 @@ const container = document.getElementById('mesasContainer');
 async function cargarMesas() {
   try {
     const res = await fetch('/api/mesas');
-    const mesas = await res.json();
+    const data = await res.json();
+    const mesas = data.mesas;
     container.innerHTML = '';
 
     if (!mesas.length) {

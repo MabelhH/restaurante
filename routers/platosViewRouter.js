@@ -28,6 +28,8 @@ router.get('/', verifyToken, (req, res) => {
 
   if (req.user.rol === 'admin') {
     res.render('platos', { usuario: userData });
+  }else if (req.user.rol === 'cocinero') {
+    res.render('platosc', { usuario: userData });
   } else {
     res.status(403).send('Acceso denegado');
   }
