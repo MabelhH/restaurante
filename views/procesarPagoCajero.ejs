@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Procesar Pago - Cajero</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      padding: 30px;
+      width: 90%;
+      max-width: 500px;
+    }
+
+    h1 {
+      color: #2c3e50;
+      text-align: center;
+      margin-bottom: 30px;
+      border-bottom: 2px solid #f8f9fa;
+      padding-bottom: 15px;
+    }
+
+    .pedido-info {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 25px;
+    }
+
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid #dee2e6;
+    }
+
+    .info-item:last-child {
+      border-bottom: none;
+    }
+
+    .info-label {
+      font-weight: 600;
+      color: #495057;
+    }
+
+    .info-value {
+      font-weight: 700;
+      color: #2c3e50;
+    }
+
+    .total {
+      font-size: 1.3em;
+      color: #28a745 !important;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #495057;
+    }
+
+    select, input {
+      width: 100%;
+      padding: 12px 15px;
+      border: 2px solid #e9ecef;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.3s ease;
+      box-sizing: border-box;
+    }
+
+    select:focus, input:focus {
+      outline: none;
+      border-color: #007bff;
+      box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 15px;
+      margin-top: 30px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 15px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: #007bff;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #0056b3;
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: #545b62;
+      transform: translateY(-2px);
+    }
+
+    .platos-list {
+      max-height: 200px;
+      overflow-y: auto;
+      margin: 15px 0;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    .plato-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px;
+      border-bottom: 1px solid #f8f9fa;
+    }
+
+    .plato-item:last-child {
+      border-bottom: none;
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 10px;
+    }
+
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #007bff;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 10px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1><i class="fas fa-credit-card"></i> Procesar Pago</h1>
+    
+    <!-- Información del Pedido -->
+    <div class="pedido-info">
+      <div class="info-item">
+        <span class="info-label">Número de Pedido:</span>
+        <span class="info-value">#<%= pedido.numeroPedido || pedido._id.toString().slice(-4) %></span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Mesa:</span>
+        <span class="info-value">Mesa <%= pedido.mesa.numeroMesa %></span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Mesero:</span>
+        <span class="info-value"><%= pedido.mesero.nombre %></span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Fecha:</span>
+        <span class="info-value"><%= new Date(pedido.fechaPedido).toLocaleString('es-ES') %></span>
+      </div>
+      
+      <!-- Lista de Platos -->
+      <div style="margin-top: 15px;">
+        <strong>Platos del pedido:</strong>
+        <div class="platos-list">
+          <% pedido.platos.forEach(plato => { %>
+            <div class="plato-item">
+              <span><%= plato.nombre %> x<%= plato.cantidad %></span>
+              <span>S/ <%= (plato.precio * plato.cantidad).toFixed(2) %></span>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+      
+      <div class="info-item" style="margin-top: 15px;">
+        <span class="info-label">Total a Pagar:</span>
+        <span class="info-value total">S/ <%= pedido.total.toFixed(2) %></span>
+      </div>
+    </div>
+
+    <!-- Formulario de Pago -->
+    <form id="formPago">
+      <!-- Campo oculto para pasar el total al JavaScript -->
+      <input type="hidden" id="totalPedido" value="<%= pedido.total %>">
+      
+      <div class="form-group">
+        <label for="metodoPago"><i class="fas fa-wallet"></i> Método de Pago</label>
+        <select name="metodoPago" id="metodoPago" required>
+          <option value="">Seleccione método de pago</option>
+          <option value="efectivo">Efectivo</option>
+          <option value="tarjeta">Tarjeta Débito/Crédito</option>
+          <option value="yape">Yape</option>
+          <option value="plin">Plin</option>
+          <option value="transferencia">Transferencia</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="montoPagado"><i class="fas fa-money-bill-wave"></i> Monto Pagado</label>
+        <input type="number" step="0.01" name="montoPagado" id="montoPagado" 
+               value="<%= pedido.total %>" min="<%= pedido.total %>" required>
+      </div>
+
+      <div class="form-group">
+        <label for="observaciones"><i class="fas fa-sticky-note"></i> Observaciones (Opcional)</label>
+        <input type="text" name="observaciones" id="observaciones" 
+               placeholder="Observaciones del pago...">
+      </div>
+
+      <!-- Loading indicator -->
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Procesando pago...</p>
+      </div>
+
+      <div class="btn-group">
+        <button type="submit" class="btn btn-primary" id="submitBtn">
+          <i class="fas fa-check-circle"></i> Confirmar Pago
+        </button>
+        <a href="/dashboard_cajero" class="btn btn-secondary">
+          <i class="fas fa-times-circle"></i> Cancelar
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    // Obtener el total del campo oculto
+    const total = parseFloat(document.getElementById('totalPedido').value);
+    const form = document.getElementById('formPago');
+    const loading = document.getElementById('loading');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    // Validación del monto en tiempo real
+    document.getElementById('montoPagado').addEventListener('input', function(e) {
+      const monto = parseFloat(e.target.value) || 0;
+      
+      if (monto < total) {
+        this.setCustomValidity(`El monto debe ser al menos S/ ${total.toFixed(2)}`);
+      } else {
+        this.setCustomValidity('');
+      }
+    });
+
+    // Manejar el envío del formulario con AJAX
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const monto = parseFloat(document.getElementById('montoPagado').value) || 0;
+      
+      // Validación final
+      if (monto < total) {
+        alert(`El monto pagado (S/ ${monto.toFixed(2)}) es menor al total (S/ ${total.toFixed(2)})`);
+        return;
+      }
+
+      // Mostrar loading
+      loading.style.display = 'block';
+      submitBtn.disabled = true;
+
+      try {
+        // Preparar datos del formulario
+        const formData = {
+          metodoPago: document.getElementById('metodoPago').value,
+          montoPagado: monto,
+          observaciones: document.getElementById('observaciones').value
+        };
+
+        // Enviar petición AJAX
+        const response = await fetch('/api/pagos/pagar/<%= pedido._id %>', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          // Mostrar mensaje de éxito y redirigir
+          alert('✅ Pago registrado exitosamente');
+          window.location.href = '/dashboard_cajero';
+        } else {
+          throw new Error(result.error || 'Error al procesar el pago');
+        }
+
+      } catch (error) {
+        console.error('Error al procesar pago:', error);
+        alert('❌ Error: ' + error.message);
+      } finally {
+        // Ocultar loading
+        loading.style.display = 'none';
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

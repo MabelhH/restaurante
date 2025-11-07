@@ -62,7 +62,7 @@ const mesasRouter = require('./routers/mesasRouter');
 const categoriaRoutes = require('./routers/categoriaRoutes');
 const pedidosRouter = require('./routers/pedidosRouter'); // ✅ Corregido nombre
 const pagosRouter = require('./routers/pagosRouter');    // ✅ Agregado
-
+const cajeroRouter = require('./routers/cajeroReuter');
 // ===== Routers de VISTAS =====
 const platosViewRouter = require('./routers/platosViewRouter');
 const ventaViewRouter = require('./routers/ventaViewRouter');
@@ -90,6 +90,7 @@ app.use('/mesas', mesasViewRouter);
 app.use('/carta', cartaViewRouter);
 app.use('/pedidos', pedidosViewRouter); // ✅ Vistas de pedidos
 app.use('/pagos', pagosViewRouter);     // ✅ Vistas de pagos
+app.use('/cajero', cajeroRouter);
 app.use('/', userViewRouter); // rutas de usuario (login, register, dashboard)
 
 // ===== Rutas de vistas principales =====

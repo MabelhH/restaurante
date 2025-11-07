@@ -95,6 +95,11 @@
                     <small>
                       <i class="fas fa-hashtag"></i> Pedido: <%= pedido.numeroPedido || pedido._id.toString().slice(-4) %>
                     </small>
+                    <% if (pedido.fechaPago) { %>
+                      <small>
+                        <i class="fas fa-money-bill-wave"></i> Pagado: <%= new Date(pedido.fechaPago).toLocaleString('es-ES') %>
+                      </small>
+                    <% } %>
                   </div>
                 </div>
               </div>
@@ -146,30 +151,57 @@
               </div>
 
               <div class="sale-actions">
-                <!-- BOTÓN DETALLES - Permite editar/eliminar platos -->
-                <a href="/pedidos/<%= pedido._id %>/editar" class="btn-action secondary" title="Editar pedido">
-                  <i class="fas fa-edit"></i> Editar
-                </a>
-
-                <!-- BOTÓN CANCELAR PEDIDO - Solo para pedidos pendientes -->
+                <!-- BOTÓN EDITAR - Solo para pedidos pendientes no pagados -->
                 <% if (pedido.estadoPedido === 'pendiente' && pedido.estadoPago === 'pendiente') { %>
+                  <a href="/pedidos/<%= pedido._id %>/editar" class="btn-action secondary" title="Editar pedido">
+                    <i class="fas fa-edit"></i> Editar
+                  </a>
+                <% } %>
+
+                <!-- BOTÓN CANCELAR PEDIDO - Solo para:
+                    1. Pedidos pendientes no pagados
+                    2. Pedidos pagados dentro de los 5 minutos
+                -->
+                <% 
+                  let puedeCancelar = false;
+                  let motivoCancelacion = '';
+                  
+                  // Caso 1: Pedido pendiente no pagado
+                  if (pedido.estadoPedido === 'pendiente' && pedido.estadoPago === 'pendiente') {
+                    puedeCancelar = true;
+                    motivoCancelacion = 'Pedido pendiente no pagado';
+                  }
+                  // Caso 2: Pedido pagado dentro de los 5 minutos
+                  else if (pedido.estadoPago === 'pagado' && pedido.fechaPago) {
+                    const fechaPago = new Date(pedido.fechaPago);
+                    const ahora = new Date();
+                    const diferenciaMinutos = (ahora - fechaPago) / (1000 * 60);
+                    
+                    if (diferenciaMinutos <= 5) {
+                      puedeCancelar = true;
+                      motivoCancelacion = `Pagado hace ${Math.floor(diferenciaMinutos)} minutos`;
+                    }
+                  }
+                %>
+
+                <% if (puedeCancelar) { %>
                   <button type="button" class="btn-action danger" 
-                          onclick="cancelarPedido('<%= pedido._id %>')" 
-                          title="Cancelar pedido completo">
+                          onclick="cancelarPedido('<%= pedido._id %>', '<%= motivoCancelacion %>')" 
+                          title="Cancelar pedido completo - <%= motivoCancelacion %>">
                     <i class="fas fa-times"></i> Cancelar
                   </button>
                 <% } %>
 
-               <!-- BOTÓN AGREGAR NUEVOS PEDIDOS - Solo si la mesa está ocupada y pagada -->
+                <!-- BOTÓN AGREGAR NUEVOS PEDIDOS - Solo si la mesa está pagada y en estado atendida/ocupada -->
                 <% if (pedido.estadoPago === 'pagado' && pedido.mesa && ['ocupada', 'atendida'].includes(pedido.mesa.estado)) { %>
-                  <a href="/carta?mesa=<%= pedido.mesa._id %>&pedidoExistente=true" 
+                  <a href="/carta?mesa=<%= pedido.mesa._id %>&pedidoExistente=<%= pedido._id %>" 
                     class="btn-action primary" 
-                    title="Agregar nuevo pedido a esta mesa">
+                    title="Agregar nuevo pedido a esta mesa ya pagada">
                     <i class="fas fa-plus-circle"></i> Nuevo Pedido
                   </a>
                 <% } %>
 
-                <!-- BOTÓN LIBERAR MESA - Solo si está atendida/ocupada después del pago -->
+                <!-- BOTÓN LIBERAR MESA - Solo si está pagada y la mesa está atendida/ocupada -->
                 <% if (pedido.estadoPago === 'pagado' && pedido.mesa && ['ocupada', 'atendida'].includes(pedido.mesa.estado)) { %>
                   <button type="button" class="btn-action info" 
                           onclick="liberarMesa('<%= pedido.mesa._id %>', '<%= pedido._id %>')" 
@@ -178,16 +210,8 @@
                   </button>
                 <% } %>
 
-                <!-- BOTONES DE FLUJO NORMAL -->
-                <% if (pedido.estadoPedido === 'pendiente') { %>
-                  <button type="button" class="btn-action info" onclick="cambiarEstadoPedido('<%= pedido._id %>', 'preparacion')" title="Enviar a cocina">
-                    <i class="fas fa-utensils"></i> Enviar a cocina
-                  </button>
-                <% } else if (pedido.estadoPedido === 'preparacion') { %>
-                  <button type="button" class="btn-action success" onclick="cambiarEstadoPedido('<%= pedido._id %>', 'entregado')" title="Marcar como entregado">
-                    <i class="fas fa-check"></i> Entregado
-                  </button>
-                <% } else if (pedido.estadoPedido === 'entregado' && pedido.estadoPago === 'pendiente') { %>
+                <!-- BOTÓN COBRAR - Solo si está entregado y no pagado -->
+                <% if (pedido.estadoPedido === 'entregado' && pedido.estadoPago === 'pendiente') { %>
                   <a href="/pagos/nuevo?pedido=<%= pedido._id %>" class="btn-action primary" title="Registrar pago">
                     <i class="fas fa-credit-card"></i> Cobrar
                   </a>
@@ -204,7 +228,7 @@
   <div id="cancelModal" class="modal">
     <div class="modal-content">
       <h3>Confirmar Cancelación</h3>
-      <p>¿Estás seguro de que quieres cancelar este pedido?</p>
+      <p id="cancelMessage">¿Estás seguro de que quieres cancelar este pedido?</p>
       <p><strong>Se devolverá el stock de todos los platos y se liberará la mesa.</strong></p>
       <div class="modal-actions">
         <button type="button" class="btn-action secondary" onclick="closeModal('cancelModal')">Cancelar</button>
@@ -274,43 +298,13 @@
           });
         });
       }
-
-      // Función para cambiar estado del pedido
-      async function cambiarEstadoPedido(pedidoId, nuevoEstado) {
-        if (!confirm('¿Estás seguro de que quieres actualizar el estado del pedido?')) {
-          return;
-        }
-
-        try {
-          const response = await fetch(`/api/pedidos/${pedidoId}/estado`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ estado: nuevoEstado })
-          });
-
-          const result = await response.json();
-
-          if (response.ok) {
-            mostrarNotificacion('✅ Estado del pedido actualizado correctamente', 'success');
-            // Recargar después de 2 segundos
-            setTimeout(() => {
-              location.reload();
-            }, 2000);
-          } else {
-            throw new Error(result.error || 'Error al actualizar el estado del pedido');
-          }
-        } catch (error) {
-          console.error('Error al cambiar estado del pedido:', error);
-          mostrarNotificacion('❌ Error: ' + error.message, 'error');
-        }
-      }
     });
 
     // Función para cancelar pedido
-    function cancelarPedido(pedidoId) {
+    function cancelarPedido(pedidoId, motivo) {
       pedidoACancelar = pedidoId;
+      const mensaje = `¿Estás seguro de que quieres cancelar este pedido?<br><small>Motivo: ${motivo}</small>`;
+      document.getElementById('cancelMessage').innerHTML = mensaje;
       openModal('cancelModal');
     }
 
