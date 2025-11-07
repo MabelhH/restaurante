@@ -33,6 +33,10 @@ class MesasController {
     try {
       const { numeroMesa, piso, sector, capacidad } = req.body;
 
+      if (!numeroMesa || numeroMesa < 1) {
+        return res.status(400).json({ error: 'El número de mesa debe ser mayor a 0' });
+      }  
+      
       // CAMBIO: Validaciones mejoradas según modelo actualizado
       if (!numeroMesa || !piso || !sector) {
         return res.status(400).json({ error: 'Número de mesa, piso y sector son requeridos' });
