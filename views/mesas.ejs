@@ -38,16 +38,15 @@
       <section class="form-section">
         <h3>Registrar nueva mesa</h3>
         <form id="formMesa">
-          <input type="number" id="numeroMesa" placeholder="Número de Mesa" required>
-          
+          <input type="number" id="numeroMesa" name="numeroMesa" placeholder="Número de Mesa" required>
           <select id="estado" required>
             <option value="">Selecciona Estado</option>
+            <option value="disponible">Disponible</option>
             <option value="liberada">Liberada</option>
             <option value="ocupada">Ocupada</option>
             <option value="atendida">Atendida</option>
             <option value="reparacion">Reparación</option>
           </select>
-
 
           <select id="piso" required>
             <option value="">Selecciona Piso</option>
@@ -158,13 +157,17 @@ container.addEventListener('click', async (e) => {
   }
 
   if (e.target.closest('.editar')) {
-    const res = await fetch(`/api/mesas/${id}`);
-    const mesa = await res.json();
+    const id = e.target.closest('button').dataset.id;
+    console.log('Editando mesa con ID:', id); // <--- verificar
 
-    form.numeroMesa.value = mesa.numeroMesa;
-    form.estado.value = mesa.estado;
-    form.piso.value = mesa.piso;
-    form.sector.value = mesa.sector;
+    const res = await fetch(`/api/mesas/${id}`);
+    const data = await res.json();
+    const mesa = data.mesa || data; // si tu API devuelve {mesa: {...}} o el objeto directo
+
+    document.getElementById('numeroMesa').value = mesa.numeroMesa;
+    document.getElementById('estado').value = mesa.estado;
+    document.getElementById('piso').value = mesa.piso;
+    document.getElementById('sector').value = mesa.sector;
 
     editarId = id;
     form.querySelector('button[type="submit"]').textContent = 'Actualizar Mesa';
