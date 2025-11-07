@@ -47,7 +47,7 @@ const ventaSchema = new Schema({
   },
   mesero: {
     type: Schema.Types.ObjectId,
-    ref: 'User',
+    ref: 'Usuario',
     required: true
   },
   fechaVenta: { 

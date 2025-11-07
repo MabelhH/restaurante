@@ -36,6 +36,7 @@ class MesasController {
       if (!numeroMesa || numeroMesa < 1) {
         return res.status(400).json({ error: 'El número de mesa debe ser mayor a 0' });
       }  
+
       
       // CAMBIO: Validaciones mejoradas según modelo actualizado
       if (!numeroMesa || !piso || !sector) {
