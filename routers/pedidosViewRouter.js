@@ -32,6 +32,11 @@ router.get('/', verifyToken, async (req, res) => {
       filtroPedidos.mesero = req.user._id;
     }
 
+    // ✅ Si es cocinero, solo mostrar pedidos pagados
+    if (req.user.rol === 'cocinero') {
+      filtroPedidos.estadoPago = 'pagado';
+    }
+
     // Filtrar por fecha actual
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
@@ -49,7 +54,6 @@ router.get('/', verifyToken, async (req, res) => {
     const mesas = await Mesa.find({ estado: { $in: ['disponible', 'ocupada'] } });
     const platos = await Platos.find({ estado: 'activo', stock: { $gt: 0 } });
 
-    // Preparar datos del usuario
     const userData = {
       _id: req.user._id,
       nombre: req.user.nombre,
@@ -80,7 +84,7 @@ router.get('/', verifyToken, async (req, res) => {
         platos,
         pedidoActual: null
       });
-    }else if (req.user.rol === 'cocinero') {
+    } else if (req.user.rol === 'cocinero') {
       res.render('pedidosc', { 
         usuario: userData, 
         pedidos, 
@@ -92,13 +96,14 @@ router.get('/', verifyToken, async (req, res) => {
       res.status(403).send('Acceso denegado');
     }
   } catch (error) {
-    console.error('❌ Error al cargar pedidos:', error);
+    console.error('Error al cargar pedidos:', error);
     res.status(500).render('error', { 
       mensaje: 'Error al cargar los pedidos',
       usuario: req.user 
     });
   }
 });
+
 
 // Ruta para ver pedidos específicos (si necesitas una vista de detalle)
 router.get('/ver', verifyToken, async (req, res) => {

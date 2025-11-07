@@ -198,28 +198,41 @@ class PedidosController {
     }
   }
 
-  // ✅ RF014 - Consultar estado de pedidos
-  async listarPedidos(req, res) {
-    try {
-      const { estadoPedido, estadoPago, mesa } = req.query;
-      const filtro = { activo: true }; // CAMBIO: Solo pedidos activos
+// ✅ RF014 - Consultar estado de pedidos
+async listarPedidos(req, res) {
+  try {
+    const { estadoPedido, estadoPago, mesa } = req.query;
+    const filtro = { activo: true };
 
-      if (estadoPedido) filtro.estadoPedido = estadoPedido;
-      if (estadoPago) filtro.estadoPago = estadoPago;
+    // 👇 Aseguramos que el rol del usuario exista
+    const rolUsuario = req.user?.rol?.toLowerCase?.() || null;
+
+    // 🧩 Si el usuario es cocinero, solo ve pedidos pagados
+    if (rolUsuario === 'cocinero') {
+      filtro.estadoPago = 'pagado';
+    } else {
+      // Otros roles (admin, mesero, cajero)
+      if (estadoPedido) filtro.estadoPedido = estadoPedido.toLowerCase();
+      if (estadoPago) filtro.estadoPago = estadoPago.toLowerCase();
       if (mesa) filtro.mesa = mesa;
-
-      const pedidos = await Pedido.find(filtro)
-        .populate('mesa', 'numeroMesa piso sector estado')
-        .populate('mesero', 'nombre email')
-        .populate('platos.plato', 'nombre precio imagen')
-        .sort({ fechaPedido: -1 });
-
-      res.json(pedidos);
-    } catch (error) {
-      console.error('Error al listar pedidos:', error);
-      res.status(500).json({ error: error.message });
     }
+
+    console.log('🔎 Filtro aplicado:', filtro);
+    console.log('👤 Rol usuario:', rolUsuario);
+
+    const pedidos = await Pedido.find(filtro)
+      .populate('mesa', 'numeroMesa piso sector estado')
+      .populate('mesero', 'nombre email rol')
+      .populate('platos.plato', 'nombre precio imagen')
+      .sort({ fechaPedido: -1 });
+
+    res.json(pedidos);
+  } catch (error) {
+    console.error('Error al listar pedidos:', error);
+    res.status(500).json({ error: error.message });
   }
+}
+
 
   // Resto de métodos se mantienen igual con pequeñas mejoras...
   async cambiarEstadoPedido(req, res) {
@@ -292,7 +305,7 @@ class PedidosController {
         mesero: pedido.mesero
       });
       await venta.save();
-
+      
       const pedidoActualizado = await Pedido.findById(pedidoId)
         .populate('mesa', 'numeroMesa piso sector')
         .populate('mesero', 'nombre email')
