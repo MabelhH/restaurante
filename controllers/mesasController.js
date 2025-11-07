@@ -33,19 +33,10 @@ class MesasController {
   try {
     const { numeroMesa, piso, sector, capacidad } = req.body;
 
-    // Validación unificada: número entero mayor a 0, piso y sector requeridos
-    if (
-      numeroMesa === undefined ||
-      typeof numeroMesa !== 'number' ||
-      !Number.isInteger(numeroMesa) ||
-      numeroMesa < 1 ||
-      !piso ||
-      !sector
-    ) {
-      return res.status(400).json({
-        error: 'Número de mesa debe ser un número entero mayor a 0, y piso y sector son requeridos'
-      });
-    }
+      // CAMBIO: Validaciones mejoradas según modelo actualizado
+      if (!numeroMesa || !piso || !sector) {
+        return res.status(400).json({ error: 'Número de mesa, piso y sector son requeridos' });
+      }
 
     // Verificar si el número de mesa ya existe
     const mesaExistente = await Mesa.findOne({ numeroMesa });

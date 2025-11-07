@@ -2,10 +2,11 @@
 const Pedido = require('../models/pedidosModel');
 const Mesa = require('../models/mesasModel');
 const Platos = require('../models/platosModel');
-const Usuario = require('../models/userModel'); 
+const Usuario = require('../models/userModel');
+const mongoose = require('mongoose');
 
 class PedidosController {
-  
+
   // ✅ RF010 - Crear nuevo pedido
   async crearPedido(req, res) {
     try {
@@ -47,14 +48,14 @@ class PedidosController {
 
         // CAMBIO: Validar stock y disponibilidad
         if (plato.stock < item.cantidad) {
-          return res.status(400).json({ 
-            error: `Stock insuficiente para ${plato.nombre}. Stock disponible: ${plato.stock}` 
+          return res.status(400).json({
+            error: `Stock insuficiente para ${plato.nombre}. Stock disponible: ${plato.stock}`
           });
         }
 
         if (!plato.disponible || plato.estado !== 'activo') {
-          return res.status(400).json({ 
-            error: `El plato ${plato.nombre} no está disponible` 
+          return res.status(400).json({
+            error: `El plato ${plato.nombre} no está disponible`
           });
         }
 
@@ -117,15 +118,22 @@ class PedidosController {
     }
   }
 
-  // ✅ RF012 - Agregar platos a pedido existente
+  // ✅ RF012 - Agregar platos a pedido existente - MEJORADO
   async agregarPlatos(req, res) {
     try {
       const { pedidoId } = req.params;
       const { platos } = req.body;
 
-      const pedido = await Pedido.findById(pedidoId);
+      const pedido = await Pedido.findById(pedidoId).populate('mesa');
       if (!pedido) {
         return res.status(404).json({ error: 'Pedido no encontrado' });
+      }
+
+      // AGREGADO: Verificar que la mesa acepte nuevos pedidos
+      if (!pedido.mesa.aceptaNuevosPedidos()) {
+        return res.status(400).json({
+          error: `La mesa no acepta nuevos pedidos. Estado actual: ${pedido.mesa.estado}`
+        });
       }
 
       // CAMBIO: Validar que el pedido no esté pagado
@@ -144,14 +152,14 @@ class PedidosController {
 
         // CAMBIO: Validar stock y disponibilidad
         if (plato.stock < item.cantidad) {
-          return res.status(400).json({ 
-            error: `Stock insuficiente para ${plato.nombre}` 
+          return res.status(400).json({
+            error: `Stock insuficiente para ${plato.nombre}`
           });
         }
 
         if (!plato.disponible || plato.estado !== 'activo') {
-          return res.status(400).json({ 
-            error: `El plato ${plato.nombre} no está disponible` 
+          return res.status(400).json({
+            error: `El plato ${plato.nombre} no está disponible`
           });
         }
 
@@ -179,7 +187,7 @@ class PedidosController {
       // Agregar nuevos platos al pedido
       pedido.platos.push(...nuevosPlatos);
       pedido.total += totalAdicional;
-      
+
       await pedido.save();
 
       const pedidoActualizado = await Pedido.findById(pedidoId)
@@ -198,41 +206,40 @@ class PedidosController {
     }
   }
 
-// ✅ RF014 - Consultar estado de pedidos
-async listarPedidos(req, res) {
-  try {
-    const { estadoPedido, estadoPago, mesa } = req.query;
-    const filtro = { activo: true };
+  // ✅ RF014 - Consultar estado de pedidos
+  async listarPedidos(req, res) {
+    try {
+      const { estadoPedido, estadoPago, mesa } = req.query;
+      const filtro = { activo: true };
 
-    // 👇 Aseguramos que el rol del usuario exista
-    const rolUsuario = req.user?.rol?.toLowerCase?.() || null;
+      // 👇 Aseguramos que el rol del usuario exista
+      const rolUsuario = req.user?.rol?.toLowerCase?.() || null;
 
-    // 🧩 Si el usuario es cocinero, solo ve pedidos pagados
-    if (rolUsuario === 'cocinero') {
-      filtro.estadoPago = 'pagado';
-    } else {
-      // Otros roles (admin, mesero, cajero)
-      if (estadoPedido) filtro.estadoPedido = estadoPedido.toLowerCase();
-      if (estadoPago) filtro.estadoPago = estadoPago.toLowerCase();
-      if (mesa) filtro.mesa = mesa;
+      // 🧩 Si el usuario es cocinero, solo ve pedidos pagados
+      if (rolUsuario === 'cocinero') {
+        filtro.estadoPago = 'pagado';
+      } else {
+        // Otros roles (admin, mesero, cajero)
+        if (estadoPedido) filtro.estadoPedido = estadoPedido.toLowerCase();
+        if (estadoPago) filtro.estadoPago = estadoPago.toLowerCase();
+        if (mesa) filtro.mesa = mesa;
+      }
+
+      console.log('🔎 Filtro aplicado:', filtro);
+      console.log('👤 Rol usuario:', rolUsuario);
+
+      const pedidos = await Pedido.find(filtro)
+        .populate('mesa', 'numeroMesa piso sector estado')
+        .populate('mesero', 'nombre email rol')
+        .populate('platos.plato', 'nombre precio imagen')
+        .sort({ fechaPedido: -1 });
+
+      res.json(pedidos);
+    } catch (error) {
+      console.error('Error al listar pedidos:', error);
+      res.status(500).json({ error: error.message });
     }
-
-    console.log('🔎 Filtro aplicado:', filtro);
-    console.log('👤 Rol usuario:', rolUsuario);
-
-    const pedidos = await Pedido.find(filtro)
-      .populate('mesa', 'numeroMesa piso sector estado')
-      .populate('mesero', 'nombre email rol')
-      .populate('platos.plato', 'nombre precio imagen')
-      .sort({ fechaPedido: -1 });
-
-    res.json(pedidos);
-  } catch (error) {
-    console.error('Error al listar pedidos:', error);
-    res.status(500).json({ error: error.message });
   }
-}
-
 
   // Resto de métodos se mantienen igual con pequeñas mejoras...
   async cambiarEstadoPedido(req, res) {
@@ -305,7 +312,7 @@ async listarPedidos(req, res) {
         mesero: pedido.mesero
       });
       await venta.save();
-      
+
       const pedidoActualizado = await Pedido.findById(pedidoId)
         .populate('mesa', 'numeroMesa piso sector')
         .populate('mesero', 'nombre email')
@@ -392,13 +399,13 @@ async listarPedidos(req, res) {
     try {
       const { mesaId } = req.params;
 
-      const pedidos = await Pedido.find({ 
+      const pedidos = await Pedido.find({
         mesa: mesaId,
-        activo: true 
+        activo: true
       })
-      .populate('mesero', 'nombre')
-      .populate('platos.plato', 'nombre precio')
-      .sort({ fechaPedido: -1 });
+        .populate('mesero', 'nombre')
+        .populate('platos.plato', 'nombre precio')
+        .sort({ fechaPedido: -1 });
 
       res.json(pedidos);
     } catch (error) {
@@ -410,19 +417,66 @@ async listarPedidos(req, res) {
   // ✅ Obtener pedidos pendientes de pago
   async obtenerPedidosPendientesPago(req, res) {
     try {
-      const pedidos = await Pedido.find({ 
+      const pedidos = await Pedido.find({
         estadoPago: 'pendiente',
-        activo: true 
+        activo: true
       })
-      .populate('mesa', 'numeroMesa piso sector')
-      .populate('mesero', 'nombre')
-      .populate('platos.plato', 'nombre precio imagen')
-      .sort({ fechaPedido: 1 });
+        .populate('mesa', 'numeroMesa piso sector')
+        .populate('mesero', 'nombre')
+        .populate('platos.plato', 'nombre precio imagen')
+        .sort({ fechaPedido: 1 });
 
       res.json(pedidos);
     } catch (error) {
       console.error('Error al obtener pedidos pendientes:', error);
       res.status(500).json({ error: error.message });
+    }
+  }
+
+  // ✅ NUEVO: Método para cargar la carta con mesa fija
+  async cargarCarta(req, res) {
+    try {
+      const { mesa, pedidoExistente, mesaFija } = req.query;
+
+      const mesas = await Mesa.find({
+        $or: [
+          { estado: { $in: ['disponible', 'liberada'] } },
+          // AGREGADO: Incluir la mesa actual si viene de editar pedido
+          ...(mesaFija && mesa ? [{ _id: new mongoose.Types.ObjectId(mesa) }] : [])
+        ]
+      }).sort('numeroMesa');
+
+      const platos = await Platos.find({
+        estado: 'activo',
+        stock: { $gt: 0 }
+      }).populate('categoria');
+
+      const categorias = await Categoria.find({ estado: 'activa' });
+
+      const userData = {
+        _id: req.user._id,
+        nombre: req.user.nombre,
+        email: req.user.email,
+        rol: req.user.rol
+      };
+
+      // AGREGADO: Pasar parámetros adicionales a la vista
+      res.render('cartaM', {
+        usuario: userData,
+        platos,
+        mesas,
+        categorias,
+        mesaSeleccionada: mesa, // Mesa fija cuando viene de editar
+        pedidoExistente: pedidoExistente,
+        mesaFija: mesaFija === 'true' // Forzar selección de mesa
+      });
+
+    } catch (error) {
+      console.error('Error al cargar carta:', error);
+      res.status(500).render('error', {
+        mensaje: 'Error al cargar la carta',
+        usuario: req.user
+      });
     }
   }
 }
