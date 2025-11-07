@@ -72,7 +72,7 @@
         <% platos.forEach(plato => { %>
           <% if (plato.estado === 'activo') { %>
             <div class="food-card <%= plato.stock <= plato.stockMinimo ? 'stock-bajo' : '' %>"
-                data-categoria="<%= plato.categoria.nombre %>">
+                data-categoria="<%= plato.categoria ? plato.categoria.nombre : 'Sin categoría' %>">
 
               <% if (plato.stock <= plato.stockMinimo) { %>
                 <div class="stock-alert">

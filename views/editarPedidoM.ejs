@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editar Pedido - Mesero</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/styleVentas.css">
+  <style>
+    .editar-pedido-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .pedido-header {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    .platos-actuales {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    .plato-item-editar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px;
+      border-bottom: 1px solid #eee;
+      transition: all 0.3s ease;
+    }
+
+    .plato-item-editar:hover {
+      background: #f8f9fa;
+    }
+
+    .plato-info {
+      flex: 1;
+    }
+
+    .plato-acciones {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .cantidad-control {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-cantidad {
+      width: 35px;
+      height: 35px;
+      border: 1px solid #ddd;
+      background: white;
+      border-radius: 5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-cantidad:hover {
+      background: #f8f9fa;
+    }
+
+    .input-cantidad {
+      width: 60px;
+      text-align: center;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 5px;
+    }
+
+    .btn-eliminar {
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .btn-eliminar:hover {
+      background: #c82333;
+    }
+
+    .acciones-principales {
+      display: flex;
+      gap: 15px;
+      margin-top: 20px;
+      justify-content: center;
+    }
+
+    .btn-agregar-platos {
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 16px;
+    }
+
+    .btn-agregar-platos:hover {
+      background: #218838;
+    }
+
+    .btn-volver {
+      background: #6c757d;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 16px;
+    }
+
+    .btn-volver:hover {
+      background: #5a6268;
+    }
+
+    .subtotal {
+      font-weight: bold;
+      color: #28a745;
+    }
+
+    .observaciones-input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      margin-top: 5px;
+    }
+
+    .total-pedido {
+      background: #e9ecef;
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 1.2em;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+
+    .sin-platos {
+      text-align: center;
+      padding: 40px;
+      color: #6c757d;
+    }
+
+    .badge {
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+
+    .badge.warning { background: #fff3cd; color: #856404; }
+    .badge.success { background: #d4edda; color: #155724; }
+
+    /* Estilos para notificaciones */
+    .notificacion {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      min-width: 300px;
+    }
+
+    .notificacion-contenido {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      display: flex;
+      justify-content: between;
+      align-items: center;
+      border-left: 4px solid #007bff;
+    }
+
+    .notificacion-success .notificacion-contenido {
+      border-left-color: #28a745;
+    }
+
+    .notificacion-error .notificacion-contenido {
+      border-left-color: #dc3545;
+    }
+
+    .notificacion-contenido button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+
+    /* Estilos para modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+
+    .modal-content {
+      background-color: white;
+      margin: 15% auto;
+      padding: 20px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+
+    .btn-action {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .btn-action.primary {
+      background: #007bff;
+      color: white;
+    }
+
+    .btn-action.secondary {
+      background: #6c757d;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <h2 class="logo">
+      <i class="fas fa-utensils"></i><br>
+      Restaurante
+    </h2>
+
+    <nav>
+      <a href="/dashboard_mesero"><i class="fas fa-home"></i> <span>Dashboard</span></a>
+      <a href="/mesas"><i class="fas fa-chair"></i> <span>Mesas</span></a>
+      <a href="/carta"><i class="fas fa-book-open"></i> <span>Carta</span></a>
+      <a href="/pedidos" class="active"><i class="fas fa-receipt"></i> <span>Pedidos</span></a>
+      <a href="/logout"><i class="fas fa-sign-out-alt"></i> <span>Cerrar sesión</span></a>
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <main>
+    <div class="editar-pedido-container">
+      <!-- Header del Pedido -->
+      <div class="pedido-header">
+        <h2>
+          <i class="fas fa-edit"></i> Editando Pedido 
+          <span class="badge warning">Pendiente</span>
+        </h2>
+        
+        <div class="pedido-info">
+          <p><strong>Mesa:</strong> <%= pedido.mesa.numeroMesa %> - <%= pedido.mesa.piso %> - <%= pedido.mesa.sector %></p>
+          <p><strong>Número de Pedido:</strong> <%= pedido.numeroPedido || pedido._id.toString().slice(-4) %></p>
+          <p><strong>Fecha:</strong> <%= new Date(pedido.fechaPedido).toLocaleString('es-ES') %></p>
+          <p><strong>Total Actual:</strong> S/ <%= pedido.total.toFixed(2) %></p>
+        </div>
+
+        <% if (pedido.observacionesGenerales) { %>
+          <div class="observaciones-generales">
+            <strong>Observaciones:</strong> <%= pedido.observacionesGenerales %>
+          </div>
+        <% } %>
+      </div>
+
+      <!-- Lista de Platos Actuales -->
+      <div class="platos-actuales">
+        <h3><i class="fas fa-utensils"></i> Platos del Pedido</h3>
+        
+        <% if (!pedido.platos || pedido.platos.length === 0) { %>
+          <div class="sin-platos">
+            <i class="fas fa-utensils fa-3x" style="color: #dee2e6; margin-bottom: 15px;"></i>
+            <h4>No hay platos en este pedido</h4>
+            <p>Agrega platos desde la carta para comenzar</p>
+          </div>
+        <% } else { %>
+          <div id="lista-platos">
+            <% pedido.platos.forEach((plato, index) => { %>
+              <div class="plato-item-editar" data-plato-index="<%= index %>">
+                <div class="plato-info">
+                  <h4><%= plato.nombre %></h4>
+                  <p class="text-muted">
+                    S/ <%= plato.precio.toFixed(2) %> x 
+                    <span id="cantidad-<%= index %>"><%= plato.cantidad %></span> = 
+                    <span class="subtotal">S/ <%= (plato.precio * plato.cantidad).toFixed(2) %></span>
+                  </p>
+                  <% if (plato.observaciones) { %>
+                    <small class="observaciones">Observaciones: <%= plato.observaciones %></small>
+                  <% } %>
+                  <div class="stock-info">
+                    <small>Stock disponible: <strong><%= plato.plato.stock + plato.cantidad %></strong></small>
+                  </div>
+                </div>
+                
+                <div class="plato-acciones">
+                  <div class="cantidad-control">
+                    <button class="btn-cantidad" data-index="<%= index %>" data-action="decrease">
+                      <i class="fas fa-minus"></i>
+                    </button>
+                    <input 
+                      type="number" 
+                      id="input-cantidad-<%= index %>"
+                      class="input-cantidad" 
+                      value="<%= plato.cantidad %>" 
+                      min="1" 
+                      max="<%= plato.plato.stock + plato.cantidad %>"
+                      data-index="<%= index %>"
+                    >
+                    <button class="btn-cantidad" data-index="<%= index %>" data-action="increase">
+                      <i class="fas fa-plus"></i>
+                    </button>
+                  </div>
+                  
+                  <button class="btn-eliminar" data-index="<%= index %>">
+                    <i class="fas fa-trash"></i> Eliminar
+                  </button>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+
+          <div class="total-pedido">
+            Total del Pedido: S/ <span id="total-pedido"><%= pedido.total.toFixed(2) %></span>
+          </div>
+        <% } %>
+      </div>
+
+      <!-- Acciones Principales -->
+      <div class="acciones-principales">
+        <a href="/carta?mesa=<%= pedido.mesa._id %>&pedidoExistente=<%= pedido._id %>" 
+           class="btn-agregar-platos">
+          <i class="fas fa-plus-circle"></i> Agregar Más Platos
+        </a>
+        
+        <a href="/pedidos" class="btn-volver">
+          <i class="fas fa-arrow-left"></i> Volver a Pedidos
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal de Confirmación -->
+  <div id="confirmModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <h3 id="modalTitle">Confirmar Acción</h3>
+      <p id="modalMessage">¿Estás seguro de que quieres realizar esta acción?</p>
+      <div class="modal-actions">
+        <button type="button" class="btn-action secondary" onclick="cerrarModal()">Cancelar</button>
+        <button type="button" class="btn-action primary" id="confirmActionBtn">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let accionConfirmar = null;
+    let parametrosAccion = null;
+
+    // Event listeners después de que el DOM se carga
+    document.addEventListener('DOMContentLoaded', function() {
+      // Manejar botones de cantidad
+      document.addEventListener('click', function(e) {
+        if (e.target.closest('.btn-cantidad')) {
+          const button = e.target.closest('.btn-cantidad');
+          const index = button.getAttribute('data-index');
+          const action = button.getAttribute('data-action');
+          const cambio = action === 'increase' ? 1 : -1;
+          cambiarCantidad(index, cambio);
+        }
+        
+        // Manejar botón eliminar
+        if (e.target.closest('.btn-eliminar')) {
+          const button = e.target.closest('.btn-eliminar');
+          const index = button.getAttribute('data-index');
+          eliminarPlato(index);
+        }
+      });
+      
+      // Manejar cambios en input de cantidad
+      document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('input-cantidad')) {
+          const index = e.target.getAttribute('data-index');
+          actualizarCantidad(index, e.target.value);
+        }
+      });
+
+      // Validar que los inputs de cantidad no sean menores a 1
+      const inputs = document.querySelectorAll('.input-cantidad');
+      inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+          if (this.value < 1) {
+            this.value = 1;
+            const index = this.getAttribute('data-index');
+            actualizarCantidad(index, 1);
+          }
+        });
+      });
+    });
+
+    // Función para cambiar cantidad incrementalmente
+    function cambiarCantidad(index, cambio) {
+      const input = document.getElementById(`input-cantidad-${index}`);
+      let nuevaCantidad = parseInt(input.value) + cambio;
+      
+      // Validar límites
+      const maxStock = parseInt(input.max);
+      if (nuevaCantidad < 1) nuevaCantidad = 1;
+      if (nuevaCantidad > maxStock) nuevaCantidad = maxStock;
+      
+      input.value = nuevaCantidad;
+      actualizarCantidad(index, nuevaCantidad);
+    }
+
+    // Función para actualizar cantidad via API
+    async function actualizarCantidad(index, nuevaCantidad) {
+      const cantidad = parseInt(nuevaCantidad);
+      if (isNaN(cantidad) || cantidad < 1) return;
+
+      try {
+        const response = await fetch(`/api/pedidos/<%= pedido._id %>/platos/${index}/cantidad`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ cantidad: cantidad })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          // Actualizar la visualización
+          document.getElementById(`cantidad-${index}`).textContent = cantidad;
+          document.getElementById('total-pedido').textContent = result.pedido.total.toFixed(2);
+          mostrarNotificacion('✅ Cantidad actualizada correctamente', 'success');
+        } else {
+          throw new Error(result.error || 'Error al actualizar cantidad');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        mostrarNotificacion('❌ Error: ' + error.message, 'error');
+        // Recargar la página para sincronizar
+        location.reload();
+      }
+    }
+
+    // Función para eliminar plato
+    function eliminarPlato(index) {
+      const platoItem = document.querySelector(`[data-plato-index="${index}"]`);
+      const nombrePlato = platoItem.querySelector('h4').textContent;
+      
+      mostrarModal(
+        'Eliminar Plato',
+        `¿Estás seguro de que quieres eliminar "${nombrePlato}" del pedido?`,
+        () => confirmarEliminarPlato(index)
+      );
+    }
+
+    async function confirmarEliminarPlato(index) {
+      try {
+        const response = await fetch(`/api/pedidos/<%= pedido._id %>/platos/${index}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          mostrarNotificacion('✅ Plato eliminado correctamente', 'success');
+          // Si no quedan platos, redirigir
+          if (result.pedido.platos.length === 0) {
+            setTimeout(() => {
+              window.location.href = '/pedidos';
+            }, 1500);
+          } else {
+            // Recargar la página para ver los cambios
+            setTimeout(() => {
+              location.reload();
+            }, 1000);
+          }
+        } else {
+          throw new Error(result.error || 'Error al eliminar plato');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        mostrarNotificacion('❌ Error: ' + error.message, 'error');
+      }
+    }
+
+    // Funciones del modal
+    function mostrarModal(titulo, mensaje, callback) {
+      document.getElementById('modalTitle').textContent = titulo;
+      document.getElementById('modalMessage').textContent = mensaje;
+      document.getElementById('confirmModal').style.display = 'block';
+      
+      const confirmBtn = document.getElementById('confirmActionBtn');
+      confirmBtn.onclick = callback;
+    }
+
+    function cerrarModal() {
+      document.getElementById('confirmModal').style.display = 'none';
+    }
+
+    // Cerrar modal al hacer clic fuera
+    window.onclick = function(event) {
+      const modal = document.getElementById('confirmModal');
+      if (event.target === modal) {
+        cerrarModal();
+      }
+    }
+
+    // Función para mostrar notificaciones
+    function mostrarNotificacion(mensaje, tipo = 'info') {
+      // Remover notificaciones existentes
+      const notificacionesExistentes = document.querySelectorAll('.notificacion');
+      notificacionesExistentes.forEach(notif => notif.remove());
+
+      const notificacion = document.createElement('div');
+      notificacion.className = `notificacion notificacion-${tipo}`;
+      notificacion.innerHTML = `
+        <div class="notificacion-contenido">
+          <span>${mensaje}</span>
+          <button onclick="this.parentElement.parentElement.remove()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      `;
+      
+      document.body.appendChild(notificacion);
+      
+      setTimeout(() => {
+        if (notificacion.parentElement) {
+          notificacion.remove();
+        }
+      }, 5000);
+    }
+  </script>
+
+</body>
+</html>

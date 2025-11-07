@@ -75,5 +75,62 @@ router.get('/', verifyToken, async (req, res) => {
     res.status(500).send('Error al cargar la carta');
   }
 });
+// Ruta para la carta con mesa pre-seleccionada (para agregar a pedido existente)
+router.get('/', verifyToken, async (req, res) => {
+  try {
+    const { mesa, pedidoExistente } = req.query;
+    
+    const platos = await Platos.find({ estado: 'activo', disponible: true })
+      .populate('categoria', 'nombre')
+      .sort({ nombre: 1 });
+      
+    const categorias = await Categoria.find({ estado: 'activo' });
+    const mesas = await Mesa.find({ estado: { $in: ['disponible', 'liberada', 'ocupada'] } });
 
+    const userData = {
+      _id: req.user._id,
+      nombre: req.user.nombre,
+      email: req.user.email,
+      rol: req.user.rol
+    };
+
+    // Si hay una mesa específica, buscarla para mostrar información
+    let mesaSeleccionada = null;
+    if (mesa) {
+      mesaSeleccionada = await Mesa.findById(mesa);
+    }
+
+    console.log('📖 Cargando carta:', {
+      usuario: userData.nombre,
+      mesaSeleccionada: mesaSeleccionada?.numeroMesa,
+      pedidoExistente: !!pedidoExistente
+    });
+
+    if (req.user.rol === 'admin') {
+      res.render('carta', { 
+        usuario: userData, 
+        platos, 
+        categorias, 
+        mesas,
+        mesaSeleccionada,
+        esPedidoExistente: !!pedidoExistente
+      });
+    } else if (req.user.rol === 'mesero') {
+      res.render('cartaM', { 
+        usuario: userData, 
+        platos, 
+        categorias, 
+        mesas,
+        mesaSeleccionada,
+        esPedidoExistente: !!pedidoExistente
+      });
+    }
+  } catch (error) {
+    console.error('❌ Error al cargar carta:', error);
+    res.status(500).render('error', { 
+      mensaje: 'Error al cargar la carta',
+      usuario: req.user 
+    });
+  }
+});
 module.exports = router;

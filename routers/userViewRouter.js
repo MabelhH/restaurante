@@ -15,7 +15,7 @@ router.post('/register', userController.register);
 
 router.get('/register_admin', verifyToken, async (req, res) => {
   const users = await Usuario.find();
-  res.render('register_admin', { user: req.user, users, error: null });
+  res.render('register_admin', { user: req.user, users, error: null, success: null });
 });
 
 router.post('/register_admin', verifyToken, async (req, res) => {
