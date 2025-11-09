@@ -193,7 +193,7 @@
                 <% } %>
 
                 <!-- BOTÓN AGREGAR NUEVOS PEDIDOS - Solo si la mesa está pagada y en estado atendida/ocupada -->
-                <% if (pedido.estadoPago === 'pagado' && pedido.mesa && ['ocupada', 'atendida','disponible'].includes(pedido.mesa.estado) && pedido.platos.every(p => p.estado === 'listo')) { %>
+                <% if (pedido.estadoPago === 'pagado' && pedido.mesa && ['ocupada', 'atendida','disponible'].includes(pedido.mesa.estado) && pedido.platos.every(p => p.estado === 'listo' || p.estado === 'entregado')) { %>
                   <a href="/carta?mesa=<%= pedido.mesa._id %>&pedidoExistente=<%= pedido._id %>" 
                     class="btn-action primary" 
                     title="Agregar nuevo pedido a esta mesa ya pagada">
@@ -202,7 +202,7 @@
                 <% } %>
 
                 <!-- BOTÓN LIBERAR MESA - Solo si está pagada y la mesa está atendida/ocupada -->
-                <% if (pedido.estadoPago === 'pagado' && pedido.mesa && ['ocupada', 'atendida'].includes(pedido.mesa.estado) && pedido.platos.every(p => p.estado === 'listo')) { %>
+                <% if (pedido.estadoPago === 'pagado' && pedido.mesa && ['ocupada', 'atendida'].includes(pedido.mesa.estado) && pedido.platos.every(p => p.estado === 'listo' || p.estado === 'entregado')) { %>
                   <button type="button" class="btn-action info" 
                           onclick="liberarMesa('<%= pedido.mesa._id %>', '<%= pedido._id %>')" 
                           title="Liberar mesa para nuevos clientes">
