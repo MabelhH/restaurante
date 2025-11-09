@@ -54,9 +54,6 @@
         <button class="category active" data-categoria="todas">
           <i class="fas fa-th-large"></i> Todas
         </button>
-        <button class="category" data-categoria="Sin categoría">
-          <i class="fas fa-question-circle"></i> Sin categoría
-        </button>
         <% if (categorias && categorias.length > 0) { %>
           <% categorias.forEach(categoria => { %>
             <button class="category" data-categoria="<%= categoria.nombre %>">

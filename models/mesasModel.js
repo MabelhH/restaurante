@@ -9,7 +9,7 @@ const mesasSchema = new Schema({
   },
   estado: {
     type: String,
-    enum: ['disponible', 'ocupada', 'atendida', 'liberada', 'reparacion'],
+    enum: ['disponible', 'ocupada', 'atendida', 'liberada', 'reparacion','reserva'],
     default: 'disponible',
     required: true
   },

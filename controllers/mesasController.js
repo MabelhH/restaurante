@@ -38,6 +38,14 @@ class MesasController {
         return res.status(400).json({ error: 'Número de mesa, piso y sector son requeridos' });
       }
 
+    if (numeroMesa < 0) {
+      return res.status(400).json({ error: 'El número de mesa no puede ser menor a 0' });
+    }
+
+    if (typeof numeroMesa !== 'number' || !Number.isInteger(numeroMesa)) {
+      return res.status(400).json({ error: 'El número de mesa debe ser un número entero' });
+    }
+
     // Verificar si el número de mesa ya existe
     const mesaExistente = await Mesa.findOne({ numeroMesa });
     if (mesaExistente) {

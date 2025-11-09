@@ -16,11 +16,11 @@
       <i class="fas fa-utensils"></i><br>Restaurante
     </h2>
     <nav>
-      <a href="/dashboard"><i class="fas fa-home"></i> <span>Dashboard</span></a>
+      <a href="/dashboard" ><i class="fas fa-home"></i> <span>Dashboard</span></a>
       <a href="/register_admin"><i class="fas fa-user-plus"></i> <span>Registro</span></a>
       <a href="/platos"><i class="fas fa-bowl-food"></i> <span>Platos</span></a>
-      <a href="/mesas"><i class="fas fa-chair"></i> <span>Mesas</span></a>
-      <a href="/ventas"><i class="fas fa-shopping-cart"></i> <span>Ventas</span></a>
+      <a href="/mesas" class="active"><i class="fas fa-chair"></i> <span>Mesas</span></a>
+      <a href="/carta"><i class="fas fa-book-open"></i> <span>Carta</span></a>
       <a href="/logout"><i class="fas fa-sign-out-alt"></i> <span>Cerrar sesión</span></a>
     </nav>
   </aside>
@@ -72,14 +72,34 @@
     </div>
   </main>
 </div>
-
+<div id="notification" class="notification">
+  <i class="fas fa-check-circle"></i>
+  <span id="notificationText">Mensaje de notificación</span>
+  
+</div>
 <script>
 const form = document.getElementById('formMesa');
 const container = document.getElementById('mesasContainer');
+const notification = document.getElementById('notification');
+const notificationText = document.getElementById('notificationText');
 let editarId = null;
 
+function showNotification(message, type = 'success') {
+  notificationText.textContent = message;
+  notification.className = `notification ${type}`;
+  notification.classList.add('show');
+  
+  setTimeout(() => {
+    notification.classList.remove('show');
+  }, 3000);
+}
+
+// function validarNumeroMesa(numero) {
+//   return numero >= 0;
+// }
 // Cargar mesas
 async function cargarMesas() {
+  try {
   const res = await fetch('/api/mesas');
   const data = await res.json();
   const mesas = data.mesas;
@@ -112,11 +132,22 @@ async function cargarMesas() {
       </div>`;
     container.appendChild(card);
   });
+} catch (error) {
+    console.error('Error al cargar mesas:', error);
+    showNotification('Error al cargar las mesas', 'error');
+  }
 }
 
 // Enviar mesa (crear o editar)
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
+  const numeroMesa = parseInt(form.numeroMesa.value);
+  
+  // ✅ VALIDACIÓN EN FRONTEND
+  if (numeroMesa < 1) {
+    showNotification('El número de mesa debe ser mayor a 0', 'error');
+    return;
+  }
   const data = {
     numeroMesa: parseInt(form.numeroMesa.value),
     estado: form.estado.value,
@@ -126,22 +157,34 @@ form.addEventListener('submit', async (e) => {
 
   let url = '/api/mesas';
   let method = 'POST';
+  let successMessage = 'Mesa agregada correctamente';
   if (editarId) {
     url = `/api/mesas/${editarId}`;
     method = 'PUT';
+    successMessage = 'Mesa actualizada correctamente';
   }
   
-
-  await fetch(url, {
+  
+ try {
+    const response = await fetch(url, {
     method,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   });
-
-  form.reset();
-  editarId = null;
-  form.querySelector('button[type="submit"]').textContent = 'Agregar Mesa';
-  cargarMesas();
+  if (response.ok) {
+        showNotification(successMessage, 'success');
+        form.reset();
+        editarId = null;
+        form.querySelector('button[type="submit"]').textContent = 'Agregar Mesa';
+        cargarMesas();
+  }else {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Error al procesar la solicitud');
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    showNotification(error.message, 'error');
+  }
 });
 
 // Editar o eliminar
@@ -151,15 +194,25 @@ container.addEventListener('click', async (e) => {
 
   if (e.target.closest('.eliminar')) {
     if (confirm('¿Deseas eliminar esta mesa?')) {
-      await fetch(`/api/mesas/${id}`, { method: 'DELETE' });
-      cargarMesas();
+      try {
+        const response = await fetch(`/api/mesas/${id}`, { method: 'DELETE' });
+        if (response.ok) {
+          showNotification('Mesa eliminada correctamente', 'success');
+          cargarMesas();
+          } else {
+          throw new Error('Error al eliminar la mesa');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('Error al eliminar la mesa', 'error');
+      }
     }
   }
 
   if (e.target.closest('.editar')) {
     const id = e.target.closest('button').dataset.id;
     console.log('Editando mesa con ID:', id); // <--- verificar
-
+    try {
     const res = await fetch(`/api/mesas/${id}`);
     const data = await res.json();
     const mesa = data.mesa || data; // si tu API devuelve {mesa: {...}} o el objeto directo
@@ -171,6 +224,10 @@ container.addEventListener('click', async (e) => {
 
     editarId = id;
     form.querySelector('button[type="submit"]').textContent = 'Actualizar Mesa';
+  }catch (error) {
+      console.error('Error al cargar datos de la mesa:', error);
+      showNotification('Error al cargar datos de la mesa', 'error');
+    }
   }
 });
 
@@ -193,8 +250,6 @@ document.addEventListener('DOMContentLoaded', cargarMesas);
 .card.atendida { border-left: 5px solid #0fff07; }
 .card.reparacion { border-left: 5px solid #303030; }
 
-
-
 .card-actions button {
   margin-right: 8px;
   cursor: pointer;
@@ -204,6 +259,37 @@ document.addEventListener('DOMContentLoaded', cargarMesas);
   color: #777;
   padding: 2rem;
 }
+.notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px 20px;
+      border-radius: 6px;
+      color: white;
+      font-weight: 500;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transform: translateX(120%);
+      transition: transform 0.4s ease;
+}
+.notification.show {
+    transform: translateX(0);
+}
+.notification.success {
+    background: #2ecc71;
+}
+
+.notification.error {
+    background: #e74c3c;
+}
+
+.notification i {
+    font-size: 1.2rem;
+}
+
 </style>
 
 </body>

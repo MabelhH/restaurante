@@ -520,6 +520,34 @@ body {
   font-size: 18px;
 }
 
+.btn-mesa {
+      width: 100%;
+      padding: 10px;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .btn-mesa:hover {
+      background: #2980b9;
+    }
+
+    @media (max-width: 1000px) {
+      .cards-container {
+        grid-template-columns: repeat(2, 1fr); /* 2 por fila en pantallas medianas */
+      }
+    }
+
+    @media (max-width: 650px) {
+      .cards-container {
+        grid-template-columns: 1fr; /* 1 por fila en pantallas pequeñas */
+      }
+    }
+
 @keyframes slideIn {
   to {
     opacity: 1;
@@ -533,3 +561,16 @@ body {
     transform: translateY(10px);
   }
 }
+
+button.liberar {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+button.liberar:hover {
+  background-color: #218838;
+}
+

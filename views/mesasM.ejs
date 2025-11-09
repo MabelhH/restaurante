@@ -42,6 +42,34 @@
         grid-template-columns: 1fr; /* 1 por fila en pantallas pequeñas */
       }
     }
+    .add-button {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      transition: all 0.3s ease;
+      z-index: 1000;
+    }
+    .add-button:hover {
+      background-color: #388E3C;
+      transform: scale(1.1);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+    }
+
+    .add-button:active {
+      transform: scale(0.95);
+    }
   </style>
 </head>
 <body>
@@ -82,7 +110,7 @@
 <script>
 const container = document.getElementById('mesasContainer');
 
-// Cargar mesas (solo lectura)
+// Cargar mesas
 async function cargarMesas() {
   try {
     const res = await fetch('/api/mesas');
@@ -104,21 +132,24 @@ async function cargarMesas() {
       card.classList.add('card');
       if (m.estado === 'ocupada') card.classList.add('ocupada');
       if (m.estado === 'atendida') card.classList.add('atendida');
-
+      
+      // Crear contenido de la tarjeta
       card.innerHTML = `
         <h4>Mesa N° ${m.numeroMesa}</h4>
         <p><strong>Estado:</strong> ${m.estado}</p>
         <p><strong>Piso:</strong> ${m.piso}</p>
-        <p><strong>Sector:</strong> ${m.sector}</p>`;
+        <p><strong>Sector:</strong> ${m.sector}</p>
+      `;
+
       container.appendChild(card);
     });
   } catch (error) {
     console.error('Error al cargar las mesas:', error);
   }
 }
-
 document.addEventListener('DOMContentLoaded', cargarMesas);
 </script>
+
 
 </body>
 </html>
