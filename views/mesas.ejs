@@ -39,6 +39,7 @@
         <h3>Registrar nueva mesa</h3>
         <form id="formMesa">
           <input type="number" id="numeroMesa" name="numeroMesa" placeholder="Número de Mesa" required>
+          <input type="number" id="capacidad" name="capacidad" placeholder="Capacidad de la Mesa" required min="1">
           <select id="estado" required>
             <option value="">Selecciona Estado</option>
             <option value="disponible">Disponible</option>
@@ -46,6 +47,7 @@
             <option value="ocupada">Ocupada</option>
             <option value="atendida">Atendida</option>
             <option value="reparacion">Reparación</option>
+            <option value="reserva">Recervada</option>
           </select>
 
           <select id="piso" required>
@@ -126,6 +128,7 @@ async function cargarMesas() {
       <p><strong>Estado:</strong> ${m.estado}</p>
       <p><strong>Piso:</strong> ${m.piso}</p>
       <p><strong>Sector:</strong> ${m.sector}</p>
+      <p><strong>Capacidad:</strong> ${m.capacidad} personas</p>
       <div class="card-actions">
         <button class="editar" data-id="${m._id}"><i class="fas fa-edit"></i> Editar</button>
         <button class="eliminar" data-id="${m._id}"><i class="fas fa-trash"></i> Eliminar</button>
@@ -148,8 +151,14 @@ form.addEventListener('submit', async (e) => {
     showNotification('El número de mesa debe ser mayor a 0', 'error');
     return;
   }
+  if (capacidad < 1) {
+    showNotification('La capacidad debe ser al menos 1 persona', 'error');
+    return;
+  }
+
   const data = {
     numeroMesa: parseInt(form.numeroMesa.value),
+    capacidad: parseInt(form.capacidad.value),
     estado: form.estado.value,
     piso: form.piso.value,
     sector: form.sector.value
@@ -218,6 +227,7 @@ container.addEventListener('click', async (e) => {
     const mesa = data.mesa || data; // si tu API devuelve {mesa: {...}} o el objeto directo
 
     document.getElementById('numeroMesa').value = mesa.numeroMesa;
+    document.getElementById('capacidad').value = mesa.capacidad;
     document.getElementById('estado').value = mesa.estado;
     document.getElementById('piso').value = mesa.piso;
     document.getElementById('sector').value = mesa.sector;

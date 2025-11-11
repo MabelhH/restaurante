@@ -1,0 +1,1564 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Clientes - Nova Salud</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/clientes.css">
+  <style>
+    /* Estilos para el modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: rgb(235, 232, 232);
+      padding: 20px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 500px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .close {
+      float: right;
+      font-size: 24px;
+      cursor: pointer;
+      color: #666;
+    }
+
+    .close:hover {
+      color: #000;
+    }
+
+    .mesa-selection {
+      margin: 15px 0;
+    }
+
+    .mesa-selection select {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+
+    /* Nuevos estilos para selección múltiple */
+    .mesas-seleccionadas-container {
+      margin: 10px 0;
+      padding: 10px;
+      background-color: #f9f9f9;
+      border-radius: 4px;
+      border-left: 4px solid #4CAF50;
+      display: none;
+    }
+
+    .mesas-seleccionadas-container h4 {
+      margin: 0 0 8px 0;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .mesa-item {
+      display: inline-flex;
+      align-items: center;
+      background-color: #e8f5e9;
+      padding: 6px 10px;
+      margin: 4px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    h3{
+      text-align: center;
+      text-transform:uppercase ;
+      font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    }
+
+    .mesa-item button {
+      background: none;
+      border: none;
+      color: #d32f2f;
+      cursor: pointer;
+      margin-left: 5px;
+      font-size: 14px;
+    }
+
+    .mesas-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+      max-height: 200px;
+      overflow-y: auto;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+
+    .mesa-option {
+      padding: 10px;
+      border: 2px solid #ddd;
+      border-radius: 4px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .mesa-option:hover {
+      background-color: #f5f5f5;
+    }
+
+    .mesa-option.selected {
+      background-color: #4CAF50;
+      color: white;
+      border-color: #4CAF50;
+    }
+
+    /* Estilos mejorados para las tarjetas */
+    .cards-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 20px;
+      padding: 20px 0;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      padding: 20px;
+      transition: all 0.3s ease;
+      border-left: 4px solid #4CAF50;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+    }
+
+    .card.cliente {
+      border-left-color: #2196F3;
+    }
+
+    .card.reserva {
+      border-left-color: #FF9800;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 15px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .card-title {
+      margin: 0;
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4CAF50, #45a049);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 1.1rem;
+    }
+
+    .card.cliente .card-avatar {
+      background: linear-gradient(135deg, #2196F3, #0b7dda);
+    }
+
+    .card-body {
+      margin-bottom: 15px;
+    }
+
+    .card-info {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 0.95rem;
+      color: #555;
+    }
+
+    .card-info i {
+      width: 20px;
+      color: #777;
+      margin-right: 10px;
+    }
+
+    .card-info strong {
+      color: #333;
+      margin-right: 5px;
+    }
+
+    /* Estados de reserva */
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .badge-pendiente {
+      background-color: #FFF3CD;
+      color: #856404;
+    }
+
+    .badge-confirmada {
+      background-color: #D4EDDA;
+      color: #155724;
+    }
+
+    .badge-cancelada {
+      background-color: #F8D7DA;
+      color: #721C24;
+    }
+
+    /* Acciones de tarjeta mejoradas */
+    .card-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid #f0f0f0;
+    }
+
+    .btn-reservar, .btn-editar, .btn-eliminar, 
+    .btn-confirmar-reserva, .btn-cancelar-reserva, 
+    .btn-editar-reserva, .btn-eliminar-reserva {
+      border: none;
+      border-radius: 6px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s ease;
+      font-weight: 500;
+    }
+
+    .btn-reservar {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    .btn-reservar:hover {
+      background-color: #45a049;
+      transform: scale(1.05);
+    }
+
+    .btn-editar, .btn-editar-reserva {
+      background-color: #2196F3;
+      color: white;
+    }
+
+    .btn-editar:hover, .btn-editar-reserva:hover {
+      background-color: #0b7dda;
+      transform: scale(1.05);
+    }
+
+    .btn-eliminar, .btn-eliminar-reserva {
+      background-color: #f44336;
+      color: white;
+    }
+
+    .btn-eliminar:hover, .btn-eliminar-reserva:hover {
+      background-color: #d32f2f;
+      transform: scale(1.05);
+    }
+
+    .btn-confirmar-reserva {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    .btn-confirmar-reserva:hover {
+      background-color: #45a049;
+      transform: scale(1.05);
+    }
+
+    .btn-cancelar-reserva {
+      background-color: #ff9800;
+      color: white;
+    }
+
+    .btn-cancelar-reserva:hover {
+      background-color: #e68a00;
+      transform: scale(1.05);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #777;
+      grid-column: 1 / -1;
+    }
+
+    .empty-state i {
+      font-size: 64px;
+      margin-bottom: 20px;
+      color: #ddd;
+    }
+
+    .empty-state h3 {
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+      color: #999;
+    }
+
+    .empty-state p {
+      font-size: 1rem;
+      color: #aaa;
+    }
+
+    /* Estilos del formulario */
+    #formReserva label {
+      display: block;
+      margin: 10px 0 5px;
+      font-weight: bold;
+    }
+
+    #formReserva input, 
+    #formReserva textarea, 
+    #formReserva select {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+
+    #formReserva button[type="submit"] {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
+      font-size: 16px;
+    }
+
+    #formReserva button[type="submit"]:hover {
+      background-color: #45a049;
+    }
+
+    /* Notificaciones */
+    .notificacion {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px 20px;
+      border-radius: 5px;
+      color: white;
+      z-index: 1001;
+      max-width: 300px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .notificacion-success {
+      background-color: #4CAF50;
+    }
+
+    .notificacion-error {
+      background-color: #f44336;
+    }
+
+    .notificacion-warning {
+      background-color: #ff9800;
+    }
+
+    .notificacion-info {
+      background-color: #2196F3;
+    }
+
+    .notificacion-contenido {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .notificacion-contenido button {
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+    /* Contenedor de pestañas centrado */
+    .tabs {
+      display: flex;
+      justify-content: center; /* centra los botones */
+      gap: 8px;                /* espacio entre botones */
+      margin: 20px 0;
+      color: #000;
+    }
+
+    /* Botones de pestañas más pequeños */
+    .tab-button {
+      padding: 6px 12px;        /* menos padding = más pequeños */
+      background: linear-gradient(to right, #b22222, #ff6347);
+      border: none;
+      border-radius: 18px;      /* esquinas redondeadas */
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 14px;          /* tamaño de texto más pequeño */
+      color: #f1eeee;
+      transition: all 0.3s ease;
+    }
+
+    .hora-selector {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .hora-selector select {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+
+    /* Hover */
+    .tab-button:hover {
+      background-color: #602f2f;
+    }
+
+    /* Pestaña activa */
+    .tab-button.active {
+      background-color: #af844c;
+      color: white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .btn-agregar-mas {
+      background-color: #2196F3;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .btn-agregar-mas:hover {
+      background-color: #0b7dda;
+    }
+
+    /* Modal de selección de mesas */
+    #mesasModal .modal-content {
+      max-width: 600px;
+    }
+
+    .modal-actions {
+      margin-top: 15px;
+      text-align: right;
+    }
+
+    .btn-confirmar {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .btn-confirmar:hover {
+      background-color: #45a049;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="dashboard-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <h2 class="logo">
+        <i class="fas fa-utensils"></i><br>
+        Restaurante
+      </h2>
+
+      <nav>
+        <a href="/dashboard"><i class="fas fa-home"></i> <span>Dashboard</span></a>
+        <a href="/clientes"><i class="fa-solid fa-users"></i><span>Clientes</span></a>
+        <a href="/register_admin"><i class="fas fa-user-plus"></i> <span>Registro</span></a>
+        <a href="/platos"><i class="fas fa-bowl-food"></i> <span>Platos</span></a>
+        <a href="/mesas"><i class="fas fa-chair"></i> <span>Mesas</span></a>
+        <a href="/ventas"><i class="fas fa-shopping-cart"></i> <span>Ventas</span></a>
+        <a href="/carta"><i class="fas fa-book-open"></i> <span>Carta</span></a>
+        <a href="/logout"><i class="fas fa-sign-out-alt"></i> <span>Cerrar sesión</span></a>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Header -->
+      <header class="top-header">
+        <div class="welcome">
+          <h2>Bienvenido,  usuario.nombre %></h2>
+          <p>Gestiona tus clientes de manera eficiente</p>
+        </div>
+      </header>
+
+      <!-- Content Area -->
+       <div class="content">
+        <!-- Formulario -->
+        <section class="form-section">
+          <h3 id="formTitulo">Registrar nuevo cliente</h3>
+          <form id="formCliente">
+            <input type="text" id="nombre" placeholder="Nombre" required>
+            <input type="text" id="apellido" placeholder="Apellido" required> <!-- obligatorio -->
+            <input type="text" id="telefono" placeholder="Teléfono" required>
+            <button type="submit" id="btnSubmit">
+              <i class="fas fa-plus"></i> Agregar Cliente
+            </button>
+          </form>
+        </section>
+
+        <!-- Content Area -->
+        <div class="tabs">
+          <button class="tab-button" data-tab="clientes">Clientes</button>
+          <button class="tab-button" data-tab="reservas">Reservas</button>
+        </div>
+        <br>
+
+        <!-- Modal para crear reserva -->
+        <div id="reservaModal" class="modal">
+          <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Registrar Reserva</h3>
+            <form id="formReserva">
+              <label>Fecha de Reserva:</label>
+              <input type="date" id="diaReserva" required>
+              
+              <label>Hora de Reserva:</label>
+              <div class="hora-selector">
+                <select id="horaReserva" required>
+                  <option value="">Hora</option>
+                  <!-- Las horas se generarán dinámicamente -->
+                </select>
+                <select id="minutoReserva" required>
+                  <option value="">Minuto</option>
+                  <!-- Los minutos se generarán dinámicamente -->
+                </select>
+                <select id="periodoReserva" required>
+                  <option value="AM">AM</option>
+                  <option value="PM">PM</option>
+                </select>
+              </div>
+              
+              <label>Número de Personas:</label>
+              <input type="number" id="numeroPersonas" min="1" value="1" required>
+              
+              <label>Observaciones:</label>
+              <textarea id="observaciones" placeholder="Observaciones adicionales..."></textarea>
+              
+              <!-- Contenedor para mesas seleccionadas -->
+              <div class="mesas-seleccionadas-container" id="mesasSeleccionadasContainer">
+                <h4>Mesas seleccionadas:</h4>
+                <div id="mesasSeleccionadasLista"></div>
+              </div>
+              
+              <!-- Botón para agregar más mesas -->
+              <button type="button" class="btn-agregar-mas" id="btnAgregarMesas">
+                <i class="fas fa-plus"></i> Agregar Mesas
+              </button>
+              <br>
+              <button type="submit"><i class="fas fa-plus"></i> Crear Reserva</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Modal para seleccionar mesas -->
+        <div id="mesasModal" class="modal">
+          <div class="modal-content">
+            <span class="close" id="closeMesasModal">&times;</span>
+            <h3>Seleccionar Mesas</h3>
+            
+            <div class="mesas-grid" id="mesasDisponibles">
+              <!-- Las mesas disponibles se cargarán aquí -->
+            </div>
+            
+            <div class="modal-actions">
+              <button type="button" class="btn-confirmar" id="btnConfirmarMesas">
+                Confirmar Selección
+              </button>
+            </div>
+          </div>
+        </div>
+
+       <section class="cards-container" id="listaClientes">
+          <!-- Los clientes se renderizan aquí -->
+        </section>
+          <!-- Lista de Reservas -->
+          <section class="cards-container" id="listaReservas">
+            <!-- Las reservas se renderizan aquí -->
+          </section>
+        
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // clientes.js
+    class ClientesApp {
+      constructor() {
+        this.form = document.getElementById('formCliente');
+        this.listaClientes = document.getElementById('listaClientes');
+        this.listaReservas = document.getElementById('listaReservas');
+        this.modal = document.getElementById('reservaModal');
+        this.mesasModal = document.getElementById('mesasModal');
+        this.formReserva = document.getElementById('formReserva');
+        this.closeModal = this.modal.querySelector('.close');
+        this.closeMesasModal = document.getElementById('closeMesasModal');
+        this.btnAgregarMesas = document.getElementById('btnAgregarMesas');
+        this.btnConfirmarMesas = document.getElementById('btnConfirmarMesas');
+        this.mesasDisponibles = document.getElementById('mesasDisponibles');
+        this.mesasSeleccionadasLista = document.getElementById('mesasSeleccionadasLista');
+        this.mesasSeleccionadasContainer = document.getElementById('mesasSeleccionadasContainer');
+        this.btnSubmit = document.getElementById('btnSubmit');
+        this.formTitulo = document.getElementById('formTitulo');
+        this.horaSelect = document.getElementById('horaReserva');
+        this.minutoSelect = document.getElementById('minutoReserva');
+        this.periodoSelect = document.getElementById('periodoReserva');
+
+        this.tabButtons = document.querySelectorAll('.tab-button') || [];
+
+        // Array para almacenar las mesas seleccionadas
+        this.mesasSeleccionadas = [];
+
+        this.init();
+      }
+
+      init() {
+        this.obtenerClientes();
+        this.obtenerReservas(); 
+        this.configurarEventListeners();
+        this.inicializarSelectorHora();
+        this.cambiarTab('clientes');
+      }
+
+      inicializarSelectorHora() {
+        // Llenar selector de horas (1-12)
+        for (let i = 1; i <= 12; i++) {
+          const option = document.createElement('option');
+          option.value = i;
+          option.textContent = i;
+          this.horaSelect.appendChild(option);
+        }
+
+        // Llenar selector de minutos (00, 05, 10, ... 55)
+        for (let i = 0; i < 60; i += 5) {
+          const option = document.createElement('option');
+          const valor = i.toString().padStart(2, '0');
+          option.value = valor;
+          option.textContent = valor;
+          this.minutoSelect.appendChild(option);
+        }
+         // Establecer valores por defecto
+        this.horaSelect.value = "12";
+        this.minutoSelect.value = "00";
+        this.periodoSelect.value = "PM";
+      }
+
+      obtenerHora24() {
+        let hora = parseInt(this.horaSelect.value);
+        const minutos = this.minutoSelect.value;
+        const periodo = this.periodoSelect.value;
+
+        if (periodo === 'PM' && hora !== 12) {
+          hora += 12;
+        } else if (periodo === 'AM' && hora === 12) {
+          hora = 0;
+        }
+
+        return `${hora.toString().padStart(2, '0')}:${minutos}`;
+      }
+
+      establecerHoraDesde24h(hora24) {
+        if (!hora24) return;
+
+        const [horaStr, minutoStr] = hora24.split(':');
+        let hora = parseInt(horaStr);
+        const minutos = minutoStr;
+
+        let periodo = 'AM';
+        if (hora >= 12) {
+          periodo = 'PM';
+          if (hora > 12) {
+            hora -= 12;
+          }
+        } else if (hora === 0) {
+          hora = 12;
+        }
+        this.horaSelect.value = hora;
+        this.minutoSelect.value = minutos;
+        this.periodoSelect.value = periodo;
+      }
+
+      configurarEventListeners() {
+        this.listaClientes.addEventListener('click', (e) => this.manejarClickLista(e));
+        this.listaReservas.addEventListener('click', (e) => this.manejarClickListaReservas(e));
+        this.closeModal.addEventListener('click', () => this.cerrarModal());
+        this.form.addEventListener('submit', (e) => this.manejarSubmitCliente(e));
+        this.closeMesasModal.addEventListener('click', () => this.cerrarModalMesas());
+        window.addEventListener('click', (e) => this.cerrarModalExterno(e));
+        this.formReserva.addEventListener('submit', (e) => this.manejarSubmitReserva(e));
+        
+        // Botón para agregar mesas
+        this.btnAgregarMesas.addEventListener('click', () => this.abrirModalMesas());
+        
+        // Botón para confirmar selección de mesas
+        this.btnConfirmarMesas.addEventListener('click', () => this.confirmarSeleccionMesas());
+
+        // Pestañas
+        if (this.tabButtons && this.tabButtons.length > 0) {
+          this.tabButtons.forEach(button => {
+            button.addEventListener('click', () => this.cambiarTab(button.dataset.tab));
+          });
+        } else {
+          console.warn('⚠️ No se encontraron elementos .tab-button en el DOM');
+        }
+      }
+
+      cambiarTab(tab) {
+        const clientesSection = this.listaClientes;
+        const reservasSection = this.listaReservas;
+
+        if (tab === 'clientes') {
+          clientesSection.style.display = 'grid';
+          reservasSection.style.display = 'none';
+        } else if (tab === 'reservas') {
+          clientesSection.style.display = 'none';
+          reservasSection.style.display = 'grid';
+        }
+
+      }
+
+      async manejarSubmitCliente(e) {
+        e.preventDefault();
+        
+        const datosCliente = {
+          nombre: document.getElementById('nombre').value.trim(),
+          apellido: document.getElementById('apellido').value.trim(), // ✅
+          telefono: document.getElementById('telefono').value.trim()
+        };
+
+
+        try {
+          if (this.modoEdicion) {
+            await this.actualizarCliente(this.clienteEditandoId, datosCliente);
+          } else {
+            await this.crearCliente(datosCliente);
+          }
+          
+          this.resetearFormulario();
+          this.obtenerClientes();
+          
+        } catch (error) {
+          console.error('Error al guardar cliente:', error);
+          this.mostrarNotificacion('❌ Error al guardar el cliente', 'error');
+        }
+      }
+
+      async crearCliente(datosCliente) {
+        const response = await fetch('/api/clientes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(datosCliente)
+        });
+
+        if (!response.ok) throw new Error('Error al crear cliente');
+        
+        this.mostrarNotificacion('✅ Cliente agregado correctamente', 'success');
+      }
+
+      async actualizarCliente(id, datosCliente) {
+        const response = await fetch(`/api/clientes/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(datosCliente)
+        });
+
+        if (!response.ok) throw new Error('Error al actualizar cliente');
+        
+        this.mostrarNotificacion('✅ Cliente actualizado correctamente', 'success');
+      }
+
+      manejarClickLista(e) {
+        const boton = e.target.closest('button');
+        if (!boton) return;
+
+        const id = boton.dataset.id;
+        
+        if (boton.classList.contains('btn-reservar')) {
+          this.abrirModalReserva(id);
+        } else if (boton.classList.contains('btn-editar')) {
+          this.editarCliente(id);
+        } else if (boton.classList.contains('btn-eliminar')) {
+          this.eliminarCliente(id);
+        }
+
+        
+      }
+
+      manejarClickListaReservas(e) {
+          const boton = e.target.closest('button');
+          if (!boton) return;
+
+          const id = boton.dataset.id;
+
+          if (boton.classList.contains('btn-editar-reserva')) {
+              this.editarReserva(id);
+          } else if (boton.classList.contains('btn-eliminar-reserva')) {
+              this.eliminarReserva(id);
+          }
+      }
+
+
+      abrirModalReserva(id) {
+        this.clienteSeleccionadoId = id;
+        
+        const hoy = new Date().toISOString().split('T')[0];
+        document.getElementById('diaReserva').min = hoy;
+        
+        if (!document.getElementById('diaReserva').value) {
+          document.getElementById('diaReserva').value = hoy;
+        }
+        
+        // Resetear mesas seleccionadas al abrir nueva reserva
+        this.mesasSeleccionadas = [];
+        this.mesasSeleccionadasContainer.style.display = 'none';
+        
+        this.modal.style.display = 'flex';
+      }
+
+      abrirModalMesas() {
+        this.cargarMesasDisponibles();
+        this.mesasModal.style.display = 'flex';
+      }
+
+      cerrarModalMesas() {
+        this.mesasModal.style.display = 'none';
+      }
+
+      async editarCliente(id) {
+        try {
+          const response = await fetch(`/api/clientes/${id}`);
+          if (!response.ok) throw new Error('Error al cargar cliente');
+          
+          const cliente = await response.json();
+          
+          document.getElementById('nombre').value = cliente.nombre;
+          document.getElementById('apellido').value = cliente.apellido;
+          document.getElementById('telefono').value = cliente.telefono;
+          
+          this.btnSubmit.innerHTML = '<i class="fas fa-save"></i> Actualizar Cliente';
+          this.formTitulo.textContent = 'Editar Cliente';
+          
+          this.modoEdicion = true;
+          this.clienteEditandoId = id;
+          
+        } catch (error) {
+          console.error('Error al cargar cliente para editar:', error);
+          this.mostrarNotificacion('❌ Error al cargar los datos del cliente', 'error');
+        }
+      }
+      
+
+      async eliminarCliente(id) {
+        if (!confirm('¿Estás seguro de que deseas eliminar este cliente?\nEsta acción no se puede deshacer.')) {
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/clientes/${id}`, { 
+            method: 'DELETE' 
+          });
+          
+          if (response.ok) {
+            this.mostrarNotificacion('✅ Cliente eliminado correctamente', 'success');
+            this.obtenerClientes();
+          } else {
+            throw new Error('Error al eliminar cliente');
+          }
+        } catch (error) {
+          console.error('Error al eliminar cliente:', error);
+          this.mostrarNotificacion('❌ Error al eliminar el cliente', 'error');
+        }
+      }
+
+      // En el frontend - método manejarSubmitReserva
+      async manejarSubmitReserva(e) {
+        e.preventDefault();
+
+        console.log('🆔 Cliente seleccionado ID:', this.clienteSeleccionadoId);
+
+        if (!this.clienteSeleccionadoId) {
+          this.mostrarNotificacion('❌ No se ha seleccionado un cliente', 'error');
+          return;
+        }
+
+        if (this.mesasSeleccionadas.length === 0) {
+          this.mostrarNotificacion('❌ Debe seleccionar al menos una mesa', 'error');
+          return;
+        }
+
+        const datosReserva = {
+          cliente: this.clienteSeleccionadoId,
+          mesas: this.mesasSeleccionadas.map(mesa => mesa._id),
+          diaReserva: document.getElementById('diaReserva').value,
+          horaReserva: this.obtenerHora24(),
+          numeroPersonas: parseInt(document.getElementById('numeroPersonas').value),
+          observaciones: document.getElementById('observaciones').value.trim(),
+          //estadoReserva: 'pendiente'
+        };
+        if (!this.modoEdicionReserva) {
+          datosReserva.estadoReserva = 'pendiente';
+        }
+
+        console.log('📤 Enviando datos de reserva:', datosReserva);
+
+        try {
+          let url = '/api/reservas';
+          let method = 'POST';
+          
+          if (this.modoEdicionReserva && this.reservaEditandoId) {
+            url = `/api/reservas/${this.reservaEditandoId}`;
+            method = 'PUT';
+            console.log('✏️ Modo edición - Actualizando reserva:', this.reservaEditandoId);
+          }
+
+          const response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(datosReserva)
+          });
+
+          const result = await response.json();
+
+          if (!response.ok) {
+            throw new Error(result.mensaje || `Error ${response.status}`);
+          }
+
+          if (this.modoEdicionReserva) {
+            this.mostrarNotificacion('✅ Reserva actualizada correctamente', 'success');
+            this.modoEdicionReserva = false;
+            this.reservaEditandoId = null;
+          } else {
+            this.mostrarNotificacion('✅ Reserva creada exitosamente', 'success');
+          }
+
+          // Cerrar modal y actualizar lista
+          this.cerrarModal();
+          this.obtenerReservas();
+
+        } catch (error) {
+          console.error('Error al guardar reserva:', error);
+          this.mostrarNotificacion(`❌ Error: ${error.message}`, 'error');
+        }
+      }
+
+      async editarReserva(id) {
+          try {
+              console.log('🔍 Solicitando reserva con ID:', id);
+              const response = await fetch(`/api/reservas/${id}`);
+              if (!response.ok) throw new Error('Error al obtener la reserva');
+
+              const result = await response.json();
+              console.log('📋 Reserva cargada para editar:', result);
+
+              document.getElementById('diaReserva').removeAttribute('min');
+
+              // Llenar modal con los datos de la reserva
+              document.getElementById('diaReserva').value = diaReservaValue;
+
+              console.log('📅 Fecha establecida:', diaReservaValue);
+              console.log('👥 Número de personas establecido:', reserva.numeroPersonas);
+
+              // Verificar la estructura de la respuesta
+              // Puede que la reserva esté en result.data o result.reserva o directamente en result
+              const reserva = result.data || result.reserva || result;
+
+              if (!reserva) {
+                  throw new Error('No se recibió la reserva');
+              }
+
+              // Formatear la fecha
+              // Formatear la fecha
+              let diaReservaValue = reserva.diaReserva;
+              if (typeof diaReservaValue === 'string' && diaReservaValue.includes('T')) {
+                  diaReservaValue = diaReservaValue.split('T')[0];
+              } else if (diaReservaValue instanceof Date) {
+                  diaReservaValue = diaReservaValue.toISOString().split('T')[0];
+              }
+
+              // Llenar modal con los datos de la reserva
+              document.getElementById('diaReserva').value = diaReservaValue;
+              //document.getElementById('horaReserva').value = reserva.horaReserva;
+              this.establecerHoraDesde24h(reserva.horaReserva);
+              document.getElementById('numeroPersonas').value = reserva.numeroPersonas;
+              document.getElementById('observaciones').value = reserva.observaciones || '';
+
+              // Obtener el ID del cliente: si es un objeto, tomamos _id, si no, el string
+              // Verificamos si reserva.cliente existe y tiene _id, sino usamos el valor directo (que puede ser el ID string)
+              if (reserva.cliente) {
+                  this.clienteSeleccionadoId = reserva.cliente._id || reserva.cliente;
+              } else {
+                  // Si no hay cliente, podríamos mostrar un error o manejarlo de otra forma
+                  console.error('No se encontró el cliente en la reserva');
+                  this.mostrarNotificacion('❌ No se pudo cargar el cliente de la reserva', 'error');
+                  return;
+              }
+
+              // Manejar las mesas
+              if (reserva.mesas && Array.isArray(reserva.mesas)) {
+                  // Si las mesas están populadas (cada elemento es un objeto con _id) entonces las usamos directamente
+                  this.mesasSeleccionadas = reserva.mesas;
+              } else {
+                  // Si las mesas son un array de IDs, entonces creamos un array de objetos con _id
+                  this.mesasSeleccionadas = reserva.mesas.map(id => ({ _id: id }));
+              }
+
+              this.renderizarMesasSeleccionadas();
+
+              // Cambiar el texto del botón del modal
+              const submitButton = this.formReserva.querySelector('button[type="submit"]');
+              submitButton.innerHTML = '<i class="fas fa-save"></i> Actualizar Reserva';
+
+              // Establecer modo edición
+              this.modoEdicionReserva = true;
+              this.reservaEditandoId = id;
+              
+              // Abrir modal
+              this.modal.style.display = 'flex';
+              
+          } catch (error) {
+              console.error('Error al editar reserva:', error);
+              this.mostrarNotificacion('❌ Error al cargar la reserva: ' + error.message, 'error');
+          }
+      }
+
+      async eliminarReserva(id) {
+          if (!confirm('¿Estás seguro de que deseas eliminar esta reserva?')) return;
+
+          try {
+              const response = await fetch(`/api/reservas/${id}`, { 
+                  method: 'DELETE' 
+              });
+
+              if (response.ok) {
+                  this.mostrarNotificacion('✅ Reserva eliminada correctamente', 'success');
+                  this.obtenerReservas();
+              } else {
+                  throw new Error('Error al eliminar reserva');
+              }
+          } catch (error) {
+              console.error('Error al eliminar reserva:', error);
+              this.mostrarNotificacion('❌ Error al eliminar la reserva', 'error');
+          }
+      }
+
+      async cargarMesasDisponibles() {
+        try {
+          const response = await fetch('/api/mesas');
+          
+          if (!response.ok) {
+            throw new Error(`Error ${response.status}: ${response.statusText}`);
+          }
+          
+          const data = await response.json();
+          console.log('📋 Todas las mesas cargadas:', data);
+          
+          if (data.success && data.mesas) {
+            this.renderizarMesasDisponibles(data.mesas);
+          } else {
+            throw new Error('Formato de respuesta inválido');
+          }
+          
+        } catch (error) {
+          console.error('Error al cargar mesas:', error);
+          this.mesasDisponibles.innerHTML = '<p>Error al cargar mesas</p>';
+          this.mostrarNotificacion('❌ Error al cargar las mesas disponibles', 'error');
+        }
+      }
+
+      renderizarMesasDisponibles(mesas) {
+        this.mesasDisponibles.innerHTML = '';
+
+        if (!mesas || mesas.length === 0) {
+          this.mesasDisponibles.innerHTML = '<p>No hay mesas disponibles</p>';
+          return;
+        }
+
+        const mesasDisponibles = mesas.filter(mesa => 
+          mesa.estado === 'disponible' || mesa.estado === 'liberada'
+        );
+
+        if (mesasDisponibles.length === 0) {
+          this.mesasDisponibles.innerHTML = '<p>No hay mesas disponibles en este momento</p>';
+          return;
+        }
+
+        mesasDisponibles.forEach(mesa => {
+          const mesaElement = document.createElement('div');
+          mesaElement.className = 'mesa-option';
+          mesaElement.dataset.id = mesa._id;
+          
+          let texto = `Mesa ${mesa.numeroMesa}`;
+          if (mesa.capacidad) texto += ` (${mesa.capacidad} personas)`;
+          if (mesa.piso) texto += ` - ${mesa.piso}`;
+          if (mesa.sector) texto += ` - ${mesa.sector}`;
+          
+          mesaElement.textContent = texto;
+          
+          // Verificar si esta mesa ya está seleccionada
+          if (this.mesasSeleccionadas.some(m => m._id === mesa._id)) {
+            mesaElement.classList.add('selected');
+          }
+          
+          mesaElement.addEventListener('click', () => {
+            this.toggleSeleccionMesa(mesa, mesaElement);
+          });
+          
+          this.mesasDisponibles.appendChild(mesaElement);
+        });
+      }
+
+      toggleSeleccionMesa(mesa, elemento) {
+        const index = this.mesasSeleccionadas.findIndex(m => m._id === mesa._id);
+        
+        if (index === -1) {
+          // Agregar mesa a la selección
+          this.mesasSeleccionadas.push(mesa);
+          elemento.classList.add('selected');
+        } else {
+          // Quitar mesa de la selección
+          this.mesasSeleccionadas.splice(index, 1);
+          elemento.classList.remove('selected');
+        }
+      }
+
+      confirmarSeleccionMesas() {
+        this.renderizarMesasSeleccionadas();
+        this.cerrarModalMesas();
+      }
+
+      renderizarMesasSeleccionadas() {
+        this.mesasSeleccionadasLista.innerHTML = '';
+        
+        if (this.mesasSeleccionadas.length === 0) {
+          this.mesasSeleccionadasContainer.style.display = 'none';
+          return;
+        }
+        
+        this.mesasSeleccionadasContainer.style.display = 'block';
+        
+        this.mesasSeleccionadas.forEach(mesa => {
+          const mesaElement = document.createElement('div');
+          mesaElement.className = 'mesa-item';
+          
+          let texto = `Mesa ${mesa.numeroMesa}`;
+          if (mesa.capacidad) texto += ` (${mesa.capacidad} personas)`;
+          if (mesa.piso) texto += ` - ${mesa.piso}`;
+          if (mesa.sector) texto += ` - ${mesa.sector}`;
+          
+          mesaElement.innerHTML = `
+            ${texto}
+            <button type="button" data-id="${mesa._id}">
+              <i class="fas fa-times"></i>
+            </button>
+          `;
+          
+          // Agregar evento para eliminar mesa
+          const btnEliminar = mesaElement.querySelector('button');
+          btnEliminar.addEventListener('click', () => {
+            this.eliminarMesaSeleccionada(mesa._id);
+          });
+          
+          this.mesasSeleccionadasLista.appendChild(mesaElement);
+        });
+      }
+
+      eliminarMesaSeleccionada(id) {
+        this.mesasSeleccionadas = this.mesasSeleccionadas.filter(mesa => mesa._id !== id);
+        this.renderizarMesasSeleccionadas();
+        
+        // Actualizar estado en el modal de mesas
+        const mesaElement = this.mesasDisponibles.querySelector(`[data-id="${id}"]`);
+        if (mesaElement) {
+          mesaElement.classList.remove('selected');
+        }
+      }
+
+      cerrarModal() {
+        this.modal.style.display = 'none';
+        this.formReserva.reset();
+        this.mesasSeleccionadas = [];
+        this.mesasSeleccionadasContainer.style.display = 'none';
+
+        this.horaSelect.value = "12";
+        this.minutoSelect.value = "00";
+        this.periodoSelect.value = "PM";
+
+        this.modoEdicionReserva = false;
+        this.reservaEditandoId = null;
+        this.clienteSeleccionadoId = null;
+        
+        // Restaurar texto del botón
+        const submitButton = this.formReserva.querySelector('button[type="submit"]');
+        submitButton.innerHTML = '<i class="fas fa-plus"></i> Crear Reserva';
+      }
+
+      cerrarModalExterno(e) {
+        if (e.target === this.modal) {
+          this.cerrarModal();
+        }
+        if (e.target === this.mesasModal) {
+          this.cerrarModalMesas();
+        }
+      }
+
+      resetearFormulario() {
+        this.form.reset();
+        this.btnSubmit.innerHTML = '<i class="fas fa-plus"></i> Agregar Cliente';
+        this.formTitulo.textContent = 'Registrar nuevo cliente';
+        this.modoEdicion = false;
+        this.clienteEditandoId = null;
+      }
+
+      async obtenerReservas() {
+        try {
+          const response = await fetch('/api/reservas');
+          const result = await response.json();
+
+          // Verifica si result.data es un array
+          const reservas = Array.isArray(result.data) ? result.data : [];
+
+          console.log('📋 Reservas recibidas:', reservas);
+          this.renderizarReservas(reservas);
+
+        } catch (error) {
+          console.error('Error al obtener reservas:', error);
+          this.listaReservas.innerHTML = `
+            <div class="empty-state">
+              <i class="fas fa-exclamation-triangle"></i>
+              <h3>Error al cargar reservas</h3>
+              <p>Intenta recargar la página</p>
+            </div>`;
+        }
+      }
+
+      // Dentro de la clase ClientesApp, agrega este método y modifica renderizarReservas:
+
+      // Función para convertir hora de 24h a 12h con AM/PM
+      formatearHoraAMPM(hora24) {
+        if (!hora24 || hora24 === 'Sin hora') return 'Sin hora';
+        
+        try {
+          const [horas, minutos] = hora24.split(':');
+          let hora = parseInt(horas);
+          const ampm = hora >= 12 ? 'PM' : 'AM';
+          
+          // Convertir a formato 12h
+          hora = hora % 12;
+          hora = hora ? hora : 12; // la hora 0 se convierte en 12
+          
+          return `${hora}:${minutos} ${ampm}`;
+        } catch (error) {
+          console.error('Error al formatear hora:', error);
+          return hora24; // Retorna el valor original si hay error
+        }
+      }
+
+      renderizarReservas(reservas) {
+        this.listaReservas.innerHTML = '';
+
+        if (!reservas || reservas.length === 0) {
+          this.listaReservas.innerHTML = `
+            <div class="empty-state">
+              <i class="fas fa-calendar-times"></i>
+              <h3>No hay reservas registradas</h3>
+              <p>Las reservas aparecerán aquí cuando se creen.</p>
+            </div>`;
+          return;
+        }
+
+        reservas.forEach(reserva => {
+          const card = document.createElement('div');
+          card.classList.add('card', 'reserva');
+
+          const numerosMesas = reserva.mesas.map(m => m.numeroMesa || 'Sin número').join(', ');
+          const fecha = new Date(reserva.diaReserva).toLocaleDateString('es-PE');
+          const hora = this.formatearHoraAMPM(reserva.horaReserva);
+
+          // Determinar la clase del badge según el estado
+          let badgeClass = '';
+          switch (reserva.estadoReserva) {
+            case 'pendiente':
+              badgeClass = 'badge-pendiente';
+              break;
+            case 'confirmada':
+              badgeClass = 'badge-confirmada';
+              break;
+            case 'cancelada':
+              badgeClass = 'badge-cancelada';
+              break;
+            default:
+              badgeClass = 'badge-pendiente';
+          }
+
+          // Obtener nombre completo del cliente (nombre + apellido)
+          const nombreCliente = reserva.cliente 
+            ? `${reserva.cliente.nombre || ''} ${reserva.cliente.apellido || ''}`.trim()
+            : 'Cliente eliminado';
+
+          const botonConfirmar = reserva.estadoReserva !== 'confirmada'
+            ? `<button type="button" class="btn-confirmar-reserva" data-id="${reserva._id}" title="Confirmar reserva">
+                <i class="fas fa-check"></i>
+              </button>`
+            : '';
+
+          const botonCancelar = reserva.estadoReserva === 'confirmada'
+            ? `<button type="button" class="btn-cancelar-reserva" data-id="${reserva._id}" title="Cancelar reserva">
+                <i class="fas fa-times"></i>
+              </button>`
+            : '';
+
+
+          card.innerHTML = `
+            <div class="card-header">
+              <div class="card-title">
+                <i class="fas fa-user"></i> ${nombreCliente}
+              </div>
+              <span class="badge ${badgeClass}">${reserva.estadoReserva}</span>
+            </div>
+            <div class="card-body">
+              <div class="card-info">
+                <i class="fas fa-chair"></i>
+                <strong>Mesas:</strong> ${numerosMesas}
+              </div>
+              <div class="card-info">
+                <i class="fas fa-calendar-day"></i>
+                <strong>Fecha:</strong> ${fecha}
+              </div>
+              <div class="card-info">
+                <i class="fas fa-clock"></i>
+                <strong>Hora:</strong> ${hora}
+              </div>
+              <div class="card-info">
+                <i class="fas fa-users"></i>
+                <strong>Personas:</strong> ${reserva.numeroPersonas}
+              </div>
+              ${reserva.observaciones ? `
+              <div class="card-info">
+                <i class="fas fa-sticky-note"></i>
+                <strong>Observaciones:</strong> ${reserva.observaciones}
+              </div>
+              ` : ''}
+            </div>
+            <div class="card-actions">
+              <button class="btn-editar-reserva" data-id="${reserva._id}" title="Editar reserva">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="btn-eliminar-reserva" data-id="${reserva._id}" title="Eliminar reserva">
+                <i class="fas fa-trash"></i>
+              </button>
+              ${botonConfirmar}
+              ${botonCancelar}
+            </div>
+          `;
+          this.listaReservas.appendChild(card);
+        });
+        
+        // Agregar event listeners a los botones de confirmar y cancelar
+        const botonesConfirmar = this.listaReservas.querySelectorAll('.btn-confirmar-reserva');
+        botonesConfirmar.forEach(boton => {
+          boton.addEventListener('click', () => {
+            const reservaId = boton.dataset.id;
+            this.confirmarReserva(reservaId);
+          });
+        });
+
+        const botonesCancelar = this.listaReservas.querySelectorAll('.btn-cancelar-reserva');
+        botonesCancelar.forEach(boton => {
+          boton.addEventListener('click', () => this.cancelarReserva(boton.dataset.id));
+        });
+      }
+
+      async confirmarReserva(id) {
+          try {
+              const response = await fetch(`/api/reservas/${id}/estado`, {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ estado: 'confirmada' }) // ⚡ usar "estado" aquí
+              });
+
+              const result = await response.json();
+              if (!response.ok) throw new Error(result.mensaje || 'Error al actualizar reserva');
+
+              this.mostrarNotificacion('✅ Reserva confirmada correctamente', 'success');
+              this.obtenerReservas();
+          } catch (error) {
+              console.error(error);
+              this.mostrarNotificacion('❌ Error al confirmar la reserva', 'error');
+          }
+      }
+
+      // Función para cancelar reserva (cambia estado a "cancelada")
+      async cancelarReserva(id) {
+          try {
+              const response = await fetch(`/api/reservas/${id}/estado`, {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ estado: 'cancelada' }) // ⚡ cambia a "cancelada"
+              });
+
+              const result = await response.json();
+
+              if (!response.ok) throw new Error(result.mensaje || 'Error al cancelar la reserva');
+
+              this.mostrarNotificacion('✅ Reserva cancelada correctamente', 'success');
+              this.obtenerReservas(); // refresca la lista para reflejar el nuevo estado
+          } catch (error) {
+              console.error(error);
+              this.mostrarNotificacion('❌ Error al cancelar la reserva', 'error');
+          }
+      }
+
+      async obtenerClientes() {
+        try {
+          const response = await fetch('/api/clientes');
+          const clientes = await response.json();
+          this.renderizarClientes(clientes);
+        } catch (error) {
+          console.error('Error al obtener clientes:', error);
+          this.listaClientes.innerHTML = `
+            <div class="empty-state">
+              <i class="fas fa-exclamation-triangle"></i>
+              <h3>Error al cargar clientes</h3>
+              <p>Intenta recargar la página</p>
+            </div>`;
+        }
+      }
+
+      renderizarClientes(clientes) {
+        this.listaClientes.innerHTML = '';
+
+        if (!clientes || clientes.length === 0) {
+          this.listaClientes.innerHTML = `
+            <div class="empty-state">
+              <i class="fas fa-users"></i>
+              <h3>No hay clientes registrados</h3>
+              <p>Agrega tu primer cliente al sistema.</p>
+            </div>`;
+          return;
+        }
+
+        clientes.forEach(cliente => {
+          const card = document.createElement('div');
+          card.classList.add('card', 'cliente');
+          
+          // Obtener iniciales para el avatar
+          const iniciales = (cliente.nombre.charAt(0) + (cliente.apellido ? cliente.apellido.charAt(0) : '')).toUpperCase();
+          
+          card.innerHTML = `
+            <div class="card-header">
+              <div class="card-title">
+                <div class="card-avatar">${iniciales}</div>
+                <div>
+                  <div>${cliente.nombre} ${cliente.apellido || ''}</div>
+                  <div style="font-size: 0.8rem; color: #777; margin-top: 3px;">ID: ${cliente._id.substring(0, 8)}...</div>
+                </div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="card-info">
+                <i class="fas fa-phone"></i>
+                <strong>Teléfono:</strong> ${cliente.telefono}
+              </div>
+              <div class="card-info">
+                <i class="fas fa-calendar-plus"></i>
+                <strong>Registrado:</strong> ${new Date().toLocaleDateString('es-PE')}
+              </div>
+            </div>
+            <div class="card-actions">
+              <button class="btn-reservar" data-id="${cliente._id}" title="Crear reserva">
+                <i class="fas fa-calendar-plus"></i> Reservar
+              </button>
+              <button class="btn-editar" data-id="${cliente._id}" title="Editar cliente">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="btn-eliminar" data-id="${cliente._id}" title="Eliminar cliente">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          `;
+          this.listaClientes.appendChild(card);
+        });
+      }
+
+      mostrarNotificacion(mensaje, tipo = 'info') {
+        const notificacion = document.createElement('div');
+        notificacion.className = `notificacion notificacion-${tipo}`;
+        notificacion.innerHTML = `
+          <div class="notificacion-contenido">
+            <span>${mensaje}</span>
+            <button onclick="this.parentElement.parentElement.remove()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        `;
+        
+        document.body.appendChild(notificacion);
+        
+        setTimeout(() => {
+          if (notificacion.parentElement) {
+            notificacion.remove();
+          }
+        }, 5000);
+      }
+    }
+
+    // Inicializar la aplicación cuando el DOM esté listo
+    document.addEventListener('DOMContentLoaded', () => {
+      new ClientesApp();
+    });
+  </script>
+</body>
+</html> 

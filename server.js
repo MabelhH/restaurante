@@ -62,6 +62,8 @@ const mesasRouter = require('./routers/mesasRouter');
 const categoriaRoutes = require('./routers/categoriaRoutes');
 const pedidosRouter = require('./routers/pedidosRouter'); // ✅ Corregido nombre
 const pagosRouter = require('./routers/pagosRouter');    // ✅ Agregado
+const clientesRouter = require('./routers/clientesRouters');
+const reservasRouter = require('./routers/reservaRoute');
 const cajeroRouter = require('./routers/cajeroReuter');
 // ===== Routers de VISTAS =====
 const platosViewRouter = require('./routers/platosViewRouter');
@@ -70,7 +72,8 @@ const userViewRouter = require('./routers/userViewRouter');
 const mesasViewRouter = require('./routers/mesasViewRouter');
 const cartaViewRouter = require('./routers/cartaViewRouter');
 const pedidosViewRouter = require('./routers/pedidosViewRouter'); // ✅ Nuevo
-const pagosViewRouter = require('./routers/pagosViewRouter');    // ✅ Nuevo
+const pagosViewRouter = require('./routers/pagosViewRouter'); 
+const clientesViewRouter = require('./routers/clienteViewRouter');   // ✅ Nuevo
 
 // ===== USAR ROUTERS API =====
 
@@ -80,7 +83,14 @@ app.use('/api/users', userRouter);
 app.use('/api/mesas', mesasRouter); 
 app.use('/api/categorias', categoriaRoutes);
 app.use('/api/pedidos', pedidosRouter);  // ✅ API de pedidos
-app.use('/api/pagos', pagosRouter);      // ✅ API de pagos
+app.use('/api/pagos', pagosRouter);  
+app.use('/api/clientes', clientesRouter);  
+app.use('/api/reservas', reservasRouter);
+
+app.get('/api/test-reservas', (req, res) => {
+  res.json({ message: '✅ Ruta de reservas funciona', timestamp: new Date() });
+});
+    // ✅ API de pagos
 
 // ===== USAR ROUTERS DE VISTAS =====
 
@@ -91,6 +101,7 @@ app.use('/carta', cartaViewRouter);
 app.use('/pedidos', pedidosViewRouter); // ✅ Vistas de pedidos
 app.use('/pagos', pagosViewRouter);     // ✅ Vistas de pagos
 app.use('/cajero', cajeroRouter);
+app.use('/clientes', clientesViewRouter);
 app.use('/', userViewRouter); // rutas de usuario (login, register, dashboard)
 
 // ===== Rutas de vistas principales =====

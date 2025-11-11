@@ -13,6 +13,11 @@ const mesasSchema = new Schema({
     default: 'disponible',
     required: true
   },
+  capacidad: {
+        type: Number,
+        required: true,
+        min: 1
+  },
   piso: {
     type: String,
     enum: ['piso 1', 'piso 2', 'piso 3'],

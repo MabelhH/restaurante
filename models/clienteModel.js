@@ -3,9 +3,12 @@ const Schema = mongoose.Schema;
 
 const clienteSchema = new Schema({
     nombre: String,
+    apellido: String,
     telefono: String,
-    correo: String,
-    direccion: String 
+    activo: {  // ← AGREGAR ESTE CAMPO
+        type: Boolean,
+        default: true
+    }
 });
 
 const Cliente = mongoose.model('Cliente', clienteSchema);
