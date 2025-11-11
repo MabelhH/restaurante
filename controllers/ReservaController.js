@@ -7,10 +7,16 @@ class ReservaController {
   // Obtener todas las reservas
   async listar(req, res) {
     try {
-      const { fecha, cliente, estado } = req.query;
+      const { fecha, cliente, estado, fechaInicio, fechaFin } = req.query;
       
       let reservas;
-      if (fecha) {
+      
+      // Prioridad: rango de fechas
+      if (fechaInicio && fechaFin) {
+        reservas = await reservaService.getReservasPorRango(fechaInicio, fechaFin);
+      } 
+      // Luego filtros individuales
+      else if (fecha) {
         reservas = await reservaService.getReservasPorFecha(fecha);
       } else if (cliente) {
         reservas = await reservaService.getReservasPorCliente(cliente);
@@ -33,31 +39,43 @@ class ReservaController {
       });
     }
   }
-
   // Obtener una reserva por ID
-  async obtener(req, res) {
+  // controllers/ReservaController.js
+  async  obtener(req, res) {
     try {
-      const reserva = await reservaService.getById(req.params.id);
-      res.json({
-        success: true,
-        data: reserva
-      });
+      const reserva = await Reserva.findById(req.params.id)
+      .populate('cliente', 'nombre apellido telefono email')
+      .populate('mesas', 'numeroMesa capacidad piso sector estado');
+      
+      console.log('📋 Reserva encontrada:', reserva);
+      console.log('🪑 Mesas en la reserva:', reserva?.mesas);// <- importante
+      if (!reserva) return res.status(404).json({ mensaje: 'Reserva no encontrada' });
+      res.json(reserva);
     } catch (error) {
-      res.status(404).json({
-        success: false,
-        mensaje: error.message
-      });
+      console.error(error);
+      res.status(500).json({ mensaje: 'Error al obtener la reserva' });
     }
   }
+
 
   // Crear nueva reserva
   async crear(req, res) {
     try {
       console.log('📝 Datos recibidos en reserva:', req.body);
       
+      // Validación más robusta
+      const { diaReserva, mesas, cliente, horaReserva } = req.body;
+      
+      if (!diaReserva || !mesas || !cliente || !horaReserva) {
+        return res.status(400).json({
+          success: false,
+          mensaje: 'Faltan campos obligatorios: diaReserva, mesas, cliente, horaReserva'
+        });
+      }
+
       const reservaData = {
         ...req.body,
-        diaReserva: new Date(req.body.diaReserva),
+        diaReserva: new Date(diaReserva),
         numeroPersonas: parseInt(req.body.numeroPersonas) || 1,
         observaciones: req.body.observaciones || '',
         estadoReserva: req.body.estadoReserva || 'pendiente'
@@ -127,20 +145,35 @@ class ReservaController {
   }
 
   // Eliminar reserva (soft delete)
+  // En tu ReservaController.js - método eliminar
   async eliminar(req, res) {
-    try {
-      await reservaService.delete(req.params.id);
-      res.json({
-        success: true,
-        mensaje: 'Reserva eliminada correctamente'
-      });
-    } catch (error) {
-      res.status(404).json({
-        success: false,
-        mensaje: error.message
-      });
-    }
+      try {
+          console.log('🗑️ SOLICITUD DE ELIMINAR RESERVA ID:', req.params.id);
+
+          const resultado = await reservaService.delete(req.params.id);
+
+          if (!resultado) {
+              console.log('❌ Reserva no encontrada para eliminar');
+              return res.status(404).json({
+                  success: false,
+                  mensaje: 'Reserva no encontrada'
+              });
+          }
+
+          console.log('✅ Reserva eliminada correctamente');
+          res.json({
+              success: true,
+              mensaje: 'Reserva eliminada correctamente'
+          });
+      } catch (error) {
+          console.error('❌ Error al eliminar reserva:', error);
+          res.status(500).json({
+              success: false,
+              mensaje: error.message || 'Error al eliminar reserva'
+          });
+      }
   }
+
 
   // Cambiar estado de reserva
   async cambiarEstado(req, res) {
@@ -218,6 +251,119 @@ class ReservaController {
       res.status(400).json({
         success: false,
         mensaje: error.message
+      });
+    }
+  }
+  // Agregar al controlador
+  async estadisticas(req, res) {
+    try {
+      const stats = await reservaService.getEstadisticas();
+      
+      res.json({
+        success: true,
+        data: stats
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        mensaje: 'Error al obtener estadísticas',
+        error: error.message
+      });
+    }
+  }
+  // Agregar a tu ReservaController.js
+
+  // 📅 Reservas de hoy
+  async reservasHoy(req, res) {
+    try {
+      const hoy = new Date().toISOString().split('T')[0];
+      const reservas = await reservaService.getReservasPorFecha(hoy);
+      res.json({
+        success: true,
+        data: reservas,
+        total: reservas.length
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        mensaje: 'Error al obtener reservas de hoy',
+        error: error.message
+      });
+    }
+  }
+
+  // ⏳ Reservas pendientes
+  async reservasPendientes(req, res) {
+    try {
+      const reservas = await reservaService.getReservasPorEstado('pendiente');
+      res.json({
+        success: true,
+        data: reservas,
+        total: reservas.length
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        mensaje: 'Error al obtener reservas pendientes',
+        error: error.message
+      });
+    }
+  }
+
+  // 👤 Reservas por cliente (ID específico)
+  async reservasPorClienteId(req, res) {
+    try {
+      const { clienteId } = req.params;
+      const reservas = await reservaService.getReservasPorCliente(clienteId);
+      res.json({
+        success: true,
+        data: reservas,
+        total: reservas.length
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        mensaje: 'Error al obtener reservas del cliente',
+        error: error.message
+      });
+    }
+  }
+
+  // 🪑 Reservas por mesa específica
+  async reservasPorMesaId(req, res) {
+    try {
+      const { mesaId } = req.params;
+      // Necesitarías agregar este método al servicio
+      const reservas = await reservaService.getReservasPorMesa(mesaId);
+      res.json({
+        success: true,
+        data: reservas,
+        total: reservas.length
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        mensaje: 'Error al obtener reservas de la mesa',
+        error: error.message
+      });
+    }
+  }
+
+  // 📅 Reservas por fecha específica
+  async reservasPorFecha(req, res) {
+    try {
+      const { fecha } = req.params;
+      const reservas = await reservaService.getReservasPorFecha(fecha);
+      res.json({
+        success: true,
+        data: reservas,
+        total: reservas.length
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        mensaje: 'Error al obtener reservas de la fecha',
+        error: error.message
       });
     }
   }

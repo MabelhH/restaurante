@@ -132,9 +132,10 @@ class ReservaService {
 
   // ==================== MÉTODOS CRUD PRINCIPALES ====================
 
+  // En ReservaService - método getAll
   async getAll() {
-    return await Reserva.find({ activo: true })
-      .populate('cliente', 'nombre email telefono')
+    return await Reserva.find({ activo: true }) // ✅ Solo reservas activas
+      .populate('cliente', 'nombre apellido email telefono') // ✅ Incluir apellido
       .populate('mesas', 'numeroMesa capacidad piso sector estado')
       .sort({ diaReserva: -1, horaReserva: -1 });
   }
@@ -178,14 +179,29 @@ class ReservaService {
     }
 
     // Validar que las mesas estén disponibles
-    const mesasNoDisponibles = mesas.filter(mesa => mesa.estado !== 'disponible');
+    const mesasNoDisponibles = mesas.filter(mesa => 
+      mesa.estado !== 'disponible' && mesa.estado !== 'liberada'
+    );
     if (mesasNoDisponibles.length > 0) {
       throw new Error(`Las mesas ${mesasNoDisponibles.map(m => m.numeroMesa).join(', ')} no están disponibles`);
     }
 
+    // Asegurar que diaReserva sea un objeto Date válido
+    let diaReserva;
+    if (data.diaReserva instanceof Date) {
+      diaReserva = data.diaReserva;
+    } else if (typeof data.diaReserva === 'string') {
+      diaReserva = new Date(data.diaReserva);
+      if (isNaN(diaReserva.getTime())) {
+        throw new Error('Fecha de reserva no válida');
+      }
+    } else {
+      throw new Error('Formato de fecha no válido');
+    }
+
     // Verificar disponibilidad
     const disponibles = await this.verificarDisponibilidadMesas(
-      data.diaReserva,
+      diaReserva,
       data.horaReserva,
       data.mesas
     );
@@ -194,8 +210,12 @@ class ReservaService {
       throw new Error('Una o más mesas están ocupadas en la fecha y hora seleccionadas');
     }
 
-    // Crear la reserva
-    const nuevaReserva = new Reserva(data);
+    // Crear la reserva con fecha formateada correctamente
+    const nuevaReserva = new Reserva({
+      ...data,
+      diaReserva: diaReserva
+    });
+    
     await nuevaReserva.save();
 
     // Programar activación automática si la reserva está confirmada
@@ -204,10 +224,9 @@ class ReservaService {
     }
 
     return await Reserva.findById(nuevaReserva._id)
-      .populate('cliente', 'nombre email telefono')
+      .populate('cliente', 'nombre apellido telefono') // Cambiado para incluir apellido
       .populate('mesas', 'numeroMesa capacidad piso sector estado');
   }
-
   async update(id, data) {
     console.log('🔍 Actualizando reserva ID:', id);
     console.log('🔍 Datos nuevos:', data);
@@ -258,11 +277,15 @@ class ReservaService {
     }
 
     // Actualizar campos permitidos
-    reserva.cliente = data.cliente || reserva.cliente;
-    reserva.mesas = data.mesas || reserva.mesas;
-    reserva.diaReserva = data.diaReserva || reserva.diaReserva;
-    reserva.horaReserva = data.horaReserva || reserva.horaReserva;
-    reserva.estadoReserva = data.estadoReserva || reserva.estadoReserva;
+    // Actualizar campos permitidos
+      if (data.cliente) reserva.cliente = data.cliente;
+      if (data.mesas) reserva.mesas = data.mesas;
+      if (data.diaReserva) reserva.diaReserva = data.diaReserva;
+      if (data.horaReserva) reserva.horaReserva = data.horaReserva;
+      if (data.estadoReserva) reserva.estadoReserva = data.estadoReserva;
+      if (data.numeroPersonas !== undefined) reserva.numeroPersonas = data.numeroPersonas;
+      if (data.observaciones !== undefined) reserva.observaciones = data.observaciones;
+
 
     await reserva.save();
 
@@ -277,24 +300,26 @@ class ReservaService {
       .populate('mesas', 'numeroMesa capacidad piso sector estado');
   }
 
+  // ReservaService - método delete CORREGIDO
   async delete(id) {
+    console.log('🗑️ Eliminando reserva de la base de datos ID:', id);
+    
     const reserva = await Reserva.findById(id);
-    if (!reserva || !reserva.activo) {
+    if (!reserva) {
       throw new Error('Reserva no encontrada');
     }
 
-    // Liberar mesas antes de desactivar la reserva
-    await this.liberarMesasDeReserva(id);
-
-    return await Reserva.findByIdAndUpdate(
-      id, 
-      { activo: false }, 
-      { new: true }
-    );
+    // ❌ OPCIÓN 1: Eliminación física (RECOMENDADA para eliminar completamente)
+    await Reserva.findByIdAndDelete(id);
+    
+    console.log('✅ Reserva eliminada permanentemente de la base de datos');
+    return { mensaje: 'Reserva eliminada permanentemente' };
   }
+
 
   // ==================== MÉTODOS DE CONSULTA ====================
 
+  // En todos los métodos de consulta, asegúrate de incluir { activo: true }
   async getReservasPorFecha(fecha) {
     const startOfDay = new Date(fecha);
     startOfDay.setHours(0, 0, 0, 0);
@@ -307,9 +332,9 @@ class ReservaService {
         $gte: startOfDay,
         $lte: endOfDay
       },
-      activo: true
+      activo: true // ✅ Solo reservas activas
     })
-    .populate('cliente', 'nombre email telefono')
+    .populate('cliente', 'nombre apellido email telefono')
     .populate('mesas', 'numeroMesa capacidad piso sector estado')
     .sort({ horaReserva: 1 });
   }
@@ -319,6 +344,7 @@ class ReservaService {
       cliente: clienteId,
       activo: true
     })
+    .populate('cliente', 'nombre apellido email telefono')
     .populate('mesas', 'numeroMesa capacidad piso sector estado')
     .sort({ diaReserva: -1, horaReserva: -1 });
   }
@@ -384,9 +410,9 @@ class ReservaService {
       id,
       { estadoReserva: estado },
       { new: true }
-    )
-    .populate('cliente', 'nombre email telefono')
+    ).populate('cliente', 'nombre apellido email telefono') // ✅ incluir apellido
     .populate('mesas', 'numeroMesa capacidad piso sector estado');
+
 
     console.log(`🔄 Estado de reserva ${id} cambiado a: ${estado}`);
     return reservaActualizada;
@@ -395,18 +421,37 @@ class ReservaService {
   // ==================== MÉTODOS DE DISPONIBILIDAD ====================
 
   async verificarDisponibilidadMesas(diaReserva, horaReserva, mesasIds, reservaId = null) {
-    const dia = new Date(diaReserva);
+    try {
+      // Normalizar la fecha
+      const dia = diaReserva instanceof Date ? diaReserva : new Date(diaReserva);
+      
+      // Crear filtro base
+      const filtro = {
+        mesas: { $in: mesasIds },
+        diaReserva: {
+          $gte: new Date(dia.setHours(0, 0, 0, 0)),
+          $lte: new Date(dia.setHours(23, 59, 59, 999))
+        },
+        horaReserva: horaReserva,
+        estadoReserva: { $in: ['pendiente', 'confirmada'] },
+        activo: true
+      };
 
-    const reservasExistentes = await Reserva.find({
-      mesas: { $in: mesasIds },
-      diaReserva: dia,
-      horaReserva: horaReserva,
-      estadoReserva: { $in: ['pendiente', 'confirmada'] },
-      activo: true,
-      ...(reservaId ? { _id: { $ne: reservaId } } : {})  // Ignorar la reserva actual
-    });
+      // Excluir la reserva actual si se está editando
+      if (reservaId) {
+        filtro._id = { $ne: reservaId };
+      }
 
-    return reservasExistentes.length === 0;
+      const reservasExistentes = await Reserva.find(filtro);
+      
+      console.log(`🔍 Verificación disponibilidad - Mesas: ${mesasIds}, Fecha: ${diaReserva}, Hora: ${horaReserva}`);
+      console.log(`📊 Reservas existentes encontradas: ${reservasExistentes.length}`);
+
+      return reservasExistentes.length === 0;
+    } catch (error) {
+      console.error('❌ Error en verificarDisponibilidadMesas:', error);
+      return false;
+    }
   }
 
   async getMesasDisponibles(diaReserva, horaReserva) {

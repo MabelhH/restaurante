@@ -128,6 +128,8 @@
     /* Estilos mejorados para las tarjetas */
     .cards-container {
       display: grid;
+      visibility: visible;
+      opacity: 1;
       grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 20px;
       padding: 20px 0;
@@ -502,6 +504,19 @@
       background-color: #45a049;
     }
 
+    #listaClientes, #listaReservas {
+      min-height: 200px;
+    }
+
+    /* Asegurar que las pestañas funcionen correctamente */
+    [data-tab-content] {
+      display: none;
+    }
+
+    [data-tab-content].active {
+      display: block;
+    }
+
   </style>
 </head>
 <body>
@@ -662,6 +677,14 @@
         // Array para almacenar las mesas seleccionadas
         this.mesasSeleccionadas = [];
 
+        this.modoEdicion = false;
+        this.clienteEditandoId = null;
+        this.modoEdicionReserva = false;
+        this.reservaEditandoId = null;
+        this.clienteSeleccionadoId = null;
+
+        
+
         this.init();
       }
 
@@ -671,6 +694,10 @@
         this.configurarEventListeners();
         this.inicializarSelectorHora();
         this.cambiarTab('clientes');
+
+        setTimeout(() => {
+          this.debugEndpointMesas();
+        }, 2000);
       }
 
       inicializarSelectorHora() {
@@ -837,19 +864,74 @@
         
       }
 
-      manejarClickListaReservas(e) {
-          const boton = e.target.closest('button');
-          if (!boton) return;
+      // Agrega este método después del método eliminarCliente
 
-          const id = boton.dataset.id;
+      async editarCliente(id) {
+        try {
+          console.log('✏️ Iniciando edición de cliente ID:', id);
+          
+          const response = await fetch(`/api/clientes/${id}`);
+          if (!response.ok) throw new Error('Error al cargar cliente');
+          
+          const cliente = await response.json();
+          console.log('📋 Cliente cargado para editar:', cliente);
 
-          if (boton.classList.contains('btn-editar-reserva')) {
-              this.editarReserva(id);
-          } else if (boton.classList.contains('btn-eliminar-reserva')) {
-              this.eliminarReserva(id);
-          }
+          // Llenar formulario con datos del cliente
+          document.getElementById('nombre').value = cliente.nombre || '';
+          document.getElementById('apellido').value = cliente.apellido || '';
+          document.getElementById('telefono').value = cliente.telefono || '';
+
+          // Cambiar a modo edición
+          this.modoEdicion = true;
+          this.clienteEditandoId = id;
+
+          // Actualizar interfaz
+          this.btnSubmit.innerHTML = '<i class="fas fa-save"></i> Actualizar Cliente';
+          this.formTitulo.textContent = 'Editar Cliente';
+
+          // Hacer scroll suave al formulario
+          document.querySelector('.form-section').scrollIntoView({ 
+            behavior: 'smooth' 
+          });
+
+        } catch (error) {
+          console.error('Error al editar cliente:', error);
+          this.mostrarNotificacion('❌ Error al cargar el cliente para editar', 'error');
+        }
       }
 
+      manejarClickListaReservas(e) {
+        const boton = e.target.closest('button');
+        if (!boton) return;
+
+        const id = boton.dataset.id;
+        console.log('🖱️ Botón clickeado en reserva:', boton.className, 'ID:', id);
+
+        // Detener la propagación inmediatamente
+        e.stopPropagation();
+
+        // Verificar clases específicas con mayor precisión
+        if (boton.classList.contains('btn-eliminar-reserva')) {
+            console.log('🔴 SOLICITANDO ELIMINAR RESERVA ID:', id);
+            this.eliminarReserva(id);
+            return; // Importante: salir después de manejar el evento
+          }
+          
+          if (boton.classList.contains('btn-editar-reserva')) {
+              this.editarReserva(id);
+              return;
+          }
+          
+          if (boton.classList.contains('btn-confirmar-reserva')) {
+              this.confirmarReserva(id);
+              return;
+          }
+          
+          if (boton.classList.contains('btn-cancelar-reserva')) {
+              this.cancelarReserva(id);
+              return;
+          }
+      }
 
       abrirModalReserva(id) {
         this.clienteSeleccionadoId = id;
@@ -869,6 +951,8 @@
       }
 
       abrirModalMesas() {
+        console.log('🔍 Abriendo modal de mesas...');
+        console.log('📋 Mesas actualmente seleccionadas:', this.mesasSeleccionadas);
         this.cargarMesasDisponibles();
         this.mesasModal.style.display = 'flex';
       }
@@ -877,31 +961,53 @@
         this.mesasModal.style.display = 'none';
       }
 
-      async editarCliente(id) {
+      async editarReserva(id) {
         try {
-          const response = await fetch(`/api/clientes/${id}`);
-          if (!response.ok) throw new Error('Error al cargar cliente');
-          
-          const cliente = await response.json();
-          
-          document.getElementById('nombre').value = cliente.nombre;
-          document.getElementById('apellido').value = cliente.apellido;
-          document.getElementById('telefono').value = cliente.telefono;
-          
-          this.btnSubmit.innerHTML = '<i class="fas fa-save"></i> Actualizar Cliente';
-          this.formTitulo.textContent = 'Editar Cliente';
-          
-          this.modoEdicion = true;
-          this.clienteEditandoId = id;
-          
+            console.log('✏️ Iniciando edición de reserva ID:', id);
+            
+            const response = await fetch(`/api/reservas/${id}`);
+            if (!response.ok) throw new Error('Error al cargar reserva');
+            
+            const reserva = await response.json();
+            console.log('📋 Reserva cargada para editar:', reserva);
+
+            // Validar que la reserva tenga cliente
+            if (!reserva.cliente) {
+                console.error('No se encontró el cliente en la reserva');
+                this.mostrarNotificacion('❌ No se pudo cargar el cliente de la reserva', 'error');
+                return;
+            }
+
+            // Puede ser un objeto o solo un ID
+            this.clienteSeleccionadoId = reserva.cliente._id || reserva.cliente;
+
+            // Establecer modo edición
+            this.modoEdicionReserva = true;
+            this.reservaEditandoId = id;
+
+            // Llenar formulario con datos de la reserva
+            const fechaInput = reserva.diaReserva.split('T')[0];
+            document.getElementById('diaReserva').value = fechaInput;
+
+            this.establecerHoraDesde24h(reserva.horaReserva);
+
+            document.getElementById('numeroPersonas').value = reserva.numeroPersonas || 1;
+            document.getElementById('observaciones').value = reserva.observaciones || '';
+
+            // Mesas seleccionadas
+            this.mesasSeleccionadas = reserva.mesas || [];
+            this.renderizarMesasSeleccionadas();
+
+            // Abrir modal
+            this.modal.style.display = 'flex';
         } catch (error) {
-          console.error('Error al cargar cliente para editar:', error);
-          this.mostrarNotificacion('❌ Error al cargar los datos del cliente', 'error');
+            console.error('Error al editar reserva:', error);
+            this.mostrarNotificacion('❌ Error al cargar la reserva', 'error');
         }
-      }
-      
+    }
 
       async eliminarCliente(id) {
+
         if (!confirm('¿Estás seguro de que deseas eliminar este cliente?\nEsta acción no se puede deshacer.')) {
           return;
         }
@@ -923,6 +1029,117 @@
         }
       }
 
+      // En tu frontend - método eliminarReserva (versión con más debug)
+      // Agrega más debug en tu método eliminarReserva
+      async eliminarReserva(id) {
+          console.log('🔴 INICIANDO ELIMINACIÓN DE RESERVA ID:', id);
+          
+          console.log('🔴 MÉTODO eliminarReserva EJECUTADO PARA ID:', id);
+    
+          if (!confirm('¿Estás seguro de que deseas ELIMINAR (no cancelar) esta reserva?\nEsta acción no se puede deshacer.')) {
+              console.log('❌ Usuario canceló la eliminación');
+              return;
+          }
+
+          try {
+              console.log('🔄 Enviando solicitud DELETE a:', `/api/reservas/${id}`);
+              
+              const response = await fetch(`/api/reservas/${id}`, {
+                  method: 'DELETE'
+              });
+
+              console.log('📡 Status de respuesta:', response.status);
+              console.log('📡 OK?:', response.ok);
+
+              // Verifica el contenido de la respuesta
+              const responseText = await response.text();
+              console.log('📋 Respuesta como texto:', responseText);
+              
+              let result;
+              try {
+                  result = JSON.parse(responseText);
+                  console.log('📋 Respuesta como JSON:', result);
+              } catch (e) {
+                  console.error('❌ No se pudo parsear JSON:', e);
+              }
+
+              if (!response.ok) {
+                  throw new Error(result?.mensaje || `Error ${response.status} al eliminar reserva`);
+              }
+
+              this.mostrarNotificacion('✅ Reserva eliminada correctamente', 'success');
+              this.obtenerReservas(); // Actualizar la lista
+              
+          } catch (error) {
+              console.error('❌ Error completo al eliminar reserva:', error);
+              this.mostrarNotificacion('❌ Error al eliminar la reserva: ' + error.message, 'error');
+          }
+      }
+
+
+      async cargarMesasDisponibles() {
+        try {
+          console.log('🔄 Cargando mesas disponibles desde el servidor...');
+          
+          const response = await fetch('/api/mesas');
+          
+          if (!response.ok) {
+            throw new Error(`Error ${response.status}: ${response.statusText}`);
+          }
+          
+          const data = await response.json();
+          console.log('📋 Respuesta completa del servidor:', data);
+          
+          let mesas = [];
+          
+          // Manejar diferentes estructuras de respuesta
+          if (data.success && data.mesas) {
+            mesas = data.mesas;
+            console.log('✅ Mesas cargadas desde data.mesas');
+          } else if (Array.isArray(data)) {
+            mesas = data;
+            console.log('✅ Mesas cargadas desde array directo');
+          } else if (data.data && Array.isArray(data.data)) {
+            mesas = data.data;
+            console.log('✅ Mesas cargadas desde data.data');
+          } else {
+            console.warn('⚠️ Estructura de respuesta no reconocida:', data);
+            // Intentar extraer mesas de otras propiedades comunes
+            if (data.mesasDisponibles && Array.isArray(data.mesasDisponibles)) {
+              mesas = data.mesasDisponibles;
+              console.log('✅ Mesas cargadas desde mesasDisponibles');
+            } else {
+              mesas = [];
+            }
+          }
+          
+          console.log('✅ Mesas obtenidas del servidor:', mesas);
+          
+          if (mesas.length === 0) {
+            console.warn('⚠️ No se encontraron mesas en la respuesta');
+            this.mesasDisponibles.innerHTML = `
+              <div style="text-align: center; padding: 20px; color: #666;">
+                <i class="fas fa-chair" style="font-size: 24px; margin-bottom: 10px;"></i>
+                <p>No hay mesas disponibles en el sistema</p>
+              </div>`;
+            return;
+          }
+          
+          this.renderizarMesasDisponibles(mesas);
+          
+        } catch (error) {
+          console.error('❌ Error al cargar mesas:', error);
+          this.mesasDisponibles.innerHTML = `
+            <div style="text-align: center; padding: 20px; color: #666;">
+              <i class="fas fa-exclamation-triangle" style="font-size: 24px; margin-bottom: 10px;"></i>
+              <p>Error al cargar las mesas: ${error.message}</p>
+              <small>Verifica la conexión con el servidor</small>
+            </div>`;
+          this.mostrarNotificacion('❌ Error al cargar las mesas disponibles', 'error');
+        }
+      }
+
+      // En el frontend - método manejarSubmitReserva
       // En el frontend - método manejarSubmitReserva
       async manejarSubmitReserva(e) {
         e.preventDefault();
@@ -939,20 +1156,48 @@
           return;
         }
 
+        // ✅ FILTRAR MESAS NULAS O SIN ID
+        const mesasValidas = this.mesasSeleccionadas.filter(mesa => 
+          mesa && mesa._id && typeof mesa._id === 'string'
+        );
+
+        if (mesasValidas.length === 0) {
+          this.mostrarNotificacion('❌ No hay mesas válidas seleccionadas', 'error');
+          return;
+        }
+
+        const fechaInput = document.getElementById('diaReserva').value;
+        console.log('📅 Fecha del input:', fechaInput);
+
+        if (!fechaInput) {
+          this.mostrarNotificacion('❌ La fecha es obligatoria', 'error');
+          return;
+        }
+
+        const fechaReserva = new Date(fechaInput);
+        fechaReserva.setHours(fechaReserva.getHours() + 5);
+
+        console.log('📅 Fecha original:', fechaInput);
+        console.log('📅 Fecha procesada:', fechaReserva);
+        console.log('📅 Fecha ISO:', fechaReserva.toISOString());
+        console.log('📅 Fecha local:', fechaReserva.toLocaleDateString('es-PE'));
+
+        // ✅ USAR MESAS VÁLIDAS
         const datosReserva = {
           cliente: this.clienteSeleccionadoId,
-          mesas: this.mesasSeleccionadas.map(mesa => mesa._id),
-          diaReserva: document.getElementById('diaReserva').value,
+          mesas: mesasValidas.map(mesa => mesa._id),
+          diaReserva: fechaReserva.toISOString(),
           horaReserva: this.obtenerHora24(),
           numeroPersonas: parseInt(document.getElementById('numeroPersonas').value),
           observaciones: document.getElementById('observaciones').value.trim(),
-          //estadoReserva: 'pendiente'
         };
+
         if (!this.modoEdicionReserva) {
           datosReserva.estadoReserva = 'pendiente';
         }
 
         console.log('📤 Enviando datos de reserva:', datosReserva);
+        console.log('📋 Mesas válidas:', mesasValidas);
 
         try {
           let url = '/api/reservas';
@@ -971,9 +1216,15 @@
           });
 
           const result = await response.json();
+          console.log('📥 Respuesta del servidor:', result);
 
           if (!response.ok) {
             throw new Error(result.mensaje || `Error ${response.status}`);
+          }
+
+          const reservaId = result.data?._id || result._id;
+          if (!reservaId) {
+            throw new Error('No se recibió el ID de la reserva');
           }
 
           if (this.modoEdicionReserva) {
@@ -993,145 +1244,74 @@
           this.mostrarNotificacion(`❌ Error: ${error.message}`, 'error');
         }
       }
-
-      async editarReserva(id) {
-          try {
-              console.log('🔍 Solicitando reserva con ID:', id);
-              const response = await fetch(`/api/reservas/${id}`);
-              if (!response.ok) throw new Error('Error al obtener la reserva');
-
-              const result = await response.json();
-              console.log('📋 Reserva cargada para editar:', result);
-
-              document.getElementById('diaReserva').removeAttribute('min');
-
-              // Llenar modal con los datos de la reserva
-              document.getElementById('diaReserva').value = diaReservaValue;
-
-              console.log('📅 Fecha establecida:', diaReservaValue);
-              console.log('👥 Número de personas establecido:', reserva.numeroPersonas);
-
-              // Verificar la estructura de la respuesta
-              // Puede que la reserva esté en result.data o result.reserva o directamente en result
-              const reserva = result.data || result.reserva || result;
-
-              if (!reserva) {
-                  throw new Error('No se recibió la reserva');
-              }
-
-              // Formatear la fecha
-              // Formatear la fecha
-              let diaReservaValue = reserva.diaReserva;
-              if (typeof diaReservaValue === 'string' && diaReservaValue.includes('T')) {
-                  diaReservaValue = diaReservaValue.split('T')[0];
-              } else if (diaReservaValue instanceof Date) {
-                  diaReservaValue = diaReservaValue.toISOString().split('T')[0];
-              }
-
-              // Llenar modal con los datos de la reserva
-              document.getElementById('diaReserva').value = diaReservaValue;
-              //document.getElementById('horaReserva').value = reserva.horaReserva;
-              this.establecerHoraDesde24h(reserva.horaReserva);
-              document.getElementById('numeroPersonas').value = reserva.numeroPersonas;
-              document.getElementById('observaciones').value = reserva.observaciones || '';
-
-              // Obtener el ID del cliente: si es un objeto, tomamos _id, si no, el string
-              // Verificamos si reserva.cliente existe y tiene _id, sino usamos el valor directo (que puede ser el ID string)
-              if (reserva.cliente) {
-                  this.clienteSeleccionadoId = reserva.cliente._id || reserva.cliente;
-              } else {
-                  // Si no hay cliente, podríamos mostrar un error o manejarlo de otra forma
-                  console.error('No se encontró el cliente en la reserva');
-                  this.mostrarNotificacion('❌ No se pudo cargar el cliente de la reserva', 'error');
-                  return;
-              }
-
-              // Manejar las mesas
-              if (reserva.mesas && Array.isArray(reserva.mesas)) {
-                  // Si las mesas están populadas (cada elemento es un objeto con _id) entonces las usamos directamente
-                  this.mesasSeleccionadas = reserva.mesas;
-              } else {
-                  // Si las mesas son un array de IDs, entonces creamos un array de objetos con _id
-                  this.mesasSeleccionadas = reserva.mesas.map(id => ({ _id: id }));
-              }
-
-              this.renderizarMesasSeleccionadas();
-
-              // Cambiar el texto del botón del modal
-              const submitButton = this.formReserva.querySelector('button[type="submit"]');
-              submitButton.innerHTML = '<i class="fas fa-save"></i> Actualizar Reserva';
-
-              // Establecer modo edición
-              this.modoEdicionReserva = true;
-              this.reservaEditandoId = id;
-              
-              // Abrir modal
-              this.modal.style.display = 'flex';
-              
-          } catch (error) {
-              console.error('Error al editar reserva:', error);
-              this.mostrarNotificacion('❌ Error al cargar la reserva: ' + error.message, 'error');
-          }
-      }
-
-      async eliminarReserva(id) {
-          if (!confirm('¿Estás seguro de que deseas eliminar esta reserva?')) return;
-
-          try {
-              const response = await fetch(`/api/reservas/${id}`, { 
-                  method: 'DELETE' 
-              });
-
-              if (response.ok) {
-                  this.mostrarNotificacion('✅ Reserva eliminada correctamente', 'success');
-                  this.obtenerReservas();
-              } else {
-                  throw new Error('Error al eliminar reserva');
-              }
-          } catch (error) {
-              console.error('Error al eliminar reserva:', error);
-              this.mostrarNotificacion('❌ Error al eliminar la reserva', 'error');
-          }
-      }
-
-      async cargarMesasDisponibles() {
-        try {
-          const response = await fetch('/api/mesas');
-          
-          if (!response.ok) {
-            throw new Error(`Error ${response.status}: ${response.statusText}`);
-          }
-          
-          const data = await response.json();
-          console.log('📋 Todas las mesas cargadas:', data);
-          
-          if (data.success && data.mesas) {
-            this.renderizarMesasDisponibles(data.mesas);
-          } else {
-            throw new Error('Formato de respuesta inválido');
-          }
-          
-        } catch (error) {
-          console.error('Error al cargar mesas:', error);
-          this.mesasDisponibles.innerHTML = '<p>Error al cargar mesas</p>';
-          this.mostrarNotificacion('❌ Error al cargar las mesas disponibles', 'error');
-        }
-      }
-
+      
       renderizarMesasDisponibles(mesas) {
+        console.log('🎯 Renderizando mesas disponibles:', mesas);
         this.mesasDisponibles.innerHTML = '';
 
         if (!mesas || mesas.length === 0) {
-          this.mesasDisponibles.innerHTML = '<p>No hay mesas disponibles</p>';
+          this.mesasDisponibles.innerHTML = `
+            <div style="text-align: center; padding: 20px; color: #666;">
+              <i class="fas fa-chair" style="font-size: 24px; margin-bottom: 10px;"></i>
+              <p>No hay mesas disponibles</p>
+            </div>`;
           return;
         }
 
-        const mesasDisponibles = mesas.filter(mesa => 
-          mesa.estado === 'disponible' || mesa.estado === 'liberada'
+        // Filtrar y normalizar mesas
+        const mesasValidas = mesas
+          .filter(mesa => {
+            const esValida = mesa && 
+                            mesa._id && 
+                            typeof mesa._id === 'string' && 
+                            mesa.numeroMesa !== undefined &&
+                            mesa.numeroMesa !== null;
+            
+            if (!esValida) {
+              console.warn('⚠️ Mesa inválida filtrada:', mesa);
+            }
+            
+            return esValida;
+          })
+          .map(mesa => {
+            // Normalizar datos para asegurar consistencia
+            return {
+              _id: mesa._id,
+              numeroMesa: parseInt(mesa.numeroMesa) || mesa.numeroMesa,
+              capacidad: parseInt(mesa.capacidad) || mesa.capacidad,
+              estado: mesa.estado || 'disponible',
+              piso: mesa.piso,
+              sector: mesa.sector
+            };
+          });
+
+        console.log('✅ Mesas válidas después de filtrar y normalizar:', mesasValidas);
+
+        if (mesasValidas.length === 0) {
+          this.mesasDisponibles.innerHTML = `
+            <div style="text-align: center; padding: 20px; color: #666;">
+              <i class="fas fa-ban" style="font-size: 24px; margin-bottom: 10px;"></i>
+              <p>No se encontraron mesas válidas en el sistema</p>
+            </div>`;
+          return;
+        }
+
+        // Filtrar mesas disponibles
+        const mesasDisponibles = mesasValidas.filter(mesa => 
+          mesa.estado === 'disponible' || 
+          mesa.estado === 'liberada' || 
+          !mesa.estado // Si no hay estado, asumir disponible
         );
 
+        console.log('✅ Mesas disponibles:', mesasDisponibles);
+
         if (mesasDisponibles.length === 0) {
-          this.mesasDisponibles.innerHTML = '<p>No hay mesas disponibles en este momento</p>';
+          this.mesasDisponibles.innerHTML = `
+            <div style="text-align: center; padding: 20px; color: #666;">
+              <i class="fas fa-clock" style="font-size: 24px; margin-bottom: 10px;"></i>
+              <p>Todas las mesas están ocupadas en este momento</p>
+              <small>Intenta más tarde o selecciona otra fecha</small>
+            </div>`;
           return;
         }
 
@@ -1140,28 +1320,83 @@
           mesaElement.className = 'mesa-option';
           mesaElement.dataset.id = mesa._id;
           
-          let texto = `Mesa ${mesa.numeroMesa}`;
-          if (mesa.capacidad) texto += ` (${mesa.capacidad} personas)`;
-          if (mesa.piso) texto += ` - ${mesa.piso}`;
-          if (mesa.sector) texto += ` - ${mesa.sector}`;
+          // ✅ FORMATO CORREGIDO - igual al de las mesas seleccionadas
+          const numeroMesa = mesa.numeroMesa;
+          let texto = `Mesa ${numeroMesa}`;
+          
+          // Agregar capacidad si existe
+          if (mesa.capacidad) {
+            texto += ` (${mesa.capacidad} pers.)`;
+          }
+          
+          // Agregar piso si existe - con formato corregido
+          if (mesa.piso) {
+            // Limpiar formato del piso (remover "piso" duplicado si existe)
+            let pisoFormateado = mesa.piso.toString().toLowerCase();
+            if (pisoFormateado.includes('piso')) {
+              pisoFormateado = pisoFormateado.replace('piso', '').trim();
+            }
+            texto += ` – Piso ${pisoFormateado}`;
+          }
+          
+          // Agregar sector si existe
+          if (mesa.sector) {
+            texto += ` – ${mesa.sector}`;
+          }
           
           mesaElement.textContent = texto;
+          mesaElement.title = `Haz clic para seleccionar Mesa ${numeroMesa}`;
           
-          // Verificar si esta mesa ya está seleccionada
-          if (this.mesasSeleccionadas.some(m => m._id === mesa._id)) {
+          // Verificar si ya está seleccionada
+          const yaSeleccionada = this.mesasSeleccionadas.some(m => 
+            m && m._id === mesa._id
+          );
+          
+          if (yaSeleccionada) {
             mesaElement.classList.add('selected');
+            console.log(`✅ Mesa ${numeroMesa} ya está seleccionada`);
           }
           
           mesaElement.addEventListener('click', () => {
+            console.log(`🖱️ Clic en Mesa ${numeroMesa}`);
             this.toggleSeleccionMesa(mesa, mesaElement);
           });
           
           this.mesasDisponibles.appendChild(mesaElement);
         });
-      }
 
+        console.log(`🏁 ${mesasDisponibles.length} mesas renderizadas en el DOM`);
+      }
+            
+      // Método temporal para verificar la respuesta del servidor
+      async debugEndpointMesas() {
+        try {
+          console.log('🔍 Debug: Probando endpoint /api/mesas...');
+          const response = await fetch('/api/mesas');
+          console.log('📋 Status:', response.status);
+          console.log('📋 Headers:', response.headers);
+          
+          const text = await response.text();
+          console.log('📋 Respuesta como texto:', text);
+          
+          try {
+            const data = JSON.parse(text);
+            console.log('📋 Respuesta como JSON:', data);
+          } catch (e) {
+            console.error('❌ No se pudo parsear como JSON:', e);
+          }
+        } catch (error) {
+          console.error('❌ Error en debug:', error);
+        }
+      }
       toggleSeleccionMesa(mesa, elemento) {
-        const index = this.mesasSeleccionadas.findIndex(m => m._id === mesa._id);
+        // ✅ VERIFICAR QUE LA MESA SEA VÁLIDA
+        if (!mesa || !mesa._id) {
+          console.error('Mesa inválida:', mesa);
+          return;
+        }
+
+        const index = this.mesasSeleccionadas.findIndex(m => m && m._id === mesa._id);
         
         if (index === -1) {
           // Agregar mesa a la selección
@@ -1172,6 +1407,8 @@
           this.mesasSeleccionadas.splice(index, 1);
           elemento.classList.remove('selected');
         }
+        
+        console.log('📋 Mesas seleccionadas:', this.mesasSeleccionadas);
       }
 
       confirmarSeleccionMesas() {
@@ -1180,41 +1417,80 @@
       }
 
       renderizarMesasSeleccionadas() {
+        console.log('🔄 Renderizando mesas seleccionadas...');
         this.mesasSeleccionadasLista.innerHTML = '';
         
-        if (this.mesasSeleccionadas.length === 0) {
+        // Filtrar mesas válidas
+        const mesasValidas = this.mesasSeleccionadas.filter(mesa => 
+          mesa && mesa._id && mesa.numeroMesa !== undefined && mesa.numeroMesa !== null
+        );
+        
+        console.log('✅ Mesas válidas para mostrar:', mesasValidas);
+        
+        if (mesasValidas.length === 0) {
           this.mesasSeleccionadasContainer.style.display = 'none';
+          console.log('📭 No hay mesas seleccionadas para mostrar');
           return;
         }
         
         this.mesasSeleccionadasContainer.style.display = 'block';
         
-        this.mesasSeleccionadas.forEach(mesa => {
+        mesasValidas.forEach(mesa => {
           const mesaElement = document.createElement('div');
           mesaElement.className = 'mesa-item';
           
-          let texto = `Mesa ${mesa.numeroMesa}`;
-          if (mesa.capacidad) texto += ` (${mesa.capacidad} personas)`;
-          if (mesa.piso) texto += ` - ${mesa.piso}`;
-          if (mesa.sector) texto += ` - ${mesa.sector}`;
+          // ✅ FORMATO CORREGIDO - igual a tu ejemplo
+          const numeroMesa = mesa.numeroMesa || 'Sin número';
+          let texto = `Mesa ${numeroMesa}`;
+          
+          // Agregar capacidad si existe
+          if (mesa.capacidad) {
+            texto += ` (${mesa.capacidad} pers.)`;
+          }
+          
+          // Agregar piso si existe - con formato corregido
+          if (mesa.piso) {
+            // Limpiar formato del piso (remover "piso" duplicado si existe)
+            let pisoFormateado = mesa.piso.toString().toLowerCase();
+            if (pisoFormateado.includes('piso')) {
+              pisoFormateado = pisoFormateado.replace('piso', '').trim();
+            }
+            texto += ` – Piso ${pisoFormateado}`;
+          }
+          
+          // Agregar sector si existe
+          if (mesa.sector) {
+            texto += ` – ${mesa.sector}`;
+          }
           
           mesaElement.innerHTML = `
-            ${texto}
-            <button type="button" data-id="${mesa._id}">
+            <span>${texto}</span>
+            <button type="button" data-id="${mesa._id}" title="Quitar mesa">
               <i class="fas fa-times"></i>
             </button>
           `;
           
           // Agregar evento para eliminar mesa
           const btnEliminar = mesaElement.querySelector('button');
-          btnEliminar.addEventListener('click', () => {
+          btnEliminar.addEventListener('click', (e) => {
+            e.stopPropagation();
+            console.log('🗑️ Eliminando mesa:', mesa.numeroMesa);
             this.eliminarMesaSeleccionada(mesa._id);
           });
           
           this.mesasSeleccionadasLista.appendChild(mesaElement);
         });
+        
+        console.log('🏁 Mesas seleccionadas renderizadas');
       }
-
+      // Agrega este método para debuggear
+      debugMesasSeleccionadas() {
+        console.log('🐛 DEBUG - Mesas seleccionadas:');
+        console.log('Cantidad:', this.mesasSeleccionadas.length);
+        this.mesasSeleccionadas.forEach((mesa, index) => {
+          console.log(`Mesa ${index}:`, mesa);
+        });
+      }
       eliminarMesaSeleccionada(id) {
         this.mesasSeleccionadas = this.mesasSeleccionadas.filter(mesa => mesa._id !== id);
         this.renderizarMesasSeleccionadas();
@@ -1263,25 +1539,28 @@
       }
 
       async obtenerReservas() {
-        try {
-          const response = await fetch('/api/reservas');
-          const result = await response.json();
+          try {
+              console.log('🔄 Obteniendo reservas actualizadas...');
+              const response = await fetch('/api/reservas');
+              const result = await response.json();
 
-          // Verifica si result.data es un array
-          const reservas = Array.isArray(result.data) ? result.data : [];
+              console.log('📋 Respuesta completa de /api/reservas:', result);
+              
+              // Verifica si result.data es un array
+              const reservas = Array.isArray(result.data) ? result.data : [];
+              console.log('👥 Reservas recibidas:', reservas.length);
 
-          console.log('📋 Reservas recibidas:', reservas);
-          this.renderizarReservas(reservas);
+              this.renderizarReservas(reservas);
 
-        } catch (error) {
-          console.error('Error al obtener reservas:', error);
-          this.listaReservas.innerHTML = `
-            <div class="empty-state">
-              <i class="fas fa-exclamation-triangle"></i>
-              <h3>Error al cargar reservas</h3>
-              <p>Intenta recargar la página</p>
-            </div>`;
-        }
+          } catch (error) {
+              console.error('Error al obtener reservas:', error);
+              this.listaReservas.innerHTML = `
+                  <div class="empty-state">
+                      <i class="fas fa-exclamation-triangle"></i>
+                      <h3>Error al cargar reservas</h3>
+                      <p>Intenta recargar la página</p>
+                  </div>`;
+          }
       }
 
       // Dentro de la clase ClientesApp, agrega este método y modifica renderizarReservas:
@@ -1307,6 +1586,7 @@
       }
 
       renderizarReservas(reservas) {
+        console.log('🎨 Renderizando reservas:', reservas.length);
         this.listaReservas.innerHTML = '';
 
         if (!reservas || reservas.length === 0) {
@@ -1461,6 +1741,89 @@
           }
       }
 
+      // === AGREGAR ESTOS MÉTODOS DESPUÉS DE cancelarReserva ===
+
+      async editarReserva(id) {
+          try {
+              console.log('✏️ Iniciando edición de reserva ID:', id);
+              
+              const response = await fetch(`/api/reservas/${id}`);
+              if (!response.ok) throw new Error('Error al cargar reserva');
+              
+              const reserva = await response.json();
+              console.log('📋 Reserva cargada para editar:', reserva);
+
+              // Validar que la reserva tenga cliente
+              if (reserva.cliente) {
+                  // Si es un objeto poblado, usa _id; si es solo string, úsalo directamente
+                  this.clienteSeleccionadoId = reserva.cliente._id || reserva.cliente;
+              } else {
+                  console.error('No se encontró el cliente en la reserva');
+                  this.mostrarNotificacion('❌ No se pudo cargar el cliente de la reserva', 'error');
+                  return;
+              }
+
+              // Establecer modo edición
+              this.modoEdicionReserva = true;
+              this.reservaEditandoId = id;
+
+              // Llenar formulario con datos de la reserva
+              const fechaInput = reserva.diaReserva.split('T')[0];
+              document.getElementById('diaReserva').value = fechaInput;
+              
+              // Establecer hora desde formato 24h
+              this.establecerHoraDesde24h(reserva.horaReserva);
+              
+              document.getElementById('numeroPersonas').value = reserva.numeroPersonas;
+              document.getElementById('observaciones').value = reserva.observaciones || '';
+
+              // Cargar mesas seleccionadas
+              this.mesasSeleccionadas = reserva.mesas || [];
+              this.renderizarMesasSeleccionadas();
+
+              // Abrir modal de reserva
+              this.modal.style.display = 'flex';
+
+              // Cambiar texto del botón
+              const submitButton = this.formReserva.querySelector('button[type="submit"]');
+              submitButton.innerHTML = '<i class="fas fa-save"></i> Actualizar Reserva';
+
+          } catch (error) {
+              console.error('Error al editar reserva:', error);
+              this.mostrarNotificacion('❌ Error al cargar la reserva para editar', 'error');
+          }
+      }
+
+      // Agrega este método en tu clase ClientesApp - después de cancelarReserva
+      async eliminarReserva(id) {
+          if (!confirm('¿Estás seguro de que deseas eliminar esta reserva?\nEsta acción no se puede deshacer.')) {
+              return;
+          }
+
+          try {
+              console.log('🗑️ Eliminando reserva ID:', id);
+              
+              const response = await fetch(`/api/reservas/${id}`, {
+                  method: 'DELETE'
+              });
+
+              const result = await response.json();
+              console.log('📋 Respuesta de eliminación:', result);
+
+              if (!response.ok) {
+                  throw new Error(result.mensaje || 'Error al eliminar reserva');
+              }
+
+              this.mostrarNotificacion('✅ Reserva eliminada correctamente', 'success');
+              this.obtenerReservas(); // Actualizar la lista
+              
+          } catch (error) {
+              console.error('Error al eliminar reserva:', error);
+              this.mostrarNotificacion('❌ Error al eliminar la reserva: ' + error.message, 'error');
+          }
+      }
+
+
       async obtenerClientes() {
         try {
           const response = await fetch('/api/clientes');
@@ -1553,7 +1916,26 @@
           }
         }, 5000);
       }
+
+      formatearPiso(piso) {
+        if (!piso) return '';
+        
+        let pisoStr = piso.toString().toLowerCase().trim();
+        
+        // Remover "piso" si ya está incluido
+        if (pisoStr.includes('piso')) {
+          pisoStr = pisoStr.replace('piso', '').trim();
+        }
+        
+        // Si queda vacío, usar el original
+        if (!pisoStr) {
+          return piso.toString();
+        }
+        
+        return pisoStr;
+      }
     }
+
 
     // Inicializar la aplicación cuando el DOM esté listo
     document.addEventListener('DOMContentLoaded', () => {
