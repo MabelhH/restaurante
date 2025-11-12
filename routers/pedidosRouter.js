@@ -285,7 +285,100 @@ router.put('/:pedidoId/platos/:platoIndex/estado', verifyToken, async (req, res)
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
+// ✅ NUEVA RUTA: Agregar platos a pedido existente - CORREGIDA
+router.post('/:pedidoId/platos', verifyToken, async (req, res) => {
+  try {
+    const { pedidoId } = req.params;
+    const { platoId, cantidad, observaciones } = req.body;
 
+    console.log('📦 Agregando plato al pedido:', { pedidoId, platoId, cantidad });
+
+    const pedido = await Pedido.findById(pedidoId);
+    if (!pedido) {
+      return res.status(404).json({ error: 'Pedido no encontrado' });
+    }
+
+    // Validar que el pedido no esté pagado
+    if (pedido.estadoPago === 'pagado') {
+      return res.status(400).json({ 
+        error: 'No se pueden agregar platos a un pedido ya pagado' 
+      });
+    }
+
+    // Validar el plato
+    const plato = await Platos.findById(platoId);
+    if (!plato) {
+      return res.status(404).json({ error: 'Plato no encontrado' });
+    }
+
+    if (!plato.tieneStock(cantidad)) {
+      return res.status(400).json({ 
+        error: `Stock insuficiente para: ${plato.nombre}. Stock disponible: ${plato.stock}` 
+      });
+    }
+
+    // Verificar si el plato ya existe en el pedido
+    const platoExistenteIndex = pedido.platos.findIndex(
+      p => p.plato.toString() === platoId
+    );
+
+    if (platoExistenteIndex !== -1) {
+      // Si ya existe, actualizar la cantidad
+      const platoExistente = pedido.platos[platoExistenteIndex];
+      const nuevaCantidad = platoExistente.cantidad + cantidad;
+      
+      if (!plato.tieneStock(nuevaCantidad - platoExistente.cantidad)) {
+        return res.status(400).json({ 
+          error: `Stock insuficiente para: ${plato.nombre}. Stock disponible: ${plato.stock}` 
+        });
+      }
+
+      // Actualizar stock (diferencia)
+      await plato.reducirStock(cantidad);
+      
+      platoExistente.cantidad = nuevaCantidad;
+      platoExistente.subtotal = platoExistente.precio * nuevaCantidad;
+      if (observaciones) {
+        platoExistente.observaciones = observaciones;
+      }
+    } else {
+      // Si no existe, agregar nuevo plato
+      const nuevoPlato = {
+        plato: platoId,
+        nombre: plato.nombre,
+        precio: plato.precio,
+        cantidad: cantidad,
+        observaciones: observaciones || '',
+        subtotal: plato.precio * cantidad,
+        estado: 'pendiente'
+      };
+      
+      pedido.platos.push(nuevoPlato);
+      await plato.reducirStock(cantidad);
+    }
+
+    // Recalcular total
+    pedido.total = pedido.platos.reduce((sum, plato) => sum + plato.subtotal, 0);
+    
+    await pedido.save();
+
+    // Populate para respuesta
+    const pedidoActualizado = await Pedido.findById(pedidoId)
+      .populate('mesa', 'numeroMesa piso sector')
+      .populate('mesero', 'nombre email')
+      .populate('platos.plato', 'nombre precio imagen descripcion stock');
+
+    res.json({
+      success: true,
+      message: 'Plato agregado al pedido exitosamente',
+      pedido: pedidoActualizado
+    });
+
+  } catch (error) {
+    console.error('❌ Error al agregar plato:', error);
+    res.status(500).json({ error: 'Error interno del servidor: ' + error.message });
+  }
+});
 // ✅ NUEVA RUTA: Eliminar un plato específico del pedido
 router.delete('/:pedidoId/platos/:platoIndex', verifyToken, async (req, res) => {
   try {

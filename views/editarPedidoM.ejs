@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="/styleVentas.css">
   <style>
+    /* Tus estilos existentes... */
     .editar-pedido-container {
       max-width: 1000px;
       margin: 0 auto;
@@ -261,6 +262,170 @@
       background: #6c757d;
       color: white;
     }
+    /* Nuevos estilos para el modal de agregar platos */
+    .modal-agregar-platos {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+
+    .modal-agregar-content {
+      background-color: white;
+      margin: 5% auto;
+      padding: 20px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+
+    .selector-platos {
+      margin: 20px 0;
+    }
+
+    .selector-platos select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 16px;
+      margin-bottom: 15px;
+    }
+
+    .info-plato {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 15px;
+    }
+
+    .info-plato p {
+      margin: 5px 0;
+    }
+
+    .controles-cantidad {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin: 15px 0;
+    }
+
+    .controles-cantidad input {
+      width: 80px;
+      text-align: center;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+
+    .btn-cantidad-modal {
+      width: 40px;
+      height: 40px;
+      border: 1px solid #ddd;
+      background: white;
+      border-radius: 5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-cantidad-modal:hover {
+      background: #f8f9fa;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+
+    .btn-action {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .btn-action.primary {
+      background: #28a745;
+      color: white;
+    }
+
+    .btn-action.primary:hover {
+      background: #218838;
+    }
+
+    .btn-action.secondary {
+      background: #6c757d;
+      color: white;
+    }
+
+    .btn-action.secondary:hover {
+      background: #5a6268;
+    }
+
+    .stock-info {
+      font-size: 14px;
+      color: #666;
+    }
+
+    .stock-bajo {
+      color: #dc3545;
+      font-weight: bold;
+    }
+
+    .stock-normal {
+      color: #28a745;
+    }
+    .lista-platos-agregar {
+  margin: 20px 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.plato-seleccionado-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  margin-bottom: 10px;
+}
+
+.plato-seleccionado-info {
+  flex: 1;
+}
+
+.btn-eliminar-lista {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.btn-agregar-lista {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 100%;
+  margin: 10px 0;
+}
   </style>
 </head>
 <body>
@@ -369,10 +534,9 @@
 
       <!-- Acciones Principales -->
       <div class="acciones-principales">
-        <a href="/carta?mesa=<%= pedido.mesa._id %>&pedidoExistente=<%= pedido._id %>" 
-           class="btn-agregar-platos">
+        <button class="btn-agregar-platos" onclick="abrirModalAgregarPlatos()">
           <i class="fas fa-plus-circle"></i> Agregar Más Platos
-        </a>
+        </button>
         
         <a href="/pedidos" class="btn-volver">
           <i class="fas fa-arrow-left"></i> Volver a Pedidos
@@ -393,7 +557,288 @@
     </div>
   </div>
 
+      <!-- Modal para Agregar Platos -->
+    <div id="modalAgregarPlatos" class="modal-agregar-platos">
+      <div class="modal-agregar-content">
+        <h2><i class="fas fa-plus-circle"></i> Agregar Platos al Pedido</h2>
+        
+        <div class="selector-platos">
+          <label for="selectPlato">Seleccionar Plato:</label>
+          <select id="selectPlato" onchange="mostrarInfoPlato()">
+            <option value="">-- Selecciona un plato --</option>
+            <% if (platos && platos.length > 0) { %>
+              <% platos.forEach(plato => { %>
+                <% if (plato.estado === 'activo' && plato.disponible !== false) { %>
+                  <option value="<%= plato._id %>" 
+                          data-nombre="<%= plato.nombre %>"
+                          data-precio="<%= plato.precio %>"
+                          data-stock="<%= plato.stock %>"
+                          data-stock-minimo="<%= plato.stockMinimo %>"
+                          data-descripcion="<%= plato.descripcion %>">
+                    <%= plato.nombre %> - S/ <%= plato.precio.toFixed(2) %> 
+                    <% if (plato.stock <= 0) { %>
+                      (AGOTADO)
+                    <% } else if (plato.stock <= plato.stockMinimo) { %>
+                      (Stock bajo: <%= plato.stock %>)
+                    <% } else { %>
+                      (Stock: <%= plato.stock %>)
+                    <% } %>
+                  </option>
+                <% } %>
+              <% }) %>
+            <% } %>
+          </select>
+        </div>
+
+        <div id="infoPlato" class="info-plato" style="display: none;">
+          <h4 id="nombrePlato"></h4>
+          <p id="descripcionPlato"></p>
+          <p><strong>Precio:</strong> S/ <span id="precioPlato"></span></p>
+          <p class="stock-info">
+            <strong>Stock disponible:</strong> 
+            <span id="stockPlato" class="stock-normal"></span>
+          </p>
+        </div>
+
+        <div class="controles-cantidad">
+          <label for="cantidadPlato">Cantidad:</label>
+          <button class="btn-cantidad-modal" onclick="cambiarCantidadModal(-1)">
+            <i class="fas fa-minus"></i>
+          </button>
+          <input type="number" id="cantidadPlato" value="1" min="1" max="1">
+          <button class="btn-cantidad-modal" onclick="cambiarCantidadModal(1)">
+            <i class="fas fa-plus"></i>
+          </button>
+        </div>
+
+        <div class="observaciones-plato">
+          <label for="observacionesPlato">Observaciones (opcional):</label>
+          <textarea id="observacionesPlato" placeholder="Ej: Sin sal, bien cocido, etc." rows="3"></textarea>
+        </div>
+
+        <button class="btn-agregar-lista" onclick="agregarPlatoALista()">
+          <i class="fas fa-plus"></i> Agregar a la Lista
+        </button>
+
+        <div class="lista-platos-agregar">
+          <h4>Platos a agregar:</h4>
+          <div id="listaPlatosSeleccionados">
+            <!-- Aquí se mostrarán los platos seleccionados -->
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-action secondary" onclick="cerrarModalAgregar()">
+            Cancelar
+          </button>
+          <button type="button" class="btn-action primary" onclick="agregarPlatosAlPedido()">
+            <i class="fas fa-check"></i> Confirmar Agregar
+          </button>
+        </div>
+      </div>
+    </div>
+
   <script>
+    // Lista temporal de platos a agregar
+let platosAAgregar = [];
+
+// Función para agregar un plato a la lista temporal
+function agregarPlatoALista() {
+  if (!platoSeleccionado) {
+    mostrarNotificacion('❌ Por favor, selecciona un plato', 'error');
+    return;
+  }
+
+  const cantidad = parseInt(document.getElementById('cantidadPlato').value);
+  const observaciones = document.getElementById('observacionesPlato').value;
+
+  if (cantidad < 1) {
+    mostrarNotificacion('❌ La cantidad debe ser al menos 1', 'error');
+    return;
+  }
+
+  if (cantidad > platoSeleccionado.stock) {
+    mostrarNotificacion('❌ No hay suficiente stock disponible', 'error');
+    return;
+  }
+
+  // Verificar si el plato ya está en la lista
+  const index = platosAAgregar.findIndex(p => p.platoId === platoSeleccionado.id);
+  if (index !== -1) {
+    // Si ya está, actualizar la cantidad y observaciones
+    platosAAgregar[index].cantidad += cantidad;
+    platosAAgregar[index].observaciones = observaciones;
+  } else {
+    // Si no está, agregarlo
+    platosAAgregar.push({
+      platoId: platoSeleccionado.id,
+      nombre: platoSeleccionado.nombre,
+      precio: platoSeleccionado.precio,
+      cantidad: cantidad,
+      observaciones: observaciones
+    });
+  }
+
+  actualizarListaPlatosSeleccionados();
+  resetearFormularioPlato();
+}
+
+// Función para actualizar la lista visual de platos seleccionados
+function actualizarListaPlatosSeleccionados() {
+  const lista = document.getElementById('listaPlatosSeleccionados');
+  lista.innerHTML = '';
+
+  if (platosAAgregar.length === 0) {
+    lista.innerHTML = '<p>No hay platos en la lista</p>';
+    return;
+  }
+
+  platosAAgregar.forEach((plato, index) => {
+    const div = document.createElement('div');
+    div.className = 'plato-seleccionado-item';
+    div.innerHTML = `
+      <div class="plato-seleccionado-info">
+        <strong>${plato.nombre}</strong>
+        <div>Cantidad: ${plato.cantidad} | S/ ${plato.precio.toFixed(2)} c/u</div>
+        <div>Observaciones: ${plato.observaciones || 'Ninguna'}</div>
+      </div>
+      <button class="btn-eliminar-lista" onclick="eliminarPlatoDeLista(${index})">
+        <i class="fas fa-trash"></i>
+      </button>
+    `;
+    lista.appendChild(div);
+  });
+}
+
+// Función para eliminar un plato de la lista temporal
+function eliminarPlatoDeLista(index) {
+  platosAAgregar.splice(index, 1);
+  actualizarListaPlatosSeleccionados();
+}
+
+// Función para resetear el formulario de plato
+function resetearFormularioPlato() {
+  document.getElementById('cantidadPlato').value = 1;
+  document.getElementById('observacionesPlato').value = '';
+  // No resetear el select para permitir agregar el mismo plato otra vez
+}
+
+// Función para agregar todos los platos de la lista al pedido
+async function agregarPlatosAlPedido() {
+  if (platosAAgregar.length === 0) {
+    mostrarNotificacion('❌ No hay platos para agregar', 'error');
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/pedidos/<%= pedido._id %>/agregar-platos`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        platos: platosAAgregar
+      })
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      mostrarNotificacion('✅ Platos agregados correctamente', 'success');
+      cerrarModalAgregar();
+      // Recargar la página para ver los cambios
+      setTimeout(() => {
+        location.reload();
+      }, 1000);
+    } else {
+      throw new Error(result.error || 'Error al agregar platos');
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    mostrarNotificacion('❌ Error: ' + error.message, 'error');
+  }
+}
+    // Variables globales para el modal de agregar platos
+    let platoSeleccionado = null;
+
+    // Función para abrir el modal de agregar platos
+    function abrirModalAgregarPlatos() {
+      document.getElementById('modalAgregarPlatos').style.display = 'block';
+      // Resetear el formulario
+      document.getElementById('selectPlato').selectedIndex = 0;
+      document.getElementById('infoPlato').style.display = 'none';
+      document.getElementById('cantidadPlato').value = 1;
+      document.getElementById('cantidadPlato').max = 1;
+      document.getElementById('observacionesPlato').value = '';
+      platoSeleccionado = null;
+      // Limpiar la lista temporal al abrir el modal
+      platosAAgregar = [];
+      actualizarListaPlatosSeleccionados();
+    }
+
+    // Función para cerrar el modal de agregar platos
+    function cerrarModalAgregar() {
+      document.getElementById('modalAgregarPlatos').style.display = 'none';
+    }
+
+    // Función para mostrar información del plato seleccionado
+    function mostrarInfoPlato() {
+      const select = document.getElementById('selectPlato');
+      const selectedOption = select.options[select.selectedIndex];
+      
+      if (selectedOption.value) {
+        platoSeleccionado = {
+          id: selectedOption.value,
+          nombre: selectedOption.getAttribute('data-nombre'),
+          precio: parseFloat(selectedOption.getAttribute('data-precio')),
+          stock: parseInt(selectedOption.getAttribute('data-stock')),
+          stockMinimo: parseInt(selectedOption.getAttribute('data-stock-minimo')),
+          descripcion: selectedOption.getAttribute('data-descripcion')
+        };
+
+        // Actualizar la información mostrada
+        document.getElementById('nombrePlato').textContent = platoSeleccionado.nombre;
+        document.getElementById('descripcionPlato').textContent = platoSeleccionado.descripcion;
+        document.getElementById('precioPlato').textContent = platoSeleccionado.precio.toFixed(2);
+        
+        const stockElement = document.getElementById('stockPlato');
+        stockElement.textContent = platoSeleccionado.stock;
+        
+        // Cambiar color según el stock
+        if (platoSeleccionado.stock <= 0) {
+          stockElement.className = 'stock-bajo';
+          stockElement.textContent += ' (AGOTADO)';
+        } else if (platoSeleccionado.stock <= platoSeleccionado.stockMinimo) {
+          stockElement.className = 'stock-bajo';
+          stockElement.textContent += ' (Stock bajo)';
+        } else {
+          stockElement.className = 'stock-normal';
+        }
+
+        // Actualizar cantidad máxima
+        document.getElementById('cantidadPlato').max = platoSeleccionado.stock;
+        document.getElementById('cantidadPlato').value = Math.min(1, platoSeleccionado.stock);
+        
+        document.getElementById('infoPlato').style.display = 'block';
+      } else {
+        document.getElementById('infoPlato').style.display = 'none';
+        platoSeleccionado = null;
+      }
+    }
+
+    // Función para cambiar la cantidad en el modal
+    function cambiarCantidadModal(cambio) {
+      const input = document.getElementById('cantidadPlato');
+      let nuevaCantidad = parseInt(input.value) + cambio;
+      const maxStock = parseInt(input.max);
+      
+      if (nuevaCantidad < 1) nuevaCantidad = 1;
+      if (nuevaCantidad > maxStock) nuevaCantidad = maxStock;
+      
+      input.value = nuevaCantidad;
+    }
+
+    // Resto de tus funciones existentes...
     let accionConfirmar = null;
     let parametrosAccion = null;
 
@@ -438,7 +883,7 @@
       });
     });
 
-    // Función para cambiar cantidad incrementalmente
+    // Función para cambiar cantidad incrementalmente (para platos existentes)
     function cambiarCantidad(index, cambio) {
       const input = document.getElementById(`input-cantidad-${index}`);
       let nuevaCantidad = parseInt(input.value) + cambio;
@@ -452,7 +897,7 @@
       actualizarCantidad(index, nuevaCantidad);
     }
 
-    // Función para actualizar cantidad via API
+    // Función para actualizar cantidad via API (para platos existentes)
     async function actualizarCantidad(index, nuevaCantidad) {
       const cantidad = parseInt(nuevaCantidad);
       if (isNaN(cantidad) || cantidad < 1) return;
@@ -546,8 +991,13 @@
     // Cerrar modal al hacer clic fuera
     window.onclick = function(event) {
       const modal = document.getElementById('confirmModal');
+      const modalAgregar = document.getElementById('modalAgregarPlatos');
+      
       if (event.target === modal) {
         cerrarModal();
+      }
+      if (event.target === modalAgregar) {
+        cerrarModalAgregar();
       }
     }
 
