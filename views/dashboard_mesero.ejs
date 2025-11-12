@@ -32,29 +32,6 @@
         <h1>Bienvenido, <%= usuario.nombre %> </h1>
         <div class="welcome-badge">Panel de mesero</div>
       </header>
-
-      <section>
-        <p class="titulo-usuarios">Clientes registrados en el sistema:</p>
-
-
-        <% if (users && users.length > 0) { %>
-          <div class="usuarios-container">
-            <% users.forEach((u, index) => { %>
-              <div class="card">
-                <h3><%= u.nombre %> <%= u.apellido %></h3>
-                <p><strong>Email:</strong> <%= u.email %></p>
-                <p><strong>ID:</strong> <%= index + 1 %></p>
-                <button><i class="fas fa-user"></i> Ver perfil</button>
-              </div>
-            <% }) %>
-          </div>
-        <% } else { %>
-          <div class="empty-state">
-            <i class="fas fa-users"></i>
-            <p>No hay usuarios registrados.</p>
-          </div>
-        <% } %>
-      </section>
     </main>
   </div>
 </body>

@@ -5,7 +5,9 @@ const cookieParser = require('cookie-parser');
 const path = require('path');
 const jwt = require('jsonwebtoken');
 const Usuario = require('./models/userModel');
+const dashboardController = require('./controllers/dashboardController');
 const session = require('express-session');
+const reporteController = require('./controllers/reporteController');
 
 require('./database/connection'); // conexión a MongoDB
 
@@ -74,6 +76,7 @@ const cartaViewRouter = require('./routers/cartaViewRouter');
 const pedidosViewRouter = require('./routers/pedidosViewRouter'); // ✅ Nuevo
 const pagosViewRouter = require('./routers/pagosViewRouter'); 
 const clientesViewRouter = require('./routers/clienteViewRouter');   // ✅ Nuevo
+const reportesRouter = require('./routers/reportesRouter');
 
 // ===== USAR ROUTERS API =====
 
@@ -103,6 +106,8 @@ app.use('/pagos', pagosViewRouter);     // ✅ Vistas de pagos
 app.use('/cajero', cajeroRouter);
 app.use('/clientes', clientesViewRouter);
 app.use('/', userViewRouter); // rutas de usuario (login, register, dashboard)
+app.use('/reportes', reportesRouter);
+
 
 // ===== Rutas de vistas principales =====
 
@@ -121,6 +126,13 @@ app.get('/', async (req, res) => {
     res.redirect('/login');
   }
 });
+
+// Reporte PDF por rango de fechas
+app.get('/reporte', verifyToken, (req, res) => {
+  res.render('reporte', { user: req.user });
+});
+
+app.get('/reporte/pdf', verifyToken, reporteController.generarReportePDF);
 
 // Ruta protegida (solo con token válido)
 app.get('/dashboard', verifyToken, (req, res) => {

@@ -25,7 +25,7 @@
         <a href="/register_admin"><i class="fas fa-user-plus"></i> <span>Registro</span></a>
         <a href="/platos"><i class="fas fa-bowl-food"></i> <span>Platos</span></a>
         <a href="/mesas"><i class="fas fa-chair"></i> <span>Mesas</span></a>
-        <a href="/ventas"><i class="fas fa-shopping-cart"></i> <span>Ventas</span></a>
+        <a href="/reportes"><i class="fas fa-shopping-cart"></i> <span>Reportes</span></a>
         <a href="/carta"><i class="fas fa-book-open"></i> <span>Carta</span></a>
         <a href="/logout"><i class="fas fa-sign-out-alt"></i> <span>Cerrar sesión</span></a>
       </nav>
@@ -43,75 +43,49 @@
         <div class="stat-card">
           <div class="stat-header">
             <h3>Platos Disponibles</h3>
-            <div class="stat-badge">+ 24 Nuevos</div>
+            <div class="stat-badge">Activos + con stock</div>
           </div>
-          <div class="stat-value">150.00</div>
+          <div class="stat-value"><%= typeof platosDisponibles !== 'undefined' ? platosDisponibles : 0 %></div>
         </div>
 
         <div class="stat-card">
           <div class="stat-header">
             <h3>Total de Pedidos</h3>
-            <div class="stat-badge">$ 600, Conductor</div>
+            <div class="stat-badge">Hoy: <%= typeof pedidosHoy !== 'undefined' ? pedidosHoy : 0 %></div>
           </div>
-          <div class="stat-value">11,000</div>
+          <div class="stat-value"><%= typeof totalPedidos !== 'undefined' ? totalPedidos : 0 %></div>
         </div>
 
         <div class="stat-card">
           <div class="stat-header">
             <h3>Ventas Totales</h3>
-            <div class="stat-badge">$ 225, Crecimiento</div>
+            <div class="stat-badge">Acumulado</div>
           </div>
-          <div class="stat-value">2,77000</div>
+          <div class="stat-value">S/ <%= Number(ventasTotales || 0).toLocaleString('es-PE') %></div>
         </div>
 
         <div class="stat-card">
           <div class="stat-header">
             <h3>Ganancia Total</h3>
-            <div class="stat-badge">+ 4.8% Incremento</div>
+            <div class="stat-badge">Estimado</div>
           </div>
-          <div class="stat-value">35,000</div>
+          <div class="stat-value">S/ <%= Number(gananciaTotal || 0).toLocaleString('es-PE') %></div>
         </div>
       </section>
 
       <!-- Revenue Chart -->
       <section class="revenue-section">
-        <h3>Ingresos Totales</h3>
+        <h3>Ingresos Totales (últimos 12 meses)</h3>
         <div class="revenue-chart">
-          <div class="chart-bars">
-            <div class="chart-bar" style="height: 70%"></div>
-            <div class="chart-bar" style="height: 50%"></div>
-            <div class="chart-bar" style="height: 80%"></div>
-            <div class="chart-bar" style="height: 60%"></div>
-            <div class="chart-bar" style="height: 90%"></div>
-            <div class="chart-bar" style="height: 40%"></div>
-            <div class="chart-bar" style="height: 70%"></div>
-            <div class="chart-bar" style="height: 85%"></div>
-            <div class="chart-bar" style="height: 65%"></div>
-            <div class="chart-bar" style="height: 55%"></div>
-            <div class="chart-bar" style="height: 75%"></div>
-            <div class="chart-bar" style="height: 45%"></div>
-          </div>
-          <div class="chart-labels">
-            <span>Ene</span>
-            <span>Feb</span>
-            <span>Mar</span>
-            <span>Abr</span>
-            <span>May</span>
-            <span>Jun</span>
-            <span>Jul</span>
-            <span>Ago</span>
-            <span>Sep</span>
-            <span>Oct</span>
-            <span>Nov</span>
-            <span>Dic</span>
-          </div>
+          <div class="chart-bars" id="chartBars"></div>
+          <div class="chart-labels" id="chartLabels"></div>
         </div>
         <div class="revenue-scale">
-          <span>$50k</span>
-          <span>$40k</span>
-          <span>$30k</span>
-          <span>$20k</span>
-          <span>$10k</span>
+          <span>S/0</span>
+          <span>S/10k</span>
+          <span>S/20k</span>
+          <span>S/30k</span>
+          <span>S/40k</span>
         </div>
       </section>
 
@@ -119,35 +93,24 @@
       <section class="performance-orders">
         <div class="performance-section">
           <h3>Rendimiento</h3>
-          <div class="performance-value">2.375</div>
-          <p class="performance-text">Mantén tu información actualizada para aumentar el número de transacciones</p>
-
-          <div class="performance-stats">
-            <div class="performance-stat">
-              <span class="stat-label">Recuento de Visitas</span>
-              <span class="stat-value">-</span>
-            </div>
-            <div class="performance-stat">
-              <span class="stat-label">Porcentaje</span>
-              <span class="stat-value">9%</span>
-            </div>
+          <div class="performance-value">
+            <%= (ventasTotales && totalPedidos) ? (ventasTotales / (totalPedidos || 1)).toFixed(2) : '0.00' %>
           </div>
 
-          <a href="#" class="more-link">Más →</a>
-          <p class="feature-text">características de gestión de estación.</p>
+          <p class="performance-text">Promedio de ingreso por pedido</p>
 
           <div class="today-stats">
             <div class="today-stat">
-              <div class="today-value">28</div>
+              <div class="today-value"><%= typeof pedidosHoy !== 'undefined' ? pedidosHoy : 0 %></div>
               <div class="today-label">Pedidos Hoy</div>
             </div>
             <div class="today-stat">
-              <div class="today-value">24</div>
-              <div class="today-label">Correlación</div>
+              <div class="today-value"><%= typeof platosDisponibles !== 'undefined' ? platosDisponibles : 0 %></div>
+              <div class="today-label">Platos disponibles</div>
             </div>
             <div class="today-stat">
-              <div class="today-value">04</div>
-              <div class="today-label">Estacionamiento</div>
+              <div class="today-value"><%= typeof totalPedidos !== 'undefined' ? totalPedidos : 0 %></div>
+              <div class="today-label">Pedidos Totales</div>
             </div>
           </div>
         </div>
@@ -155,38 +118,27 @@
         <div class="recent-orders-section">
           <h3>Pedidos Recientes</h3>
           <div class="orders-list">
-            <div class="order-item">
-              <div class="order-details">
-                <h4>Ensalada de Pollo</h4>
-                <span class="order-price">$12.70</span>
+            <% if (Array.isArray(pedidosRecientes) && pedidosRecientes.length > 0) { %>
+              <% pedidosRecientes.forEach(p => { %>
+                <div class="order-item">
+                  <div class="order-details">
+                    <h4><%= p.platos && p.platos[0] ? p.platos[0].nombre : 'Pedido' %></h4>
+                    <span class="order-price">S/ <%= Number(p.total || 0).toFixed(2) %></span>
+                  </div>
+                  <div class="order-date-status">
+                    <span class="order-date"><%= new Date(p.fechaPedido).toLocaleDateString() %></span>
+                    <span class="order-status <%= p.estadoPedido === 'pendiente' ? 'pending' : 'complete' %>">
+                      <%= p.estadoPedido %>
+                    </span>
+                  </div>
+                </div>
+              <% }) %>
+            <% } else { %>
+              <div class="empty-state">
+                <i class="fas fa-receipt"></i>
+                <p>No hay pedidos recientes</p>
               </div>
-              <div class="order-date-status">
-                <span class="order-date">06 Ago 2024</span>
-                <span class="order-status pending">Pendiente</span>
-              </div>
-            </div>
-
-            <div class="order-item">
-              <div class="order-details">
-                <h4>Fideos al Cursor</h4>
-                <span class="order-price">$12.70</span>
-              </div>
-              <div class="order-date-status">
-                <span class="order-date">06 Ago 2024</span>
-                <span class="order-status complete">Completado</span>
-              </div>
-            </div>
-
-            <div class="order-item">
-              <div class="order-details">
-                <h4>Fideos Salteados</h4>
-                <span class="order-price">$14.70</span>
-              </div>
-              <div class="order-date-status">
-                <span class="order-date">06 Ago 2024</span>
-                <span class="order-status complete">Completado</span>
-              </div>
-            </div>
+            <% } %>
           </div>
         </div>
       </section>
@@ -196,32 +148,58 @@
         <div class="reports-section">
           <h3>Últimos Reportes</h3>
           <div class="report-item">
-            <div class="report-name">Reporte Julio 2024</div>
+            <div class="report-name">Reporte mensual</div>
             <div class="report-actions">
-              <a href="#" class="action-link">Ver todos</a>
-              <a href="#" class="action-link">Crear Nuevo</a>
-              <a href="#" class="action-link">Descargar PDF</a>
+              <a href="/reportes" class="action-link">Ver reportes</a>
             </div>
           </div>
         </div>
 
-        <div class="customers-section">
-          <h3>Tus Clientes</h3>
-          <div class="customer-stats">
-            <div class="customer-stat">
-              <div class="customer-value">3750</div>
-              <div class="customer-label">En Línea</div>
-            </div>
-            <div class="customer-stat">
-              <div class="customer-value">5410</div>
-              <div class="customer-label">En Tienda</div>
-            </div>
+      <div class="customers-section">
+        <h3>Empleados</h3>
+        <div class="customer-stats">
+          <div class="customer-stat">
+            <div class="customer-value"><%= typeof totalEmpleados !== 'undefined' ? totalEmpleados : 0 %></div>
+            <div class="customer-label">Registrados</div>
           </div>
-          <a href="#" class="view-more">Ver Más</a>
+          <div class="customer-stat">
+            <div class="customer-value"><%= typeof empleadosLinea !== 'undefined' ? empleadosLinea : 0 %></div>
+            <div class="customer-label">En Línea</div>
+          </div>
         </div>
+        <a href="/register_admin"> <span>Ver más</span></a>
+      </div>
+
       </section>
     </main>
   </div>
+
+  <script>
+    // Datos incrustados desde servidor para la gráfica
+    const months = <%- JSON.stringify(months || []) %>;
+    const revenues = <%- JSON.stringify(revenuesByMonth || []) %>;
+
+    // Render sencillo de barras (sin librerías)
+    const chartBars = document.getElementById('chartBars');
+    const chartLabels = document.getElementById('chartLabels');
+
+    // Normalizar alturas (0-100%)
+    const maxVal = Math.max(...revenues, 1);
+    revenues.forEach(val => {
+      const pct = Math.round((val / maxVal) * 100);
+      const bar = document.createElement('div');
+      bar.className = 'chart-bar';
+      bar.style.height = pct + '%';
+      bar.title = 'S/ ' + val;
+      chartBars.appendChild(bar);
+    });
+
+    months.forEach(m => {
+      const span = document.createElement('span');
+      span.textContent = m;
+      chartLabels.appendChild(span);
+    });
+  </script>
 </body>
 
 </html>

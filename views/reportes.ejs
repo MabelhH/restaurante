@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Reportes - Restaurante</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/dashboard.css">
+  <style>
+    .filter-card { background: #fff; padding: 25px; border-radius: 12px; margin: 30px auto; max-width: 700px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    .filter-card h2 { text-align:center; margin-bottom:20px; }
+    .filter-card form { display:flex; gap:15px; flex-wrap:wrap; justify-content:center; align-items:center; }
+    .filter-card input, .filter-card select { padding:10px; border-radius:6px; border:1px solid #ccc; min-width:150px; }
+    .filter-card button { padding:10px 18px; border:none; border-radius:6px; cursor:pointer; background:#4CAF50; color:#fff; }
+    .table-container { margin:30px auto; max-width:1000px; overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; font-family:sans-serif; }
+    table th, table td { padding:12px; border:1px solid #ddd; text-align:center; }
+    table th { background:#4CAF50; color:#fff; }
+    .download-buttons { margin:15px 0; display:flex; gap:10px; justify-content:flex-end; }
+    .success-message,.error-message { position:fixed; top:20px; right:20px; color:#fff; padding:12px 20px; border-radius:8px; z-index:1000; animation: fadeInOut 3s forwards; }
+    .success-message { background:#28a745; } .error-message { background:#dc3545; }
+    @keyframes fadeInOut { 0%{opacity:0; transform:translateY(-10px)} 10%,90%{opacity:1; transform:translateY(0)} 100%{opacity:0; transform:translateY(-10px)} }
+    .download-buttons {
+      margin: 15px 0;
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+    .download-buttons button {
+      padding: 10px 20px;
+      font-weight: bold;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: 0.3s ease;
+      font-size: 15px;
+    }
+    .btn-pdf {
+      background-color: #d9534f;
+      color: white;
+    }
+    .btn-pdf:hover {
+      background-color: #c9302c;
+    }
+    .btn-excel {
+      background-color: #5cb85c;
+      color: white;
+    }
+    .btn-excel:hover {
+      background-color: #4cae4c;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-container">
+    <aside class="sidebar">
+      <h2 class="logo"><i class="fas fa-utensils"></i><br>Restaurante</h2>
+      <nav>
+        <a href="/dashboard" class="active"><i class="fas fa-home"></i> <span>Dashboard</span></a>
+        <a href="/clientes"><i class="fa-solid fa-users"></i> <span>Clientes</span></a>
+        <a href="/register_admin"><i class="fas fa-user-plus"></i> <span>Registro</span></a>
+        <a href="/platos"><i class="fas fa-bowl-food"></i> <span>Platos</span></a>
+        <a href="/mesas"><i class="fas fa-chair"></i> <span>Mesas</span></a>
+        <a href="/reportes"><i class="fas fa-shopping-cart"></i> <span>Reportes</span></a>
+        <a href="/carta"><i class="fas fa-book-open"></i> <span>Carta</span></a>
+        <a href="/logout"><i class="fas fa-sign-out-alt"></i> <span>Cerrar sesión</span></a>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+      <header>
+        <h1>Reportes</h1>
+        <div class="welcome-badge">Genera reportes por fechas y mesero</div>
+      </header>
+
+      <div class="filter-card">
+        <h2>Generar Reporte</h2>
+        <form id="filterForm">
+          <input type="date" name="fechaInicio" required />
+          <input type="date" name="fechaFin" required />
+          <select name="mesero" id="mesero">
+            <option value="todos">Todos los meseros</option>
+            <% if (Array.isArray(meseros)) { meseros.forEach(m => { %>
+              <option value="<%= m._id %>"><%= (m.nombre || '') + ' ' + (m.apellido || '') %></option>
+            <% }) } %>
+          </select>
+          <button type="submit"><i class="fas fa-eye"></i> Mostrar</button>
+        </form>
+      </div>
+
+      <div class="table-container" id="tableContainer" style="display:none;">
+        <div class="download-buttons">
+          <button id="btnPdf" class="btn-pdf"><i class="fas fa-file-pdf"></i> Descargar PDF</button>
+          <button id="btnExcel" class="btn-excel"><i class="fas fa-file-excel"></i> Descargar Excel</button>
+        </div>
+
+        <table id="reportTable">
+          <thead>
+            <tr>
+              <th>ID Pedido</th>
+              <th>Fecha</th>
+              <th>Platos</th>
+              <th>Total (S/)</th>
+              <th>Estado</th>
+              <th>Mesero</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div id="message-container"></div>
+    </main>
+  </div>
+
+  <script>
+    const form = document.getElementById('filterForm');
+    const messageContainer = document.getElementById('message-container');
+    const tableContainer = document.getElementById('tableContainer');
+    const reportTableBody = document.querySelector('#reportTable tbody');
+    let currentFilters = {};
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fechaInicio = form.fechaInicio.value;
+      const fechaFin = form.fechaFin.value;
+      const mesero = form.mesero.value;
+      currentFilters = { fechaInicio, fechaFin, mesero };
+
+      try {
+        const res = await fetch(`/reportes/filtrar?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}&mesero=${mesero}`, { cache: 'no-store' });
+        if (!res.ok) {
+          const txt = await res.text();
+          showMessage(txt || 'Error', 'error');
+          return;
+        }
+        const data = await res.json();
+        if (!data.length) {
+          tableContainer.style.display = 'none';
+          showMessage('No hay pedidos en el rango seleccionado', 'error');
+          return;
+        }
+
+        reportTableBody.innerHTML = data.map(p => {
+          const platosHtml = Array.isArray(p.platos)
+            ? p.platos.map(pl => `${pl.nombre} (x${pl.cantidad}) - S/ ${pl.subtotal}`).join('<br>')
+            : 'Sin platos';
+          return `
+            <tr>
+              <td>${p._id}</td>
+              <td>${new Date(p.fechaPedido).toLocaleDateString()}</td>
+              <td>${platosHtml}</td>
+              <td>${Number(p.total).toFixed(2)}</td>
+              <td>${p.estadoPago}</td>
+              <td>${p.mesero || 'Sin asignar'}</td>
+            </tr>
+          `;
+        }).join('');
+
+        tableContainer.style.display = 'block';
+        showMessage('Reportes cargados correctamente', 'success');
+      } catch (err) {
+        console.error(err);
+        showMessage('Error cargando reportes', 'error');
+      }
+    });
+
+    document.getElementById('btnPdf').addEventListener('click', () => {
+      const { fechaInicio, fechaFin, mesero } = currentFilters;
+      if (!fechaInicio || !fechaFin) return showMessage('Selecciona un rango de fechas', 'error');
+      window.location.href = `/reportes/pdf_rango?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}&mesero=${mesero}`;
+    });
+
+    document.getElementById('btnExcel').addEventListener('click', () => {
+      const { fechaInicio, fechaFin, mesero } = currentFilters;
+      if (!fechaInicio || !fechaFin) return showMessage('Selecciona un rango de fechas', 'error');
+      window.location.href = `/reportes/excel_rango?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}&mesero=${mesero}`;
+    });
+
+    function showMessage(text, type) {
+      const div = document.createElement('div');
+      div.className = type === 'success' ? 'success-message' : 'error-message';
+      div.innerText = text;
+      messageContainer.appendChild(div);
+      setTimeout(() => div.remove(), 3000);
+    }
+  </script>
+</body>
+</html>
