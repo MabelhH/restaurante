@@ -12,8 +12,6 @@ class PedidosController {
     try {
       const { mesaId, platos, meseroId, observacionesGenerales } = req.body;
 
-      console.log('Datos recibidos:', { mesaId, platos, meseroId, observacionesGenerales });
-
       // CAMBIO: Validar que el mesero existe usando userModel
       const mesero = await Usuario.findById(meseroId);
       if (!mesero) {
@@ -26,11 +24,23 @@ class PedidosController {
         return res.status(404).json({ error: 'Mesa no encontrada' });
       }
 
+      console.log('🔍 DEBUG - Estado de la mesa:', {
+        mesaId: mesa._id,
+        numeroMesa: mesa.numeroMesa,
+        estado: mesa.estado,
+        estadosPermitidos: ['disponible', 'liberada', 'ocupada'],
+        esEstadoPermitido: ['disponible', 'liberada', 'ocupada'].includes(mesa.estado)
+      });
+
       // CAMBIO: Validar que la mesa esté disponible o liberada
-      if (!['disponible', 'liberada'].includes(mesa.estado)) {
-        return res.status(400).json({ error: 'La mesa no está disponible para nuevos pedidos' });
+       if (!['disponible', 'liberada', 'ocupada'].includes(mesa.estado)) {
+        console.log('❌ DEBUG - Mesa rechazada. Estado:', mesa.estado);
+        return res.status(400).json({ 
+          error: `La mesa no acepta nuevos pedidos. Estado actual: ${mesa.estado}` 
+        });
       }
 
+      console.log('✅ DEBUG - Mesa ACEPTADA para nuevo pedido');
       // Validar que hay platos
       if (!platos || platos.length === 0) {
         return res.status(400).json({ error: 'El pedido debe contener al menos un plato' });

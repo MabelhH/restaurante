@@ -61,7 +61,7 @@
             <h3>Ventas Totales</h3>
             <div class="stat-badge">Acumulado</div>
           </div>
-          <div class="stat-value">S/ <%= Number(ventasTotales || 0).toLocaleString('es-PE') %></div>
+          <div class="stat-value">S/ <%= Number(typeof ventasTotales !== 'undefined' ? ventasTotales : 0).toLocaleString('es-PE') %></div>
         </div>
 
         <div class="stat-card">
@@ -69,7 +69,7 @@
             <h3>Ganancia Total</h3>
             <div class="stat-badge">Estimado</div>
           </div>
-          <div class="stat-value">S/ <%= Number(gananciaTotal || 0).toLocaleString('es-PE') %></div>
+          <div class="stat-value">S/ <%= Number(typeof gananciaTotal !== 'undefined' ? gananciaTotal : 0).toLocaleString('es-PE') %></div>
         </div>
       </section>
 
@@ -94,7 +94,7 @@
         <div class="performance-section">
           <h3>Rendimiento</h3>
           <div class="performance-value">
-            <%= (ventasTotales && totalPedidos) ? (ventasTotales / (totalPedidos || 1)).toFixed(2) : '0.00' %>
+            <%= (typeof ventasTotales !== 'undefined' && typeof totalPedidos !== 'undefined') ? (ventasTotales / (totalPedidos || 1)).toFixed(2) : '0.00' %>
           </div>
 
           <p class="performance-text">Promedio de ingreso por pedido</p>
@@ -118,7 +118,7 @@
         <div class="recent-orders-section">
           <h3>Pedidos Recientes</h3>
           <div class="orders-list">
-            <% if (Array.isArray(pedidosRecientes) && pedidosRecientes.length > 0) { %>
+            <% if (typeof pedidosRecientes !== 'undefined' && Array.isArray(pedidosRecientes) && pedidosRecientes.length > 0) { %>
               <% pedidosRecientes.forEach(p => { %>
                 <div class="order-item">
                   <div class="order-details">
@@ -175,30 +175,47 @@
   </div>
 
   <script>
-    // Datos incrustados desde servidor para la gráfica
-    const months = <%- JSON.stringify(months || []) %>;
-    const revenues = <%- JSON.stringify(revenuesByMonth || []) %>;
+    // Datos incrustados desde servidor para la gráfica - CON VERIFICACIÓN SEGURA
+    const months = <%- JSON.stringify(typeof months !== 'undefined' ? months : []) %>;
+    const revenues = <%- JSON.stringify(typeof revenuesByMonth !== 'undefined' ? revenuesByMonth : []) %>;
 
     // Render sencillo de barras (sin librerías)
     const chartBars = document.getElementById('chartBars');
     const chartLabels = document.getElementById('chartLabels');
 
-    // Normalizar alturas (0-100%)
-    const maxVal = Math.max(...revenues, 1);
-    revenues.forEach(val => {
-      const pct = Math.round((val / maxVal) * 100);
-      const bar = document.createElement('div');
-      bar.className = 'chart-bar';
-      bar.style.height = pct + '%';
-      bar.title = 'S/ ' + val;
-      chartBars.appendChild(bar);
-    });
+    // Verificar que existen los elementos y los datos
+    if (chartBars && chartLabels && Array.isArray(months) && Array.isArray(revenues)) {
+      
+      // Limpiar contenedores por si ya tenían contenido
+      chartBars.innerHTML = '';
+      chartLabels.innerHTML = '';
 
-    months.forEach(m => {
-      const span = document.createElement('span');
-      span.textContent = m;
-      chartLabels.appendChild(span);
-    });
+      // Verificar que hay datos para mostrar
+      if (revenues.length > 0 && months.length > 0) {
+        // Normalizar alturas (0-100%) - CON VERIFICACIÓN SEGURA
+        const validRevenues = revenues.filter(val => !isNaN(parseFloat(val)));
+        const maxVal = validRevenues.length > 0 ? Math.max(...validRevenues) : 1;
+        
+        revenues.forEach((val, index) => {
+          const numericVal = Number(val) || 0;
+          const pct = Math.round((numericVal / maxVal) * 100);
+          const bar = document.createElement('div');
+          bar.className = 'chart-bar';
+          bar.style.height = pct + '%';
+          bar.title = 'S/ ' + numericVal.toLocaleString('es-PE');
+          chartBars.appendChild(bar);
+        });
+
+        months.forEach(m => {
+          const span = document.createElement('span');
+          span.textContent = m;
+          chartLabels.appendChild(span);
+        });
+      } else {
+        // Mostrar mensaje si no hay datos
+        chartBars.innerHTML = '<div class="no-data">No hay datos disponibles</div>';
+      }
+    }
   </script>
 </body>
 

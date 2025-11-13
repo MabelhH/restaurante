@@ -57,7 +57,7 @@ router.post('/pagar/:id', async (req, res) => {
     // Liberar mesa
     const mesa = await Mesa.findById(pedido.mesa);
     if (mesa) {
-      mesa.estado = 'liberada';
+      mesa.estado = 'ocupada';
       mesa.pedidoActual = null;
       await mesa.save();
     }

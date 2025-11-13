@@ -72,7 +72,7 @@ router.post('/', verifyToken, async (req, res) => {
       });
     }
 
-    if (mesa.estado !== 'disponible' && mesa.estado !== 'liberada') {
+    if (mesa.estado !== 'disponible' && mesa.estado !== 'liberada'  && mesa.estado !== 'ocupada') {
       return res.status(400).json({ 
         error: 'La mesa no está disponible. Estado actual: ' + mesa.estado 
       });

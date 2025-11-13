@@ -26,6 +26,10 @@ function verifyToken(req, res, next) {
 router.get('/', verifyToken, async (req, res) => {
   try {
     console.log('👤 Usuario accediendo a carta:', req.user);
+    console.log('🔍 Parámetros query:', req.query);
+
+    const mesaAutoId = req.query.mesaAuto || req.query.mesaId;
+    const mesaParam = mesaAutoId;
 
     // Poblar el campo "categoria" para mostrar nombres
     const platos = await Plato.find({ estado: 'activo', disponible: true })
@@ -36,14 +40,32 @@ router.get('/', verifyToken, async (req, res) => {
     const categorias = await Categoria.find({ estado: 'activo' }, 'nombre');
 
     // ✅ Obtener mesas disponibles para el carrito
-    const mesas = await Mesa.find({ 
-      estado: { $in: ['disponible', 'liberada'] } 
-    }).sort({ numeroMesa: 1 });
+    let mesas = [];
+    if (mesaParam) {
+      // Buscar solo la mesa específica
+      const mesaEspecifica = await Mesa.findById(mesaParam);
+      if (mesaEspecifica) {
+        mesas = [mesaEspecifica];
+        console.log(` Mesa específica encontrada: Mesa ${mesaEspecifica.numeroMesa} (${mesaEspecifica.estado})`);
+      } else {
+        console.warn(` Mesa con ID ${mesaParam} no encontrada`);
+        // Fallback: obtener mesas disponibles
+        mesas = await Mesa.find({
+          estado: { $in: ['disponible', 'liberada'] }
+        }).sort({ numeroMesa: 1 });
+      }
+    } else {
+      // Si no hay parámetro, obtener todas las mesas disponibles
+      mesas = await Mesa.find({
+        estado: { $in: ['disponible', 'liberada'] }
+      }).sort({ numeroMesa: 1 });
+    }
 
     console.log('📊 Datos cargados:', {
       platos: platos.length,
       categorias: categorias.length,
-      mesas: mesas.length
+      mesas: mesas.length,
+      mesaParam: mesaParam || 'No hay parámetro'
     });
 
     // CORREGIDO: Pasar el usuario con _id
@@ -82,6 +104,8 @@ router.get('/', verifyToken, async (req, res) => {
     res.status(500).send('Error al cargar la carta');
   }
 });
+
+
 // Ruta para la carta con mesa pre-seleccionada (para agregar a pedido existente)
 router.get('/', verifyToken, async (req, res) => {
   try {

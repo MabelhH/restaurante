@@ -177,20 +177,37 @@
               <option value="">-- Selecciona una mesa --</option>
               <% if (mesas && mesas.length > 0) { %>
                 <% mesas.forEach(mesa => { %>
-                  <% if (mesa.estado === 'disponible' || mesa.estado === 'liberada') { %>
-                    <option value="<%= mesa._id %>">
-                      Mesa <%= mesa.numeroMesa %> - <%= mesa.piso %> - <%= mesa.sector %>
-                      <% if (mesa.estado === 'liberada') { %> (Recién liberada) <% } %>
-                    </option>
-                  <% } %>
+                  <!-- PERMITIR TODOS LOS ESTADOS DE MESA -->
+                  <option value="<%= mesa._id %>" 
+                          data-estado="<%= mesa.estado %>"
+                          <% if (mesa.estado === 'ocupada') { %>
+                            style="color: #ff6b00; font-weight: bold;"
+                          <% } else if (mesa.estado === 'disponible') { %>
+                            style="color: #28a745;"
+                          <% } else if (mesa.estado === 'liberada') { %>
+                            style="color: #17a2b8;"
+                          <% } %>>
+                    Mesa <%= mesa.numeroMesa %> - <%= mesa.piso %> - <%= mesa.sector %>
+                    <% if (mesa.estado === 'liberada') { %> 
+                      (Liberada) 
+                    <% } else if (mesa.estado === 'ocupada') { %>
+                      (Ocupada - Agregar pedido)
+                    <% } else if (mesa.estado === 'disponible') { %>
+                      (Disponible)
+                    <% } %>
+                  </option>
                 <% }) %>
               <% } else { %>
                 <option value="">No hay mesas disponibles</option>
               <% } %>
             </select>
+            <div class="mesa-status-info" id="mesa-status-info" style="margin-top: 5px; font-size: 12px; display: none;">
+              <!-- Aquí se mostrará información del estado de la mesa -->
+            </div>
           </div>
+
         </div>
-        
+
         <div class="cart-actions">
           <button class="btn-confirm" onclick="confirmarPedido()">
             <i class="fas fa-check-circle"></i>
@@ -212,6 +229,37 @@
     // Inicialización cuando el DOM está listo
     document.addEventListener('DOMContentLoaded', function() {
       console.log('✅ Carta cargada correctamente');
+
+
+      const mesaSelect = document.getElementById('mesa-select');
+
+      // Configurar event listener para cambios en el selector de mesa
+      if (mesaSelect) {
+        mesaSelect.addEventListener('change', function() {
+          const selectedOption = this.options[this.selectedIndex];
+          if (selectedOption && selectedOption.value) {
+            actualizarInfoEstadoMesa(selectedOption);
+          } else {
+            const statusInfo = document.getElementById('mesa-status-info');
+            if (statusInfo) statusInfo.style.display = 'none';
+          }
+        });
+          
+        
+      // Inicializar información de estado si hay una mesa seleccionada
+        if (mesaSelect.value) {
+          const selectedOption = mesaSelect.options[mesaSelect.selectedIndex];
+          actualizarInfoEstadoMesa(selectedOption);
+        }
+        
+        // Mostrar notificación si no hay mesas disponibles
+        if (mesaSelect.options.length <= 1) {
+          console.warn('⚠️ No hay mesas disponibles');
+        }
+      }
+
+      detectarMesaDesdeURL();
+
       console.log('Usuario:', { 
         _id: '<%= usuario._id %>', 
         nombre: '<%= usuario.nombre %>',
@@ -254,14 +302,64 @@
 
       // Inicializar filtros de búsqueda y categorías
       inicializarFiltros();
-      
-      // Mostrar notificación si no hay mesas disponibles
-      const mesaSelect = document.getElementById('mesa-select');
-      if (mesaSelect && mesaSelect.options.length <= 1) {
-        console.warn('⚠️ No hay mesas disponibles');
-      }
     });
 
+    // 🔥 FUNCIÓN MEJORADA: Detectar y seleccionar mesa automáticamente (incluye mesas ocupadas)
+    function detectarMesaDesdeURL() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const mesaAutoId = urlParams.get('mesaAuto');
+      const mesaId = urlParams.get('mesaId'); // También verifica mesaId por si acaso
+      
+      const mesaParam = mesaAutoId || mesaId;
+      
+      if (mesaParam) {
+        const mesaSelect = document.getElementById('mesa-select');
+        if (!mesaSelect) {
+          console.warn('❌ Selector de mesa no encontrado');
+          return;
+        }
+       // const mesaOption = Array.from(mesaSelect.options).find(option => option.value === mesaParam);
+        
+        const mesaOption = Array.from(mesaSelect.options).find(option => option.value === mesaParam);
+        if (mesaOption) {
+          mesaSelect.value = mesaParam;
+          // Actualizar información del estado de la mesa
+          actualizarInfoEstadoMesa(mesaOption);
+          
+          // Obtener el número de mesa del texto de la opción
+          const match = mesaOption.text.match(/Mesa (\d+)/);
+          const numeroMesa = match ? match[1] : 'desconocida';
+          const estadoMesa = mesaOption.getAttribute('data-estado');
+          
+          let mensaje = '';
+          if (estadoMesa === 'ocupada') {
+            mensaje = `Agregando nuevo pedido a la mesa  ${numeroMesa}`;
+          } else {
+            mensaje = `la Mesa  numero ${numeroMesa} seleccionada para nuevo pedido`;
+          }
+          
+          console.log(mensaje);
+          mostrarNotificacion(mensaje, 'success');
+          
+          // Scroll suave al selector de mesa para que el usuario lo vea
+          setTimeout(() => {
+            mesaSelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Resaltar visualmente el selector
+            mesaSelect.style.border = '2px solid #28a745';
+            mesaSelect.style.boxShadow = '0 0 10px rgba(40, 167, 69, 0.5)';
+            setTimeout(() => {
+              mesaSelect.style.border = '';
+              mesaSelect.style.boxShadow = '';
+            }, 3000);
+          }, 500);
+          
+        } else {
+          console.warn('⚠️ Mesa automática no encontrada en selector:', mesaParam);
+          mostrarNotificacion('⚠️ La mesa seleccionada ya no está disponible', 'warning');
+        }
+      }
+    }
     // Función para inicializar filtros de búsqueda y categorías
     function inicializarFiltros() {
       const inputBusqueda = document.getElementById('search-input');
@@ -388,6 +486,32 @@
         } else {
           actualizarCarrito();
         }
+      }
+    }
+
+    // Función para actualizar la información del estado de la mesa seleccionada
+    function actualizarInfoEstadoMesa(mesaOption) {
+      const statusInfo = document.getElementById('mesa-status-info');
+      if (!statusInfo) return;
+      
+      const estado = mesaOption.getAttribute('data-estado');
+      const texto = mesaOption.textContent;
+      
+      statusInfo.style.display = 'block';
+      statusInfo.className = 'mesa-status-info ' + estado;
+      
+      switch(estado) {
+        case 'ocupada':
+          statusInfo.innerHTML = '<i class="fas fa-info-circle"></i> Esta mesa tiene pedidos activos. Estás agregando un nuevo pedido.';
+          break;
+        case 'disponible':
+          statusInfo.innerHTML = '<i class="fas fa-check-circle"></i> Mesa disponible para nuevos pedidos.';
+          break;
+        case 'liberada':
+          statusInfo.innerHTML = '<i class="fas fa-broom"></i> Mesa recién liberada y lista para usar.';
+          break;
+        default:
+          statusInfo.style.display = 'none';
       }
     }
 
@@ -568,6 +692,7 @@
         btnConfirm.disabled = false;
       }
     }
+    
 
     // Función para mostrar notificaciones
     function mostrarNotificacion(mensaje, tipo = 'info') {

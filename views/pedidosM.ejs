@@ -163,7 +163,7 @@
                     2. Pedidos pagados dentro de los 5 minutos
                 -->
                 <% 
-                  let puedeCancelar = false;
+                  let puedeCancelar = pedido.estadoPedido === 'pendiente';
                   let motivoCancelacion = '';
                   
                   // Caso 1: Pedido pendiente no pagado
@@ -194,7 +194,7 @@
 
                 <!-- BOTÓN AGREGAR NUEVOS PEDIDOS - Solo si la mesa está pagada y en estado atendida/ocupada -->
                 <% if (pedido.estadoPago === 'pagado' && pedido.mesa && ['ocupada', 'atendida','disponible'].includes(pedido.mesa.estado) && pedido.platos.every(p => p.estado === 'listo' || p.estado === 'entregado')) { %>
-                  <a href="/carta?mesa=<%= pedido.mesa._id %>&pedidoExistente=<%= pedido._id %>" 
+                  <a href="/carta?mesaAuto=<%= pedido.mesa._id %>" 
                     class="btn-action primary" 
                     title="Agregar nuevo pedido a esta mesa ya pagada">
                     <i class="fas fa-plus-circle"></i> Nuevo Pedido
