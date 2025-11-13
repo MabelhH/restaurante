@@ -193,13 +193,13 @@
                 <% } %>
 
                 <!-- BOTÓN AGREGAR NUEVOS PEDIDOS - Solo si la mesa está pagada y en estado atendida/ocupada -->
-                <% if (pedido.estadoPago === 'pagado' && pedido.mesa && ['ocupada', 'atendida','disponible'].includes(pedido.mesa.estado) && pedido.platos.every(p => p.estado === 'listo' || p.estado === 'entregado')) { %>
-                  <a href="/carta?mesaAuto=<%= pedido.mesa._id %>" 
-                    class="btn-action primary" 
-                    title="Agregar nuevo pedido a esta mesa ya pagada">
-                    <i class="fas fa-plus-circle"></i> Nuevo Pedido
-                  </a>
-                <% } %>
+            <% if (pedido.estadoPago === 'pagado' && pedido.mesa && ['ocupada', 'atendida','disponible'].includes(pedido.mesa.estado) && pedido.platos.every(p => p.estado === 'listo' || p.estado === 'entregado')) { %>
+              <a href="/carta?mesaAuto=<%= pedido.mesa._id %>" 
+                class="btn-action primary" 
+                title="Agregar nuevo pedido a esta mesa ya pagada">
+                <i class="fas fa-plus-circle"></i> Nuevo Pedido
+              </a>
+            <% } %>
 
                 <!-- BOTÓN LIBERAR MESA - Solo si está pagada y la mesa está atendida/ocupada -->
                 <% if (pedido.estadoPago === 'pagado' && pedido.mesa && ['ocupada', 'atendida'].includes(pedido.mesa.estado) && pedido.platos.every(p => p.estado === 'listo' || p.estado === 'entregado')) { %>

@@ -6,6 +6,7 @@
   <title>Gestión de Platos - Restaurante</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="/carta.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
   <div class="dashboard-container">
@@ -35,13 +36,38 @@
           <h2>Bienvenido</h2>
           <p>Descubre lo que necesites</p>
         </div>
+        <div class="qr-section">
+          <button id="generarQR" class="btn-qr">
+            <i class="fas fa-qrcode"></i> Generar QR para Carta PDF
+          </button>
+        </div>
         <div class="search-bar">
           <input type="text" placeholder="Buscar plato..." />
           <i class="fas fa-search"></i>
         </div>
       </header>
 
-      <!-- Sección principal -->
+      <div id="qrModal" class="modal" style="display: none;">
+        <div class="modal-content">
+          <span class="close">&times;</span>
+          <h3>QR para Carta en PDF</h3>
+          <div id="qrcode"></div>
+          <p>Escanea este código QR para ver la carta en PDF</p>
+          <div class="modal-buttons">
+            <button id="descargarQR" class="btn-descargar">
+              <i class="fas fa-download"></i> Descargar QR
+            </button>
+            <a href="/carta/pdf" target="_blank" class="btn-ver-pdf">
+              <i class="fas fa-file-pdf"></i> Ver PDF Ahora
+            </a>
+            <button id="compartirQR" class="btn-compartir">
+              <i class="fas fa-share-alt"></i> Compartir
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- El resto de tu contenido se mantiene igual -->
       <section class="hero">
         <div class="hero-text">
           <h1>No es solo comida,<br> es una experiencia</h1>
@@ -68,7 +94,7 @@
         <% } %>
       </section>
 
-            <!-- Lista de platos -->
+      <!-- Lista de platos -->
       <section class="food-list">
         <% platos.forEach(plato => { %>
           <% if (plato.estado === 'activo') { %>
@@ -102,12 +128,100 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function () {
+      // 🔹 VARIABLES PARA EL QR
+      const generarQRBtn = document.getElementById('generarQR');
+      const qrModal = document.getElementById('qrModal');
+      const closeModal = document.querySelector('.close');
+      const descargarQRBtn = document.getElementById('descargarQR');
+      const compartirQRBtn = document.getElementById('compartirQR');
+
+      // 🔹 URL DEL PDF - ESTA ES LA PARTE IMPORTANTE
+      const urlPDF = window.location.origin + '/carta/pdf';
+      console.log('📄 URL del PDF:', urlPDF);
+
+      // 🔹 GENERAR QR QUE APUNTA AL PDF
+      generarQRBtn.addEventListener('click', function() {
+        // Limpiar QR anterior
+        document.getElementById('qrcode').innerHTML = '';
+        
+        // Verificar que la librería QRCode esté disponible
+        if (typeof QRCode === 'undefined') {
+          alert('Error: La librería QRCode no está cargada. Recarga la página.');
+          return;
+        }
+        
+        console.log('🎯 Generando QR para:', urlPDF);
+        
+        // Generar nuevo QR que apunta DIRECTAMENTE al PDF
+        new QRCode(document.getElementById('qrcode'), {
+          text: urlPDF,
+          width: 250,
+          height: 250,
+          colorDark: "#000000",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.H
+        });
+        
+        qrModal.style.display = 'block';
+      });
+
+      // 🔹 CERRAR MODAL
+      closeModal.addEventListener('click', function() {
+        qrModal.style.display = 'none';
+      });
+
+      // 🔹 DESCARGAR QR
+      descargarQRBtn.addEventListener('click', function() {
+        const canvas = document.querySelector('#qrcode canvas');
+        if (canvas) {
+          const image = canvas.toDataURL('image/png');
+          const link = document.createElement('a');
+          link.href = image;
+          link.download = 'qr-carta-pdf-restaurante.png';
+          link.click();
+        } else {
+          alert('Primero genera el QR antes de descargarlo');
+        }
+      });
+
+      // 🔹 COMPARTIR QR
+      compartirQRBtn.addEventListener('click', function() {
+        const canvas = document.querySelector('#qrcode canvas');
+        if (canvas) {
+          canvas.toBlob(function(blob) {
+            if (navigator.share) {
+              navigator.share({
+                title: 'Carta del Restaurante - QR',
+                text: 'Escanea este QR para ver nuestra carta en PDF',
+                files: [new File([blob], 'carta-restaurante-qr.png', { type: 'image/png' })]
+              });
+            } else {
+              // Fallback: descargar
+              const image = canvas.toDataURL('image/png');
+              const link = document.createElement('a');
+              link.href = image;
+              link.download = 'qr-carta-pdf-restaurante.png';
+              link.click();
+            }
+          });
+        } else {
+          alert('Primero genera el QR antes de compartirlo');
+        }
+      });
+
+      // 🔹 CERRAR MODAL AL HACER CLIC FUERA
+      window.addEventListener('click', function(event) {
+        if (event.target === qrModal) {
+          qrModal.style.display = 'none';
+        }
+      });
+
+      // 🔹 TU CÓDIGO EXISTENTE DE FILTRADO (se mantiene igual)
       const inputBusqueda = document.querySelector('.search-bar input');
       const tarjetas = document.querySelectorAll('.food-card');
       const botonesCategoria = document.querySelectorAll('.category');
       let categoriaActiva = 'todas';
 
-      // 🔹 Filtrar por categoría
       function filtrarPorCategoria(categoria) {
         categoriaActiva = categoria;
         tarjetas.forEach(card => {
@@ -121,7 +235,6 @@
         });
       }
 
-      // 🔹 Escuchar clics en botones
       botonesCategoria.forEach(btn => {
         btn.addEventListener('click', function () {
           const categoria = this.getAttribute('data-categoria');
@@ -129,7 +242,6 @@
         });
       });
 
-      // 🔹 Búsqueda
       inputBusqueda.addEventListener('input', function () {
         const texto = inputBusqueda.value.toLowerCase();
         tarjetas.forEach(card => {
