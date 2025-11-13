@@ -25,9 +25,26 @@ function verifyToken(req, res, next) {
 }
 
 
+function getLocalIP() {
+  const interfaces = require('os').networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const interface of interfaces[name]) {
+      if (interface.family === 'IPv4' && !interface.internal) {
+        return interface.address;
+      }
+    }
+  }
+  return 'localhost';
+}
+
 async function obtenerImagenParaPDF(urlImagen) {
   try {
     console.log(`📥 Descargando imagen: ${urlImagen}`);
+
+    if (!urlImagen || urlImagen === 'null' || urlImagen === 'undefined') {
+      console.log('❌ URL de imagen vacía o inválida');
+      return null;
+    }
     
     // Si la imagen es una URL web
     if (urlImagen.startsWith('http')) {
@@ -63,6 +80,7 @@ async function obtenerImagenParaPDF(urlImagen) {
   }
 }
 
+
 // Ruta /carta (unificada - elimina la duplicada)
 router.get('/', verifyToken, async (req, res) => {
   try {
@@ -73,6 +91,16 @@ router.get('/', verifyToken, async (req, res) => {
     const mesaParam = mesaAutoId;
     const { mesa, pedidoExistente } = req.query;
 
+
+    const localIP = getLocalIP();
+    const pdfUrl = `http://${localIP}:3000/carta/pdf`;
+    
+    console.log('📍 URL del PDF para QR:', pdfUrl);
+    
+
+    console.log('📍 IP detectada:', localIP);
+    console.log('📍 URL del PDF para QR:', pdfUrl);
+    console.log('📍 ¿Es localhost?', localIP === 'localhost');
     // Poblar el campo "categoria" para mostrar nombres
     const platos = await Plato.find({ estado: 'activo', disponible: true })
       .populate('categoria', 'nombre')
@@ -130,6 +158,8 @@ router.get('/', verifyToken, async (req, res) => {
       categorias, 
       mesas,
       mesaSeleccionada, 
+      pdfUrl: pdfUrl,  // ← Esta variable va a tu vista
+      localIP: localIP,
       esPedidoExistente: !!pedidoExistente 
     };
 
@@ -147,6 +177,12 @@ router.get('/', verifyToken, async (req, res) => {
     console.error('❌ Error al cargar la carta:', err);
     res.status(500).send('Error al cargar la carta');
   }
+});
+
+// Ruta especial para QR que siempre use IP real
+router.get('/qr-pdf', async (req, res) => {
+  const localIP = '192.168.5.101'; // Reemplaza con tu IP
+  return res.redirect(`http://${localIP}:3000/carta/pdf`);
 });
 
 // Ruta para generar PDF CON imágenes funcional

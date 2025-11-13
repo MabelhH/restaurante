@@ -126,7 +126,7 @@
     </main>
   </div>
 
-  <script>
+  <!-- <script>
     document.addEventListener('DOMContentLoaded', function () {
       // 🔹 VARIABLES PARA EL QR
       const generarQRBtn = document.getElementById('generarQR');
@@ -254,6 +254,77 @@
         });
       });
     });
-  </script>
+  </script> -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // 🔹 VARIABLES PARA EL QR - USAR LA VARIABLE DEL SERVIDOR
+    const generarQRBtn = document.getElementById('generarQR');
+    const qrModal = document.getElementById('qrModal');
+    const closeModal = document.querySelector('.close');
+    const descargarQRBtn = document.getElementById('descargarQR');
+    const compartirQRBtn = document.getElementById('compartirQR');
+
+    // 🔹 URL CORRECTA DESDE EL SERVIDOR - ESTA ES LA SOLUCIÓN
+    const urlPDF = '<%= pdfUrl %>';  // ← USA LA VARIABLE DEL SERVIDOR
+    console.log('🎯 URL del PDF para QR:', urlPDF);
+    console.log('📍 IP del servidor:', '<%= localIP %>');
+
+    // 🔹 VERIFICAR SI LA URL ES ACCESIBLE DESDE MÓVILES
+    if (urlPDF.includes('localhost')) {
+      console.error('❌ ERROR: El QR apunta a localhost - No funcionará en móviles');
+      // Mostrar advertencia al usuario
+      generarQRBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Configurar QR para móviles';
+      generarQRBtn.style.backgroundColor = '#ff6b6b';
+    }
+
+    // 🔹 GENERAR QR QUE APUNTA AL PDF CORRECTO
+    generarQRBtn.addEventListener('click', function() {
+      // Limpiar QR anterior
+      document.getElementById('qrcode').innerHTML = '';
+      
+      // Verificar que la librería QRCode esté disponible
+      if (typeof QRCode === 'undefined') {
+        alert('Error: La librería QRCode no está cargada. Recarga la página.');
+        return;
+      }
+      
+      console.log('🎯 Generando QR para:', urlPDF);
+      
+      // Generar nuevo QR con la URL CORRECTA
+      new QRCode(document.getElementById('qrcode'), {
+        text: urlPDF,
+        width: 250,
+        height: 250,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+      
+      qrModal.style.display = 'block';
+    });
+
+    // El resto de tu código se mantiene igual...
+    // 🔹 CERRAR MODAL
+    closeModal.addEventListener('click', function() {
+      qrModal.style.display = 'none';
+    });
+
+    // 🔹 DESCARGAR QR
+    descargarQRBtn.addEventListener('click', function() {
+      const canvas = document.querySelector('#qrcode canvas');
+      if (canvas) {
+        const image = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.href = image;
+        link.download = 'qr-carta-pdf-restaurante.png';
+        link.click();
+      } else {
+        alert('Primero genera el QR antes de descargarlo');
+      }
+    });
+
+    // ... resto de tus funciones de filtrado, etc.
+  });
+</script>
 </body>
 </html>
