@@ -5,13 +5,20 @@ const ExcelJS = require('exceljs');
 
 const Pedido = require('../models/pedidosModel');
 const Usuario = require('../models/userModel');
-const { verifyToken } = require('../controllers/userController'); // Si lo usas, mantenlo
+const { verifyToken } = require('../controllers/userController');
 
 // =============== RUTA PRINCIPAL ===============
 router.get('/', verifyToken, async (req, res) => {
   try {
     const meseros = await Usuario.find({ rol: 'mesero' }).lean();
-    res.render('reportes', { meseros });
+
+    res.render('reportes', {
+      meseros,
+      pedidos: [],
+      totalGeneral: 0,
+      fechaInicio: '',
+      fechaFin: ''
+    });
   } catch (error) {
     console.error('Error cargando /reportes:', error);
     res.status(500).send('Error al cargar los reportes');
@@ -56,7 +63,9 @@ router.get('/filtrar', verifyToken, async (req, res) => {
       mesero: p.mesero ? `${p.mesero.nombre} ${p.mesero.apellido}` : 'Sin asignar',
     }));
 
-    res.json(resultados);
+    const totalGeneral = pedidos.reduce((sum, p) => sum + (p.total || 0), 0);
+
+    res.json({ resultados, totalGeneral: totalGeneral.toFixed(2) });
   } catch (error) {
     console.error('Error al filtrar pedidos:', error);
     res.status(500).send('Error filtrando pedidos');
@@ -83,6 +92,8 @@ router.get('/pdf_rango', verifyToken, async (req, res) => {
       .lean();
 
     if (!pedidos.length) return res.status(404).send('No hay pedidos en el rango seleccionado');
+
+    const totalGeneral = pedidos.reduce((sum, p) => sum + (p.total || 0), 0);
 
     const doc = new PDFDocument({ margin: 40, size: 'A4' });
     res.setHeader('Content-Type', 'application/pdf');
@@ -124,7 +135,6 @@ router.get('/pdf_rango', verifyToken, async (req, res) => {
       doc.text(`Total: S/ ${total}`);
       doc.moveDown(0.3);
 
-      // === LISTA DE PLATOS ===
       if (Array.isArray(p.platos) && p.platos.length > 0) {
         doc.text('Platos:');
         p.platos.forEach(pl => {
@@ -141,6 +151,9 @@ router.get('/pdf_rango', verifyToken, async (req, res) => {
       doc.text('-----------------------------------------------------------');
       doc.moveDown(0.8);
     });
+
+    // === TOTAL GENERAL ===
+    doc.fontSize(12).text(`TOTAL GENERAL: S/ ${totalGeneral.toFixed(2)}`, { align: 'right', bold: true });
 
     doc.end();
   } catch (error) {
@@ -169,6 +182,8 @@ router.get('/excel_rango', verifyToken, async (req, res) => {
       .lean();
 
     if (!pedidos.length) return res.status(404).send('No hay pedidos en el rango seleccionado');
+
+    const totalGeneral = pedidos.reduce((sum, p) => sum + (p.total || 0), 0);
 
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet('Pedidos');
@@ -203,6 +218,17 @@ router.get('/excel_rango', verifyToken, async (req, res) => {
         estado: p.estadoPago || p.estadoPedido || 'pendiente',
         mesero: p.mesero ? `${p.mesero.nombre} ${p.mesero.apellido}` : 'Sin asignar',
       });
+    });
+
+    // Fila de total general
+    sheet.addRow({});
+    sheet.addRow({
+      n: '',
+      fecha: '',
+      platos: 'TOTAL GENERAL',
+      total: totalGeneral.toFixed(2),
+      estado: '',
+      mesero: ''
     });
 
     res.setHeader(

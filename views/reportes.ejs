@@ -6,7 +6,7 @@
   <title>Reportes - Restaurante</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="/dashboard.css">
-  <style>
+ <style>
     .filter-card { background: #fff; padding: 25px; border-radius: 12px; margin: 30px auto; max-width: 700px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
     .filter-card h2 { text-align:center; margin-bottom:20px; }
     .filter-card form { display:flex; gap:15px; flex-wrap:wrap; justify-content:center; align-items:center; }
@@ -56,13 +56,11 @@
     <aside class="sidebar">
       <h2 class="logo"><i class="fas fa-utensils"></i><br>Restaurante</h2>
       <nav>
-        <a href="/dashboard" class="active"><i class="fas fa-home"></i> <span>Dashboard</span></a>
+        <a href="/dashboard"><i class="fas fa-home"></i> <span>Dashboard</span></a>
         <a href="/clientes"><i class="fa-solid fa-users"></i> <span>Clientes</span></a>
-        <a href="/register_admin"><i class="fas fa-user-plus"></i> <span>Registro</span></a>
         <a href="/platos"><i class="fas fa-bowl-food"></i> <span>Platos</span></a>
         <a href="/mesas"><i class="fas fa-chair"></i> <span>Mesas</span></a>
-        <a href="/reportes"><i class="fas fa-shopping-cart"></i> <span>Reportes</span></a>
-        <a href="/carta"><i class="fas fa-book-open"></i> <span>Carta</span></a>
+        <a href="/reportes" class="active"><i class="fas fa-shopping-cart"></i> <span>Reportes</span></a>
         <a href="/logout"><i class="fas fa-sign-out-alt"></i> <span>Cerrar sesión</span></a>
       </nav>
     </aside>
@@ -70,19 +68,18 @@
     <main class="main-content">
       <header>
         <h1>Reportes</h1>
-        <div class="welcome-badge">Genera reportes por fechas y mesero</div>
       </header>
 
       <div class="filter-card">
         <h2>Generar Reporte</h2>
         <form id="filterForm">
-          <input type="date" name="fechaInicio" required />
-          <input type="date" name="fechaFin" required />
+          <input type="date" name="fechaInicio" value="<%= fechaInicio %>" required>
+          <input type="date" name="fechaFin" value="<%= fechaFin %>" required>
           <select name="mesero" id="mesero">
             <option value="todos">Todos los meseros</option>
-            <% if (Array.isArray(meseros)) { meseros.forEach(m => { %>
+            <% if (Array.isArray(meseros)) meseros.forEach(m => { %>
               <option value="<%= m._id %>"><%= (m.nombre || '') + ' ' + (m.apellido || '') %></option>
-            <% }) } %>
+            <% }) %>
           </select>
           <button type="submit"><i class="fas fa-eye"></i> Mostrar</button>
         </form>
@@ -107,6 +104,8 @@
           </thead>
           <tbody></tbody>
         </table>
+
+        <h3 id="totalGeneralDisplay" style="text-align:right; margin-top:15px;"></h3>
       </div>
 
       <div id="message-container"></div>
@@ -115,9 +114,10 @@
 
   <script>
     const form = document.getElementById('filterForm');
-    const messageContainer = document.getElementById('message-container');
     const tableContainer = document.getElementById('tableContainer');
     const reportTableBody = document.querySelector('#reportTable tbody');
+    const totalGeneralDisplay = document.getElementById('totalGeneralDisplay');
+    const messageContainer = document.getElementById('message-container');
     let currentFilters = {};
 
     form.addEventListener('submit', async (e) => {
@@ -134,14 +134,15 @@
           showMessage(txt || 'Error', 'error');
           return;
         }
+
         const data = await res.json();
-        if (!data.length) {
+        if (!data.resultados.length) {
           tableContainer.style.display = 'none';
           showMessage('No hay pedidos en el rango seleccionado', 'error');
           return;
         }
 
-        reportTableBody.innerHTML = data.map(p => {
+        reportTableBody.innerHTML = data.resultados.map(p => {
           const platosHtml = Array.isArray(p.platos)
             ? p.platos.map(pl => `${pl.nombre} (x${pl.cantidad}) - S/ ${pl.subtotal}`).join('<br>')
             : 'Sin platos';
@@ -156,6 +157,8 @@
             </tr>
           `;
         }).join('');
+
+        totalGeneralDisplay.textContent = `TOTAL GENERAL: S/ ${data.totalGeneral}`;
 
         tableContainer.style.display = 'block';
         showMessage('Reportes cargados correctamente', 'success');
@@ -185,108 +188,5 @@
       setTimeout(() => div.remove(), 3000);
     }
   </script>
-    <!-- Chat flotante -->
-  <button id="chat-toggle" class="chat-toggle">
-    <img src="/favicon.ico" alt="Chat" style="width:24px;height:24px;">
-  </button>
-
-  <div id="chat-modal" class="chat-modal hidden">
-    <div class="chat-header">
-      <h3>ChefIA</h3>
-      <button id="chat-close" class="chat-close">&times;</button>
-    </div>
-    <div id="chat-body" class="chat-body"></div>
-    <form id="chat-form" class="chat-form">
-      <input id="chat-input" type="text" placeholder="Escribe tu mensaje..." autocomplete="off">
-      <button type="submit">Enviar</button>
-    </form>
-  </div>
-
-<style>
-    /* Botón flotante */
-    .chat-toggle {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background-color: #eb1f1f;
-      color: #fff;
-      border: none;
-      border-radius: 50%;
-      width: 60px;
-      height: 60px;
-      font-size: 24px;
-      cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      transition: transform 0.2s ease;
-      z-index: 999;
-    }
-    .chat-toggle:hover { transform: scale(1.1); }
-
-    /* Ventana modal del chat */
-    .chat-modal {
-      position: fixed;
-      bottom: 100px;
-      right: 30px;
-      width: 320px;
-      max-height: 420px;
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      z-index: 1000;
-    }
-    .chat-modal.hidden { display: none; }
-
-    .chat-header {
-      background: #eb1f1f;
-      color: white;
-      padding: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .chat-body {
-      flex: 1;
-      overflow-y: auto;
-      padding: 10px;
-      font-size: 14px;
-    }
-    .chat-form {
-      display: flex;
-      border-top: 1px solid #ccc;
-    }
-    .chat-form input {
-      flex: 1;
-      border: none;
-      padding: 10px;
-      font-size: 14px;
-    }
-    .chat-form button {
-      background: #eb1f1f;
-      color: white;
-      border: none;
-      padding: 0 15px;
-      cursor: pointer;
-    }
-    .msg {
-      margin-bottom: 8px;
-      padding: 8px;
-      border-radius: 10px;
-      max-width: 85%;
-    }
-    .msg.user {
-      background: #e9ecef;
-      align-self: flex-end;
-    }
-    .msg.ai {
-      background: #eb1f1f;
-      color: white;
-      align-self: flex-start;
-    }
-  </style>
-
-  <script src="/js/adminChat.js"></script>
 </body>
 </html>
