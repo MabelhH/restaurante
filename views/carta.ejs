@@ -126,20 +126,29 @@
     </main>
   </div>
 
-  <!-- <script>
+  <script>
     document.addEventListener('DOMContentLoaded', function () {
-      // 🔹 VARIABLES PARA EL QR
+      // 🔹 VARIABLES PARA EL QR - USAR LA VARIABLE DEL SERVIDOR
       const generarQRBtn = document.getElementById('generarQR');
       const qrModal = document.getElementById('qrModal');
       const closeModal = document.querySelector('.close');
       const descargarQRBtn = document.getElementById('descargarQR');
       const compartirQRBtn = document.getElementById('compartirQR');
 
-      // 🔹 URL DEL PDF - ESTA ES LA PARTE IMPORTANTE
-      const urlPDF = window.location.origin + '/carta/pdf';
-      console.log('📄 URL del PDF:', urlPDF);
+      // 🔹 URL CORRECTA DESDE EL SERVIDOR - ESTA ES LA SOLUCIÓN
+      const urlPDF = '<%= pdfUrl %>';  // ← USA LA VARIABLE DEL SERVIDOR
+      console.log('🎯 URL del PDF para QR:', urlPDF);
+      console.log('📍 IP del servidor:', '<%= localIP %>');
 
-      // 🔹 GENERAR QR QUE APUNTA AL PDF
+      // 🔹 VERIFICAR SI LA URL ES ACCESIBLE DESDE MÓVILES
+      if (urlPDF.includes('localhost')) {
+        console.error('❌ ERROR: El QR apunta a localhost - No funcionará en móviles');
+        // Mostrar advertencia al usuario
+        generarQRBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Configurar QR para móviles';
+        generarQRBtn.style.backgroundColor = '#ff6b6b';
+      }
+
+      // 🔹 GENERAR QR QUE APUNTA AL PDF CORRECTO
       generarQRBtn.addEventListener('click', function() {
         // Limpiar QR anterior
         document.getElementById('qrcode').innerHTML = '';
@@ -152,7 +161,7 @@
         
         console.log('🎯 Generando QR para:', urlPDF);
         
-        // Generar nuevo QR que apunta DIRECTAMENTE al PDF
+        // Generar nuevo QR con la URL CORRECTA
         new QRCode(document.getElementById('qrcode'), {
           text: urlPDF,
           width: 250,
@@ -216,25 +225,28 @@
         }
       });
 
-      // 🔹 TU CÓDIGO EXISTENTE DE FILTRADO (se mantiene igual)
+      // 🔹 CÓDIGO DE FILTRADO POR CATEGORÍA Y BÚSQUEDA
       const inputBusqueda = document.querySelector('.search-bar input');
       const tarjetas = document.querySelectorAll('.food-card');
       const botonesCategoria = document.querySelectorAll('.category');
       let categoriaActiva = 'todas';
 
+      // Función para filtrar por categoría
       function filtrarPorCategoria(categoria) {
         categoriaActiva = categoria;
         tarjetas.forEach(card => {
           const categoriaPlato = card.getAttribute('data-categoria');
-          card.style.display =
-            categoria === 'todas' || categoriaPlato === categoria ? 'block' : 'none';
+          const coincideCategoria = categoria === 'todas' || categoriaPlato === categoria;
+          card.style.display = coincideCategoria ? 'block' : 'none';
         });
 
+        // Actualizar botones activos
         botonesCategoria.forEach(btn => {
           btn.classList.toggle('active', btn.getAttribute('data-categoria') === categoria);
         });
       }
 
+      // Event listeners para botones de categoría
       botonesCategoria.forEach(btn => {
         btn.addEventListener('click', function () {
           const categoria = this.getAttribute('data-categoria');
@@ -242,89 +254,60 @@
         });
       });
 
+      // Función de búsqueda en tiempo real
       inputBusqueda.addEventListener('input', function () {
         const texto = inputBusqueda.value.toLowerCase();
         tarjetas.forEach(card => {
           const nombre = card.querySelector('h4').textContent.toLowerCase();
           const descripcion = card.querySelector('p').textContent.toLowerCase();
           const categoriaPlato = card.getAttribute('data-categoria');
+          
           const coincideBusqueda = nombre.includes(texto) || descripcion.includes(texto);
           const coincideCategoria = categoriaActiva === 'todas' || categoriaPlato === categoriaActiva;
+          
           card.style.display = coincideBusqueda && coincideCategoria ? 'block' : 'none';
         });
       });
-    });
-  </script> -->
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    // 🔹 VARIABLES PARA EL QR - USAR LA VARIABLE DEL SERVIDOR
-    const generarQRBtn = document.getElementById('generarQR');
-    const qrModal = document.getElementById('qrModal');
-    const closeModal = document.querySelector('.close');
-    const descargarQRBtn = document.getElementById('descargarQR');
-    const compartirQRBtn = document.getElementById('compartirQR');
 
-    // 🔹 URL CORRECTA DESDE EL SERVIDOR - ESTA ES LA SOLUCIÓN
-    const urlPDF = '<%= pdfUrl %>';  // ← USA LA VARIABLE DEL SERVIDOR
-    console.log('🎯 URL del PDF para QR:', urlPDF);
-    console.log('📍 IP del servidor:', '<%= localIP %>');
+      // 🔹 INICIALIZAR FILTRO POR DEFECTO (Todas las categorías)
+      filtrarPorCategoria('todas');
 
-    // 🔹 VERIFICAR SI LA URL ES ACCESIBLE DESDE MÓVILES
-    if (urlPDF.includes('localhost')) {
-      console.error('❌ ERROR: El QR apunta a localhost - No funcionará en móviles');
-      // Mostrar advertencia al usuario
-      generarQRBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Configurar QR para móviles';
-      generarQRBtn.style.backgroundColor = '#ff6b6b';
-    }
+      // 🔹 MEJORA: Agregar funcionalidad de limpiar búsqueda
+      const searchBar = document.querySelector('.search-bar');
+      const clearSearch = document.createElement('span');
+      clearSearch.innerHTML = '<i class="fas fa-times"></i>';
+      clearSearch.style.cssText = `
+        position: absolute;
+        right: 35px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #999;
+        display: none;
+      `;
+      searchBar.appendChild(clearSearch);
 
-    // 🔹 GENERAR QR QUE APUNTA AL PDF CORRECTO
-    generarQRBtn.addEventListener('click', function() {
-      // Limpiar QR anterior
-      document.getElementById('qrcode').innerHTML = '';
-      
-      // Verificar que la librería QRCode esté disponible
-      if (typeof QRCode === 'undefined') {
-        alert('Error: La librería QRCode no está cargada. Recarga la página.');
-        return;
-      }
-      
-      console.log('🎯 Generando QR para:', urlPDF);
-      
-      // Generar nuevo QR con la URL CORRECTA
-      new QRCode(document.getElementById('qrcode'), {
-        text: urlPDF,
-        width: 250,
-        height: 250,
-        colorDark: "#000000",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.H
+      // Mostrar/ocultar botón de limpiar
+      inputBusqueda.addEventListener('input', function() {
+        clearSearch.style.display = this.value ? 'block' : 'none';
       });
-      
-      qrModal.style.display = 'block';
-    });
 
-    // El resto de tu código se mantiene igual...
-    // 🔹 CERRAR MODAL
-    closeModal.addEventListener('click', function() {
-      qrModal.style.display = 'none';
-    });
+      // Limpiar búsqueda
+      clearSearch.addEventListener('click', function() {
+        inputBusqueda.value = '';
+        inputBusqueda.dispatchEvent(new Event('input'));
+        clearSearch.style.display = 'none';
+      });
 
-    // 🔹 DESCARGAR QR
-    descargarQRBtn.addEventListener('click', function() {
-      const canvas = document.querySelector('#qrcode canvas');
-      if (canvas) {
-        const image = canvas.toDataURL('image/png');
-        const link = document.createElement('a');
-        link.href = image;
-        link.download = 'qr-carta-pdf-restaurante.png';
-        link.click();
-      } else {
-        alert('Primero genera el QR antes de descargarlo');
-      }
-    });
+      // 🔹 MEJORA: Tecla Escape para cerrar modal
+      document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape' && qrModal.style.display === 'block') {
+          qrModal.style.display = 'none';
+        }
+      });
 
-    // ... resto de tus funciones de filtrado, etc.
-  });
-</script>
+      console.log('✅ Sistema de carta cargado correctamente');
+    });
+  </script>
 </body>
 </html>
