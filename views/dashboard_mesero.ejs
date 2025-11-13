@@ -3,36 +3,854 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard - Restaurante</title>
+  <title>Dashboard - Mesero</title>
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="dashboard.css">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="/dashboard_mesero.css">
+  <style>
+    /* Estilos adicionales para notificaciones */
+    .notifications-panel {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    .notification-item {
+      border-left: 4px solid #b22222;
+      padding: 15px;
+      margin-bottom: 10px;
+      background: #f8f9fa;
+      border-radius: 5px;
+    }
+
+    .notification-item.urgent {
+      border-left-color: #dc3545;
+      background: #fff5f5;
+    }
+
+    .notification-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+
+    .notification-title {
+      font-weight: bold;
+      color: #b22222;
+    }
+
+    .notification-time {
+      font-size: 0.8em;
+      color: #6c757d;
+    }
+
+    .notification-content p {
+      margin: 2px 0;
+    }
+
+    .notification-details {
+      font-size: 0.9em;
+      color: #6c757d;
+    }
+
+    .notification-actions {
+      margin-top: 10px;
+    }
+
+    .btn-mark-delivered {
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 0.8em;
+    }
+
+    .btn-mark-delivered:hover {
+      background: #218838;
+    }
+
+    .flash-notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px 20px;
+      border-radius: 5px;
+      color: white;
+      z-index: 1000;
+      animation: slideIn 0.3s ease;
+    }
+
+    .flash-notification.success {
+      background: #28a745;
+    }
+
+    .flash-notification.error {
+      background: #dc3545;
+    }
+
+    .flash-notification.info {
+      background: #17a2b8;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .reserved-tables {
+      background: linear-gradient(135deg, #ff9800, #f57c00);
+    }
+  </style>
 </head>
 <body>
   <div class="dashboard-container">
     <!-- Sidebar -->
     <aside class="sidebar">
       <h2 class="logo">
-      <i class="fas fa-utensils"></i><br>
-      Restaurante
-    </h2>
+        <i class="fas fa-utensils"></i><br>
+        Restaurante
+      </h2>
 
       <nav>
         <a href="/dashboard_mesero" class="active"><i class="fas fa-home"></i> <span>Dashboard</span></a>
         <a href="/mesas"><i class="fas fa-chair"></i> <span>Mesas</span></a>
         <a href="/carta"><i class="fas fa-book-open"></i> <span>Carta</span></a>
-        <a href="/pedidos/ver"><i class="fas fa-receipt"></i> <span>Pedidos</span></a>
+        <a href="/pedidos"><i class="fas fa-receipt"></i> <span>Pedidos</span></a>
+        <a href="/pedidos/historial/todos"><i class="fas fa-history"></i> <span>Historial</span></a>
         <a href="/logout"><i class="fas fa-sign-out-alt"></i> <span>Cerrar sesión</span></a>
       </nav>
     </aside>
 
     <!-- Main content -->
     <main class="main-content">
+      <!-- Header -->
       <header>
-        <h1>Bienvenido, <%= usuario.nombre %> </h1>
-        <div class="welcome-badge">Panel de mesero</div>
+        <div class="header-left">
+          <h1>Bienvenido, <span class="user-name"><%= usuario.nombre %></span></h1>
+          <p class="welcome-text">Resumen de tu actividad hoy</p>
+        </div>
+        <div class="header-right">
+          <div class="date-time">
+            <div class="current-date" id="current-date"></div>
+            <div class="current-time" id="current-time"></div>
+          </div>
+          <div class="user-badge">
+            <i class="fas fa-user-tie"></i>
+            <span>Mesero</span>
+          </div>
+        </div>
       </header>
+
+      <!-- Estadísticas Rápidas -->
+      <section class="quick-stats">
+        <div class="stat-card">
+          <div class="stat-icon total-orders">
+            <i class="fas fa-receipt"></i>
+          </div>
+          <div class="stat-info">
+            <h3 id="total-pedidos-hoy">0</h3>
+            <p>Pedidos Hoy</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon total-sales">
+            <i class="fas fa-money-bill-wave"></i>
+          </div>
+          <div class="stat-info">
+            <h3 id="total-ventas-hoy">S/ 0.00</h3>
+            <p>Ventas Totales</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon active-tables">
+            <i class="fas fa-chair"></i>
+          </div>
+          <div class="stat-info">
+            <h3 id="mesas-activas">0</h3>
+            <p>Mesas Activas</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon delivered-orders">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <div class="stat-info">
+            <h3 id="pedidos-entregados">0</h3>
+            <p>Entregados</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon reserved-tables">
+            <i class="fas fa-calendar-check"></i>
+          </div>
+          <div class="stat-info">
+            <h3 id="mesas-reservadas">0</h3>
+            <p>Mesas Reservadas</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Gráficos y Métricas -->
+      <section class="charts-section">
+        <div class="chart-container">
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3>Ventas por Hora - Hoy</h3>
+            </div>
+            <canvas id="salesChart"></canvas>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3>Platos Más Vendidos</h3>
+              <span class="chart-subtitle">Top 5 del día</span>
+            </div>
+            <canvas id="dishesChart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- Pedidos Activos y Notificaciones -->
+      <section class="activity-section">
+        <div class="active-orders">
+          <div class="section-header">
+            <h3><i class="fas fa-clock"></i> Pedidos Activos</h3>
+            <span class="badge" id="active-orders-count">0</span>
+          </div>
+          <div class="orders-list" id="active-orders-list">
+            <div class="empty-state">
+              <i class="fas fa-check-circle"></i>
+              <p>No hay pedidos activos en este momento</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="notifications-panel">
+          <div class="section-header">
+            <h3><i class="fas fa-bell"></i> Notificaciones</h3>
+            <span class="badge" id="notifications-count">0</span>
+          </div>
+          <div class="notifications-list" id="notifications-list">
+            <div class="empty-state">
+              <i class="fas fa-bell-slash"></i>
+              <p>No hay notificaciones</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="notifications-panel">
+          <div class="section-header">
+            <h3><i class="fas fa-utensils"></i> Platos Populares</h3>
+          </div>
+          <div class="popular-dishes" id="popular-dishes">
+            <div class="empty-state">
+              <i class="fas fa-utensils"></i>
+              <p>No hay datos de platos aún</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Acciones Rápidas -->
+      <section class="quick-actions">
+        <h3>Acciones Rápidas</h3>
+        <div class="actions-grid">
+          <a href="/pedidos" class="action-card new-order">
+            <div class="action-icon">
+              <i class="fas fa-plus-circle"></i>
+            </div>
+            <div class="action-content">
+              <h4>Nuevo Pedido</h4>
+              <p>Crear pedido para mesa</p>
+            </div>
+          </a>
+
+          <a href="/mesas" class="action-card view-tables">
+            <div class="action-icon">
+              <i class="fas fa-chair"></i>
+            </div>
+            <div class="action-content">
+              <h4>Ver Mesas</h4>
+              <p>Estado de todas las mesas</p>
+            </div>
+          </a>
+
+          <a href="/carta" class="action-card view-menu">
+            <div class="action-icon">
+              <i class="fas fa-book-open"></i>
+            </div>
+            <div class="action-content">
+              <h4>Ver Carta</h4>
+              <p>Menú y disponibilidad</p>
+            </div>
+          </a>
+
+          <a href="/pedidos/historial/todos" class="action-card history">
+            <div class="action-icon">
+              <i class="fas fa-chart-bar"></i>
+            </div>
+            <div class="action-content">
+              <h4>Mi Historial</h4>
+              <p>Ver mis pedidos anteriores</p>
+            </div>
+          </a>
+        </div>
+      </section>
     </main>
   </div>
+
+  <script>
+    // Tiempo real - Fecha y Hora
+    function updateDateTime() {
+      const now = new Date();
+      
+      // Formatear fecha
+      const options = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      };
+      document.getElementById('current-date').textContent = 
+        now.toLocaleDateString('es-ES', options);
+      
+      // Formatear hora
+      document.getElementById('current-time').textContent = 
+        now.toLocaleTimeString('es-ES', { 
+          hour: '2-digit', 
+          minute: '2-digit'
+        });
+    }
+
+    // Actualizar cada segundo
+    setInterval(updateDateTime, 1000);
+    updateDateTime();
+
+    // Variables globales para los gráficos
+    let salesChart, dishesChart;
+    let meseroId = '<%= usuario._id %>'; // ID del mesero logueado
+
+    // Función para diagnóstico
+    async function diagnosticarDashboard() {
+      try {
+        console.log('🔍 Iniciando diagnóstico del dashboard...');
+        console.log('👤 Mesero ID:', meseroId);
+        console.log('📅 Fecha actual:', new Date().toLocaleDateString());
+        
+        const response = await fetch('/pedidos/dashboard/datos');
+        const result = await response.json();
+        
+        console.log('📊 Respuesta del servidor:', result);
+        
+        if (result.success) {
+          console.log('✅ Datos recibidos correctamente');
+          console.log('📦 Total pedidos:', result.datos.estadisticas.totalPedidos);
+          console.log('💰 Total ventas:', result.datos.estadisticas.totalVentas);
+          console.log('🪑 Mesas activas:', result.datos.estadisticas.mesasActivas);
+          console.log('✅ Pedidos entregados:', result.datos.estadisticas.pedidosEntregados);
+        } else {
+          console.error('❌ Error en respuesta:', result.error);
+        }
+      } catch (error) {
+        console.error('❌ Error en diagnóstico:', error);
+      }
+    }
+
+    // Función para cargar datos del dashboard desde la base de datos
+    async function loadDashboardData() {
+      try {
+        console.log('🔄 Cargando datos del dashboard...');
+        
+        const response = await fetch('/pedidos/dashboard/datos');
+        
+        if (!response.ok) {
+          throw new Error(`Error HTTP: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('📊 Respuesta completa del servidor:', result);
+
+        if (result.success) {
+          const datos = result.datos;
+          console.log('📊 Datos recibidos:', datos);
+          console.log('💰 Estadísticas:', datos.estadisticas);
+
+          // Actualizar estadísticas con valores por defecto si son undefined
+          document.getElementById('total-pedidos-hoy').textContent = 
+            datos.estadisticas.totalPedidos || 0;
+          document.getElementById('total-ventas-hoy').textContent = 
+            `S/ ${(datos.estadisticas.totalVentas || 0).toFixed(2)}`;
+          document.getElementById('mesas-activas').textContent = 
+            datos.estadisticas.mesasActivas || 0;
+          document.getElementById('pedidos-entregados').textContent = 
+            datos.estadisticas.pedidosEntregados || 0;
+          document.getElementById('mesas-reservadas').textContent = 
+            datos.estadisticas.mesasReservadas || 0;
+
+          // Actualizar gráficos si hay datos
+          if (datos.ventasPorHora && datos.ventasPorHora.length > 0) {
+            updateSalesChart(datos.ventasPorHora);
+          } else {
+            console.log('⚠️ No hay datos de ventas por hora');
+            updateSalesChart(Array(24).fill(0));
+          }
+          
+          if (datos.platosMasVendidos && datos.platosMasVendidos.length > 0) {
+            updateDishesChart(datos.platosMasVendidos);
+          } else {
+            console.log('⚠️ No hay datos de platos más vendidos');
+            updateDishesChart([]);
+          }
+
+          // Actualizar pedidos activos
+          updateActiveOrders(datos.pedidosActivos || []);
+
+          // Actualizar platos populares
+          updatePopularDishes(datos.platosMasVendidos || []);
+
+          console.log('✅ Dashboard actualizado correctamente');
+
+        } else {
+          console.error('❌ Error en la respuesta del servidor:', result.error);
+          mostrarEstadoError('Error al cargar datos: ' + (result.error || 'Desconocido'));
+        }
+      } catch (error) {
+        console.error('❌ Error al cargar datos del dashboard:', error);
+        mostrarEstadoError('Error de conexión: ' + error.message);
+      }
+    }
+
+    // Función para mostrar estado de error
+    function mostrarEstadoError(mensaje) {
+      console.error('🚨 Estado de error:', mensaje);
+      
+      // Mostrar valores por defecto
+      document.getElementById('total-pedidos-hoy').textContent = '0';
+      document.getElementById('total-ventas-hoy').textContent = 'S/ 0.00';
+      document.getElementById('mesas-activas').textContent = '0';
+      document.getElementById('pedidos-entregados').textContent = '0';
+      document.getElementById('mesas-reservadas').textContent = '0';
+    }
+
+    // Función para cargar platos listos del mesero logueado
+    async function loadPlatosListos() {
+      try {
+        console.log('🔔 Cargando platos listos...');
+        const response = await fetch('/pedidos/platos-listos');
+        
+        if (!response.ok) {
+          throw new Error(`Error HTTP: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('🔔 Respuesta platos listos:', result);
+
+        if (result.success) {
+          // Filtrar solo los platos listos del mesero logueado
+          const platosMesero = result.platosListos.filter(plato => {
+            // Comparar con el ID del mesero logueado
+            return plato.meseroId === meseroId || plato.mesero === '<%= usuario.nombre %>';
+          });
+          
+          console.log(`🔔 Platos listos del mesero: ${platosMesero.length}`);
+          updateNotifications(platosMesero);
+        } else {
+          console.error('❌ Error en platos listos:', result.error);
+        }
+      } catch (error) {
+        console.error('❌ Error al cargar platos listos:', error);
+      }
+    }
+
+    // Función para actualizar notificaciones
+    function updateNotifications(platosListos) {
+      const notificationsList = document.getElementById('notifications-list');
+      const notificationsCount = document.getElementById('notifications-count');
+
+      notificationsCount.textContent = platosListos.length;
+
+      if (platosListos.length === 0) {
+        notificationsList.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-bell-slash"></i>
+            <p>No hay notificaciones</p>
+          </div>
+        `;
+        return;
+      }
+
+      notificationsList.innerHTML = platosListos.map(plato => `
+        <div class="notification-item urgent">
+          <div class="notification-header">
+            <span class="notification-title">¡Plato Listo!</span>
+            <span class="notification-time">${new Date(plato.fechaActualizacion).toLocaleTimeString('es-ES', { 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            })}</span>
+          </div>
+          <div class="notification-content">
+            <p><strong>${plato.nombrePlato}</strong> - Mesa ${plato.mesa}</p>
+            <p class="notification-details">Pedido #${plato.numeroPedido} - ${plato.cantidad}x</p>
+          </div>
+          <div class="notification-actions">
+            <button class="btn-mark-delivered" onclick="marcarPlatoEntregado('${plato.pedidoId}', ${plato.platoIndex})">
+              <i class="fas fa-check"></i> Marcar Entregado
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Función para marcar plato como entregado
+    async function marcarPlatoEntregado(pedidoId, platoIndex) {
+      try {
+        const response = await fetch(`/pedidos/${pedidoId}/platos/${platoIndex}/entregado`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          console.log('✅ Plato marcado como entregado');
+          // Recargar datos
+          loadDashboardData();
+          loadPlatosListos();
+          
+          // Mostrar notificación de éxito
+          showNotification('Plato marcado como entregado exitosamente', 'success');
+        } else {
+          showNotification('Error al marcar plato como entregado', 'error');
+        }
+      } catch (error) {
+        console.error('❌ Error al marcar plato como entregado:', error);
+        showNotification('Error al marcar plato como entregado', 'error');
+      }
+    }
+
+    // Función para mostrar notificaciones temporales
+    function showNotification(message, type = 'info') {
+      const notification = document.createElement('div');
+      notification.className = `flash-notification ${type}`;
+      notification.textContent = message;
+      
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.remove();
+      }, 3000);
+    }
+
+    // Función para actualizar el gráfico de ventas
+    function updateSalesChart(ventasPorHora) {
+      const ctx = document.getElementById('salesChart').getContext('2d');
+      
+      if (salesChart) {
+        salesChart.destroy();
+      }
+
+      const horas = Array.from({ length: 24 }, (_, i) => `${i}:00`);
+      
+      salesChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: horas,
+          datasets: [{
+            label: 'Ventas (S/)',
+            data: ventasPorHora,
+            backgroundColor: 'rgba(178, 34, 34, 0.7)',
+            borderColor: 'rgba(178, 34, 34, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Ventas (S/)'
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: 'Hora del día'
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Función para manejar gráfico de platos vacío
+    function updateDishesChart(platosMasVendidos) {
+      const ctx = document.getElementById('dishesChart').getContext('2d');
+      
+      if (dishesChart) {
+        dishesChart.destroy();
+      }
+
+      // Si no hay datos, mostrar gráfico vacío
+      if (!platosMasVendidos || platosMasVendidos.length === 0) {
+        dishesChart = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Sin datos'],
+            datasets: [{
+              data: [1],
+              backgroundColor: ['#e9ecef']
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: 'bottom'
+              },
+              tooltip: {
+                enabled: false
+              }
+            }
+          }
+        });
+        return;
+      }
+
+      const labels = platosMasVendidos.map(plato => plato.nombre);
+      const data = platosMasVendidos.map(plato => plato.cantidad);
+
+      dishesChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: [
+              '#b22222', '#ff6b6b', '#28a745', '#17a2b8', '#ffc107'
+            ]
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'bottom'
+            }
+          }
+        }
+      });
+    }
+
+    function updateActiveOrders(pedidosActivos) {
+      const ordersList = document.getElementById('active-orders-list');
+      const activeCount = document.getElementById('active-orders-count');
+
+      activeCount.textContent = pedidosActivos.length;
+
+      if (pedidosActivos.length === 0) {
+        ordersList.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-check-circle"></i>
+            <p>No hay pedidos activos en este momento</p>
+          </div>
+        `;
+        return;
+      }
+
+      ordersList.innerHTML = pedidosActivos.map(pedido => `
+        <div class="order-item ${pedido.estadoPedido === 'preparacion' ? 'urgent' : ''}">
+          <div class="order-header">
+            <span class="order-number">#${pedido.numeroPedido || pedido._id.toString().slice(-4)}</span>
+            <span class="order-status ${pedido.estadoPedido}">${pedido.estadoPedido}</span>
+          </div>
+          <div class="order-details">
+            <span class="table-number">Mesa ${pedido.mesa?.numeroMesa || 'N/A'}</span>
+            <span class="order-time">${new Date(pedido.fechaPedido).toLocaleTimeString('es-ES', { 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            })}</span>
+          </div>
+          <div class="order-items">
+            ${pedido.platos.slice(0, 2).map(plato => 
+              `<span>${plato.cantidad}x ${plato.nombre}</span>`
+            ).join('')}
+            ${pedido.platos.length > 2 ? `<span class="more-items">+${pedido.platos.length - 2} más</span>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function updatePopularDishes(platosMasVendidos) {
+      const popularDishes = document.getElementById('popular-dishes');
+
+      if (platosMasVendidos.length === 0) {
+        popularDishes.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-utensils"></i>
+            <p>No hay datos de platos aún</p>
+          </div>
+        `;
+        return;
+      }
+
+      popularDishes.innerHTML = platosMasVendidos.map((plato, index) => `
+        <div class="dish-item">
+          <div class="dish-rank">${index + 1}</div>
+          <div class="dish-info">
+            <div class="dish-name">${plato.nombre}</div>
+            <div class="dish-stats">
+              <span class="dish-quantity">${plato.cantidad} vendidos</span>
+              <span class="dish-total">S/ ${plato.total.toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Cargar datos al iniciar
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('🚀 Inicializando dashboard...');
+      console.log('👤 ID del mesero:', meseroId);
+      
+      // Ejecutar diagnóstico primero
+      diagnosticarDashboard();
+      
+      // Luego cargar datos del dashboard
+      setTimeout(() => {
+        loadDashboardData();
+      }, 1000);
+      
+      // Actualizar cada 20 segundos
+      setInterval(loadDashboardData, 20000);
+      
+      // Actualizar notificaciones cada 10 segundos
+      setInterval(loadPlatosListos, 10000);
+    });
+  </script>
+
+   <!-- Chat flotante -->
+  <button id="chat-toggle" class="chat-toggle">
+    <img src="/favicon.ico" alt="Chat" style="width:24px;height:24px;">
+  </button>
+
+  <div id="chat-modal" class="chat-modal hidden">
+    <div class="chat-header">
+      <h3>ChefIA</h3>
+      <button id="chat-close" class="chat-close">&times;</button>
+    </div>
+    <div id="chat-body" class="chat-body"></div>
+    <form id="chat-form" class="chat-form">
+      <input id="chat-input" type="text" placeholder="Escribe tu mensaje..." autocomplete="off">
+      <button type="submit">Enviar</button>
+    </form>
+  </div>
+
+  <style>
+    /* Botón flotante */
+    .chat-toggle {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #eb1f1f;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      font-size: 24px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      transition: transform 0.2s ease;
+      z-index: 999;
+    }
+    .chat-toggle:hover { transform: scale(1.1); }
+
+    /* Ventana modal del chat */
+    .chat-modal {
+      position: fixed;
+      bottom: 100px;
+      right: 30px;
+      width: 320px;
+      max-height: 420px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 1000;
+    }
+    .chat-modal.hidden { display: none; }
+
+    .chat-header {
+      background: #eb1f1f;
+      color: white;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .chat-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      font-size: 14px;
+    }
+    .chat-form {
+      display: flex;
+      border-top: 1px solid #ccc;
+    }
+    .chat-form input {
+      flex: 1;
+      border: none;
+      padding: 10px;
+      font-size: 14px;
+    }
+    .chat-form button {
+      background: #eb1f1f;
+      color: white;
+      border: none;
+      padding: 0 15px;
+      cursor: pointer;
+    }
+    .msg {
+      margin-bottom: 8px;
+      padding: 8px;
+      border-radius: 10px;
+      max-width: 85%;
+    }
+    .msg.user {
+      background: #e9ecef;
+      align-self: flex-end;
+    }
+    .msg.ai {
+      background: #eb1f1f;
+      color: white;
+      align-self: flex-start;
+    }
+  </style>
+
+  <script src="/js/meseroChat.js"></script>
 </body>
 </html>

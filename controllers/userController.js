@@ -124,7 +124,6 @@ exports.login = async (req, res) => {
       { 
         _id: user._id, // CAMBIO: Usar _id en lugar de id
         nombre: user.nombre, 
-        email: user.email, 
         rol: user.rol 
       },
       SECRET_KEY,

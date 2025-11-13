@@ -6,6 +6,7 @@
   <title>Carta - Mesero</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="/carta.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
   <div class="dashboard-container">
@@ -32,11 +33,40 @@
           <h2>Bienvenido, <%= usuario.nombre %></h2>
           <p>Selecciona un plato para agregar al pedido</p>
         </div>
+        
+        <!-- ✅ NUEVA SECCIÓN QR PARA MESERO -->
+        <div class="qr-section">
+          <button id="generarQR" class="btn-qr">
+            <i class="fas fa-qrcode"></i> Generar QR para Carta
+          </button>
+        </div>
+        
         <div class="search-bar">
           <input type="text" placeholder="Buscar plato..." id="search-input" />
           <i class="fas fa-search"></i>
         </div>
       </header>
+
+      <!-- ✅ NUEVO MODAL QR -->
+      <div id="qrModal" class="modal" style="display: none;">
+        <div class="modal-content">
+          <span class="close">&times;</span>
+          <h3>QR para Carta Digital</h3>
+          <div id="qrcode"></div>
+          <p>Escanea este código QR para que los clientes vean la carta</p>
+          <div class="modal-buttons">
+            <button id="descargarQR" class="btn-descargar">
+              <i class="fas fa-download"></i> Descargar QR
+            </button>
+            <a href="/carta/pdf" target="_blank" class="btn-ver-pdf">
+              <i class="fas fa-file-pdf"></i> Ver PDF
+            </a>
+            <button id="compartirQR" class="btn-compartir">
+              <i class="fas fa-share-alt"></i> Compartir
+            </button>
+          </div>
+        </div>
+      </div>
 
       <!-- Sección principal -->
       <section class="hero">
@@ -230,6 +260,8 @@
     document.addEventListener('DOMContentLoaded', function() {
       console.log('✅ Carta cargada correctamente');
 
+      // ✅ INICIALIZAR SISTEMA QR PARA MESERO
+      inicializarSistemaQR();
 
       const mesaSelect = document.getElementById('mesa-select');
 
@@ -304,6 +336,103 @@
       inicializarFiltros();
     });
 
+    // ✅ NUEVA FUNCIÓN: Inicializar sistema QR para mesero
+    function inicializarSistemaQR() {
+      const generarQRBtn = document.getElementById('generarQR');
+      const qrModal = document.getElementById('qrModal');
+      const closeModal = document.querySelector('.close');
+      const descargarQRBtn = document.getElementById('descargarQR');
+      const compartirQRBtn = document.getElementById('compartirQR');
+
+      // URL para el QR - usar la misma que en la vista admin
+      const urlPDF = '<%= pdfUrl %>' || `${window.location.origin}/carta/pdf`;
+      console.log('🎯 URL del PDF para QR:', urlPDF);
+
+      // Generar QR
+      generarQRBtn.addEventListener('click', function() {
+        // Limpiar QR anterior
+        document.getElementById('qrcode').innerHTML = '';
+        
+        // Verificar que la librería QRCode esté disponible
+        if (typeof QRCode === 'undefined') {
+          alert('Error: La librería QRCode no está cargada. Recarga la página.');
+          return;
+        }
+        
+        console.log('🎯 Generando QR para:', urlPDF);
+        
+        // Generar nuevo QR
+        new QRCode(document.getElementById('qrcode'), {
+          text: urlPDF,
+          width: 250,
+          height: 250,
+          colorDark: "#000000",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.H
+        });
+        
+        qrModal.style.display = 'block';
+      });
+
+      // Cerrar modal
+      closeModal.addEventListener('click', function() {
+        qrModal.style.display = 'none';
+      });
+
+      // Descargar QR
+      descargarQRBtn.addEventListener('click', function() {
+        const canvas = document.querySelector('#qrcode canvas');
+        if (canvas) {
+          const image = canvas.toDataURL('image/png');
+          const link = document.createElement('a');
+          link.href = image;
+          link.download = 'qr-carta-restaurante.png';
+          link.click();
+        } else {
+          alert('Primero genera el QR antes de descargarlo');
+        }
+      });
+
+      // Compartir QR
+      compartirQRBtn.addEventListener('click', function() {
+        const canvas = document.querySelector('#qrcode canvas');
+        if (canvas) {
+          canvas.toBlob(function(blob) {
+            if (navigator.share) {
+              navigator.share({
+                title: 'Carta del Restaurante - QR',
+                text: 'Escanea este QR para ver nuestra carta',
+                files: [new File([blob], 'carta-restaurante-qr.png', { type: 'image/png' })]
+              });
+            } else {
+              // Fallback: descargar
+              const image = canvas.toDataURL('image/png');
+              const link = document.createElement('a');
+              link.href = image;
+              link.download = 'qr-carta-restaurante.png';
+              link.click();
+            }
+          });
+        } else {
+          alert('Primero genera el QR antes de compartirlo');
+        }
+      });
+
+      // Cerrar modal al hacer clic fuera
+      window.addEventListener('click', function(event) {
+        if (event.target === qrModal) {
+          qrModal.style.display = 'none';
+        }
+      });
+
+      // Tecla Escape para cerrar modal
+      document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape' && qrModal.style.display === 'block') {
+          qrModal.style.display = 'none';
+        }
+      });
+    }
+
     // 🔥 FUNCIÓN MEJORADA: Detectar y seleccionar mesa automáticamente (incluye mesas ocupadas)
     function detectarMesaDesdeURL() {
       const urlParams = new URLSearchParams(window.location.search);
@@ -360,6 +489,7 @@
         }
       }
     }
+
     // Función para inicializar filtros de búsqueda y categorías
     function inicializarFiltros() {
       const inputBusqueda = document.getElementById('search-input');
@@ -740,6 +870,110 @@
       return encontrados;
     }
   </script>
+
+   <!-- Chat flotante -->
+  <button id="chat-toggle" class="chat-toggle">
+    <img src="/favicon.ico" alt="Chat" style="width:24px;height:24px;">
+  </button>
+
+  <div id="chat-modal" class="chat-modal hidden">
+    <div class="chat-header">
+      <h3>ChefIA</h3>
+      <button id="chat-close" class="chat-close">&times;</button>
+    </div>
+    <div id="chat-body" class="chat-body"></div>
+    <form id="chat-form" class="chat-form">
+      <input id="chat-input" type="text" placeholder="Escribe tu mensaje..." autocomplete="off">
+      <button type="submit">Enviar</button>
+    </form>
+  </div>
+
+  <style>
+    /* Botón flotante */
+    .chat-toggle {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #eb1f1f;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      font-size: 24px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      transition: transform 0.2s ease;
+      z-index: 999;
+    }
+    .chat-toggle:hover { transform: scale(1.1); }
+
+    /* Ventana modal del chat */
+    .chat-modal {
+      position: fixed;
+      bottom: 100px;
+      right: 30px;
+      width: 320px;
+      max-height: 420px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 1000;
+    }
+    .chat-modal.hidden { display: none; }
+
+    .chat-header {
+      background: #eb1f1f;
+      color: white;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .chat-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      font-size: 14px;
+    }
+    .chat-form {
+      display: flex;
+      border-top: 1px solid #ccc;
+    }
+    .chat-form input {
+      flex: 1;
+      border: none;
+      padding: 10px;
+      font-size: 14px;
+    }
+    .chat-form button {
+      background: #eb1f1f;
+      color: white;
+      border: none;
+      padding: 0 15px;
+      cursor: pointer;
+    }
+    .msg {
+      margin-bottom: 8px;
+      padding: 8px;
+      border-radius: 10px;
+      max-width: 85%;
+    }
+    .msg.user {
+      background: #e9ecef;
+      align-self: flex-end;
+    }
+    .msg.ai {
+      background: #eb1f1f;
+      color: white;
+      align-self: flex-start;
+    }
+  </style>
+
+  <script src="/js/meseroChat.js"></script>
 
 </body>
 </html>

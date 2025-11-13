@@ -1,24 +1,30 @@
 const express = require('express');
 const router = express.Router();
-const reservaController = require('../controllers/ReservaController');
+const ReservaController = require('../controllers/ReservaController'); // ✅ Corregido: con mayúscula
 
-router.get('/reportes/estadisticas', reservaController.estadisticas);
-router.get('/reportes/reservas-hoy', reservaController.reservasHoy);
-router.get('/reportes/reservas-pendientes', reservaController.reservasPendientes);
+// Rutas de reportes
+router.get('/reportes/estadisticas', ReservaController.estadisticas);
+router.get('/reportes/reservas-hoy', ReservaController.reservasHoy);
+router.get('/reportes/reservas-pendientes', ReservaController.reservasPendientes);
 
-// Rutas específicas primero
-router.get('/fecha/rango', reservaController.reservasPorRango);
-router.get('/fecha/:fecha', reservaController.reservasPorFecha);
-router.get('/cliente/:clienteId', reservaController.reservasPorClienteId);
-router.get('/mesa/:mesaId', reservaController.reservasPorMesaId);
-router.post('/verificar-disponibilidad', reservaController.verificarDisponibilidad);
+// Rutas específicas
+router.get('/fecha/rango', ReservaController.reservasPorRango);
+router.get('/fecha/:fecha', ReservaController.reservasPorFecha);
+router.get('/cliente/:clienteId', ReservaController.reservasPorClienteId);
+router.get('/mesa/:mesaId', ReservaController.reservasPorMesaId);
+router.post('/verificar-disponibilidad', ReservaController.verificarDisponibilidad);
 
-router.patch('/:id/estado', reservaController.cambiarEstado);
+// ✅ Ruta para confirmar asistencia - CORREGIDA
+router.post('/:id/confirmar-asistencia', ReservaController.confirmarAsistenciaYLiberar);
+
+// Rutas de gestión de estado
+router.patch('/:id/estado', ReservaController.cambiarEstado);
+
 // Rutas CRUD generales
-router.get('/', reservaController.listar);          // Con filtros múltiples
-router.get('/:id', reservaController.obtener);      // Por ID específico
-router.post('/', reservaController.crear);          // Crear nueva
-router.put('/:id', reservaController.actualizar);   // Actualizar
-router.delete('/:id', reservaController.eliminar);  // Eliminar
+router.get('/', ReservaController.listar);
+router.get('/:id', ReservaController.obtener);
+router.post('/', ReservaController.crear);
+router.put('/:id', ReservaController.actualizar);
+router.delete('/:id', ReservaController.eliminar);
 
 module.exports = router;

@@ -1,3 +1,4 @@
+// pedidosRouter.js
 const express = require('express');
 const router = express.Router();
 const Pedido = require('../models/pedidosModel');
@@ -26,6 +27,72 @@ function verifyToken(req, res, next) {
     }
 }
 
+// ✅ RUTA PARA OBTENER PLATOS LISTOS (PARA NOTIFICACIONES) - CORREGIDA
+router.get('/platos-listos', verifyToken, async (req, res) => {
+  try {
+    const meseroId = req.user._id;
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const manana = new Date(hoy);
+    manana.setDate(manana.getDate() + 1);
+
+    console.log('🔔 Buscando platos listos para mesero:', meseroId);
+
+    // Buscar pedidos del día actual que tengan platos listos del mesero actual
+    const pedidos = await Pedido.find({
+      fechaPedido: { $gte: hoy, $lt: manana },
+      activo: true,
+      mesero: meseroId, // Solo pedidos del mesero logueado
+      'platos.estado': 'listo'
+    })
+    .populate('mesa', 'numeroMesa')
+    .populate('mesero', 'nombre _id')
+    .sort({ updatedAt: -1 });
+
+    console.log(`📊 Encontrados ${pedidos.length} pedidos con platos listos`);
+
+    // Recopilar todos los platos listos
+    let platosListos = [];
+    
+    pedidos.forEach(pedido => {
+      pedido.platos.forEach((plato, platoIndex) => {
+        if (plato.estado === 'listo') {
+          platosListos.push({
+            pedidoId: pedido._id,
+            platoIndex: platoIndex,
+            mesa: pedido.mesa?.numeroMesa || 'Sin mesa',
+            nombrePlato: plato.nombre,
+            cantidad: plato.cantidad,
+            observaciones: plato.observaciones,
+            numeroPedido: pedido.numeroPedido || pedido._id.toString().slice(-4),
+            fechaActualizacion: pedido.updatedAt,
+            mesero: pedido.mesero?.nombre || 'Sin mesero',
+            meseroId: pedido.mesero?._id?.toString(),
+            estadoPedido: pedido.estadoPedido
+          });
+        }
+      });
+    });
+
+    // Ordenar por fecha de actualización (más antiguos primero)
+    platosListos.sort((a, b) => new Date(a.fechaActualizacion) - new Date(b.fechaActualizacion));
+
+    console.log(`🎯 Total de platos listos del mesero: ${platosListos.length}`);
+
+    res.json({
+      success: true,
+      platosListos: platosListos,
+      total: platosListos.length
+    });
+
+  } catch (error) {
+    console.error('❌ Error al obtener platos listos:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Error interno del servidor al obtener platos listos' 
+    });
+  }
+});
 // Ruta para crear pedidos - RF010: Registro de pedidos por cliente o mesa
 router.post('/', verifyToken, async (req, res) => {
   try {
@@ -285,6 +352,7 @@ router.put('/:pedidoId/platos/:platoIndex/estado', verifyToken, async (req, res)
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
+
 // ✅ NUEVA RUTA: Agregar platos a pedido existente - CORREGIDA
 router.post('/:pedidoId/platos', verifyToken, async (req, res) => {
   try {
@@ -379,6 +447,7 @@ router.post('/:pedidoId/platos', verifyToken, async (req, res) => {
     res.status(500).json({ error: 'Error interno del servidor: ' + error.message });
   }
 });
+
 // ✅ NUEVA RUTA: Eliminar un plato específico del pedido
 router.delete('/:pedidoId/platos/:platoIndex', verifyToken, async (req, res) => {
   try {
@@ -685,7 +754,6 @@ router.get('/pagados', verifyToken, async (req, res) => {
   }
 });
 
-
 // Obtener pedido por ID
 router.get('/:id', verifyToken, async (req, res) => {
   try {
@@ -736,6 +804,171 @@ router.get('/hoy/pedidos', verifyToken, async (req, res) => {
   }
 });
 
+// ✅ RUTA MEJORADA PARA DASHBOARD DEL MESERO
+router.get('/dashboard/datos', verifyToken, async (req, res) => {
+  try {
+    const meseroId = req.user._id;
+    console.log(`📊 Cargando dashboard para mesero: ${meseroId}`);
+    console.log('👤 Usuario del token:', req.user);
 
+    // Fechas para filtrar solo hoy
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const manana = new Date(hoy);
+    manana.setDate(manana.getDate() + 1);
+
+    console.log(`📅 Filtro de fecha: ${hoy} a ${manana}`);
+
+    // 1. OBTENER PEDIDOS DEL MESERO LOGEADO - SOLO HOY
+    const pedidosHoy = await Pedido.find({
+      mesero: meseroId,
+      fechaPedido: { $gte: hoy, $lt: manana },
+      activo: true
+    })
+    .populate('mesa', 'numeroMesa estado')
+    .populate('platos.plato', 'nombre precio')
+    .sort({ fechaPedido: -1 });
+
+    console.log(`📦 Pedidos encontrados hoy: ${pedidosHoy.length}`);
+    
+    // Debug: mostrar cada pedido
+    pedidosHoy.forEach((pedido, index) => {
+      console.log(`   Pedido ${index + 1}:`, {
+        id: pedido._id,
+        mesa: pedido.mesa?.numeroMesa,
+        total: pedido.total,
+        estadoPedido: pedido.estadoPedido,
+        estadoPago: pedido.estadoPago,
+        fecha: pedido.fechaPedido
+      });
+    });
+
+    // 2. OBTENER MESAS RESERVADAS
+    const mesasReservadas = await Mesa.countDocuments({ 
+      estado: 'reserva' 
+    });
+    console.log(`🪑 Mesas reservadas: ${mesasReservadas}`);
+
+    // 3. CALCULAR ESTADÍSTICAS
+    const totalPedidos = pedidosHoy.length;
+    
+    // Ventas totales de hoy (solo pedidos pagados)
+    const pedidosPagados = pedidosHoy.filter(pedido => pedido.estadoPago === 'pagado');
+    const totalVentas = pedidosPagados.reduce((sum, pedido) => sum + pedido.total, 0);
+
+    // Pedidos entregados
+    const pedidosEntregados = pedidosHoy.filter(p => p.estadoPedido === 'entregado').length;
+
+    // Mesas activas (mesas únicas con pedidos activos)
+    const mesasActivasIds = [...new Set(
+      pedidosHoy
+        .filter(p => 
+          p.estadoPedido !== 'entregado' && 
+          p.estadoPedido !== 'cancelado' &&
+          p.mesa // Asegurar que tenga mesa
+        )
+        .map(p => p.mesa._id.toString())
+    )];
+    const mesasActivas = mesasActivasIds.length;
+
+    console.log('💰 Estadísticas calculadas:');
+    console.log('   - Total pedidos:', totalPedidos);
+    console.log('   - Pedidos pagados:', pedidosPagados.length);
+    console.log('   - Total ventas:', totalVentas);
+    console.log('   - Pedidos entregados:', pedidosEntregados);
+    console.log('   - Mesas activas:', mesasActivas);
+
+    // 4. PEDIDOS ACTIVOS (NO ENTREGADOS NI CANCELADOS)
+    const pedidosActivos = pedidosHoy
+      .filter(pedido => 
+        pedido.estadoPedido !== 'entregado' && 
+        pedido.estadoPedido !== 'cancelado'
+      )
+      .map(pedido => ({
+        _id: pedido._id,
+        numeroPedido: pedido.numeroPedido || pedido._id.toString().slice(-4),
+        mesa: pedido.mesa ? { 
+          _id: pedido.mesa._id,
+          numeroMesa: pedido.mesa.numeroMesa 
+        } : { numeroMesa: 'N/A' },
+        platos: pedido.platos,
+        estadoPedido: pedido.estadoPedido,
+        fechaPedido: pedido.fechaPedido,
+        total: pedido.total
+      }));
+
+    console.log(`🔄 Pedidos activos: ${pedidosActivos.length}`);
+
+    // 5. PLATOS MÁS VENDIDOS HOY - CORREGIDO
+    const platosVendidos = {};
+    pedidosHoy.forEach(pedido => {
+      pedido.platos.forEach(plato => {
+        const platoNombre = plato.nombre || 'Plato no disponible';
+        
+        if (!platosVendidos[platoNombre]) {
+          platosVendidos[platoNombre] = {
+            nombre: platoNombre,
+            cantidad: 0,
+            total: 0
+          };
+        }
+        platosVendidos[platoNombre].cantidad += plato.cantidad;
+        platosVendidos[platoNombre].total += plato.subtotal || (plato.precio * plato.cantidad);
+      });
+    });
+
+    const platosMasVendidos = Object.values(platosVendidos)
+      .sort((a, b) => b.cantidad - a.cantidad)
+      .slice(0, 5);
+
+    console.log(`🍽️ Platos más vendidos: ${platosMasVendidos.length}`);
+
+    // 6. VENTAS POR HORA (PARA EL GRÁFICO) - CORREGIDO
+    const ventasPorHora = Array.from({ length: 24 }, (_, i) => {
+      const ventasHora = pedidosHoy
+        .filter(pedido => {
+          const horaPedido = new Date(pedido.fechaPedido).getHours();
+          return horaPedido === i && pedido.estadoPago === 'pagado';
+        })
+        .reduce((sum, pedido) => sum + pedido.total, 0);
+      
+      return ventasHora;
+    });
+
+    console.log('📈 Ventas por hora calculadas:', ventasPorHora);
+
+    // 7. DATOS DE RESPUESTA
+    const responseData = {
+      success: true,
+      datos: {
+        estadisticas: {
+          totalPedidos,
+          totalVentas,
+          pedidosEntregados,
+          mesasActivas,
+          mesasReservadas
+        },
+        pedidosActivos,
+        platosMasVendidos,
+        ventasPorHora,
+        debug: {
+          meseroId: meseroId.toString(),
+          totalPedidosEncontrados: pedidosHoy.length,
+          fechaConsulta: new Date().toISOString()
+        }
+      }
+    };
+
+    console.log('🎯 Enviando respuesta al frontend');
+    res.json(responseData);
+
+  } catch (error) {
+    console.error('❌ Error en dashboard:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Error al cargar datos del dashboard: ' + error.message
+    });
+  }
+});
 
 module.exports = router;

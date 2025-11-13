@@ -97,6 +97,8 @@ class ReservaController {
     }
   }
 
+  
+
   // Actualizar reserva - VERSIÓN CORREGIDA USANDO EL SERVICIO
   async actualizar(req, res) {
     try {
@@ -348,6 +350,29 @@ class ReservaController {
       });
     }
   }
+
+  async confirmarAsistenciaYLiberar(req, res) {
+    try {
+      const { id } = req.params;
+      console.log('✅ Confirmando asistencia y liberando mesas para reserva ID:', id);
+      
+      const reservaActualizada = await reservaService.confirmarAsistenciaYLiberar(id);
+      
+      res.json({
+        success: true,
+        data: reservaActualizada,
+        mensaje: 'Asistencia confirmada y mesas liberadas exitosamente'
+      });
+    } catch (error) {
+      console.error('❌ Error en confirmarAsistenciaYLiberar:', error);
+      res.status(400).json({
+        success: false,
+        mensaje: error.message
+      });
+    }
+  }
+
+  
 
   // 📅 Reservas por fecha específica
   async reservasPorFecha(req, res) {

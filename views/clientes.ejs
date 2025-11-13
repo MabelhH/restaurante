@@ -6,518 +6,6 @@
   <title>Gestión de Clientes - Nova Salud</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="/clientes.css">
-  <style>
-    /* Estilos para el modal */
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.5);
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
-
-    .modal-content {
-      background: rgb(235, 232, 232);
-      padding: 20px;
-      border-radius: 8px;
-      width: 90%;
-      max-width: 500px;
-      max-height: 80vh;
-      overflow-y: auto;
-    }
-
-    .close {
-      float: right;
-      font-size: 24px;
-      cursor: pointer;
-      color: #666;
-    }
-
-    .close:hover {
-      color: #000;
-    }
-
-    .mesa-selection {
-      margin: 15px 0;
-    }
-
-    .mesa-selection select {
-      width: 100%;
-      padding: 8px;
-      margin-top: 5px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-    }
-
-    /* Nuevos estilos para selección múltiple */
-    .mesas-seleccionadas-container {
-      margin: 10px 0;
-      padding: 10px;
-      background-color: #f9f9f9;
-      border-radius: 4px;
-      border-left: 4px solid #4CAF50;
-      display: none;
-    }
-
-    .mesas-seleccionadas-container h4 {
-      margin: 0 0 8px 0;
-      font-size: 14px;
-      color: #333;
-    }
-
-    .mesa-item {
-      display: inline-flex;
-      align-items: center;
-      background-color: #e8f5e9;
-      padding: 6px 10px;
-      margin: 4px;
-      border-radius: 4px;
-      font-size: 12px;
-    }
-    h3{
-      text-align: center;
-      text-transform:uppercase ;
-      font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
-    }
-
-    .mesa-item button {
-      background: none;
-      border: none;
-      color: #d32f2f;
-      cursor: pointer;
-      margin-left: 5px;
-      font-size: 14px;
-    }
-
-    .mesas-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-      gap: 10px;
-      margin-top: 10px;
-      max-height: 200px;
-      overflow-y: auto;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-    }
-
-    .mesa-option {
-      padding: 10px;
-      border: 2px solid #ddd;
-      border-radius: 4px;
-      cursor: pointer;
-      text-align: center;
-      transition: all 0.3s ease;
-    }
-
-    .mesa-option:hover {
-      background-color: #f5f5f5;
-    }
-
-    .mesa-option.selected {
-      background-color: #4CAF50;
-      color: white;
-      border-color: #4CAF50;
-    }
-
-    /* Estilos mejorados para las tarjetas */
-    .cards-container {
-      display: grid;
-      visibility: visible;
-      opacity: 1;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 20px;
-      padding: 20px 0;
-    }
-
-    .card {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-      padding: 20px;
-      transition: all 0.3s ease;
-      border-left: 4px solid #4CAF50;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
-    }
-
-    .card.cliente {
-      border-left-color: #2196F3;
-    }
-
-    .card.reserva {
-      border-left-color: #FF9800;
-    }
-
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 15px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid #f0f0f0;
-    }
-
-    .card-title {
-      margin: 0;
-      font-size: 1.3rem;
-      font-weight: 600;
-      color: #333;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .card-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #4CAF50, #45a049);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: bold;
-      font-size: 1.1rem;
-    }
-
-    .card.cliente .card-avatar {
-      background: linear-gradient(135deg, #2196F3, #0b7dda);
-    }
-
-    .card-body {
-      margin-bottom: 15px;
-    }
-
-    .card-info {
-      display: flex;
-      align-items: center;
-      margin-bottom: 10px;
-      font-size: 0.95rem;
-      color: #555;
-    }
-
-    .card-info i {
-      width: 20px;
-      color: #777;
-      margin-right: 10px;
-    }
-
-    .card-info strong {
-      color: #333;
-      margin-right: 5px;
-    }
-
-    /* Estados de reserva */
-    .badge {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-    }
-
-    .badge-pendiente {
-      background-color: #FFF3CD;
-      color: #856404;
-    }
-
-    .badge-confirmada {
-      background-color: #D4EDDA;
-      color: #155724;
-    }
-
-    .badge-cancelada {
-      background-color: #F8D7DA;
-      color: #721C24;
-    }
-
-    /* Acciones de tarjeta mejoradas */
-    .card-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      margin-top: 15px;
-      padding-top: 15px;
-      border-top: 1px solid #f0f0f0;
-    }
-
-    .btn-reservar, .btn-editar, .btn-eliminar, 
-    .btn-confirmar-reserva, .btn-cancelar-reserva, 
-    .btn-editar-reserva, .btn-eliminar-reserva {
-      border: none;
-      border-radius: 6px;
-      padding: 8px 12px;
-      cursor: pointer;
-      font-size: 0.85rem;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      transition: all 0.2s ease;
-      font-weight: 500;
-    }
-
-    .btn-reservar {
-      background-color: #4CAF50;
-      color: white;
-    }
-
-    .btn-reservar:hover {
-      background-color: #45a049;
-      transform: scale(1.05);
-    }
-
-    .btn-editar, .btn-editar-reserva {
-      background-color: #2196F3;
-      color: white;
-    }
-
-    .btn-editar:hover, .btn-editar-reserva:hover {
-      background-color: #0b7dda;
-      transform: scale(1.05);
-    }
-
-    .btn-eliminar, .btn-eliminar-reserva {
-      background-color: #f44336;
-      color: white;
-    }
-
-    .btn-eliminar:hover, .btn-eliminar-reserva:hover {
-      background-color: #d32f2f;
-      transform: scale(1.05);
-    }
-
-    .btn-confirmar-reserva {
-      background-color: #4CAF50;
-      color: white;
-    }
-
-    .btn-confirmar-reserva:hover {
-      background-color: #45a049;
-      transform: scale(1.05);
-    }
-
-    .btn-cancelar-reserva {
-      background-color: #ff9800;
-      color: white;
-    }
-
-    .btn-cancelar-reserva:hover {
-      background-color: #e68a00;
-      transform: scale(1.05);
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 60px 20px;
-      color: #777;
-      grid-column: 1 / -1;
-    }
-
-    .empty-state i {
-      font-size: 64px;
-      margin-bottom: 20px;
-      color: #ddd;
-    }
-
-    .empty-state h3 {
-      font-size: 1.5rem;
-      margin-bottom: 10px;
-      color: #999;
-    }
-
-    .empty-state p {
-      font-size: 1rem;
-      color: #aaa;
-    }
-
-    /* Estilos del formulario */
-    #formReserva label {
-      display: block;
-      margin: 10px 0 5px;
-      font-weight: bold;
-    }
-
-    #formReserva input, 
-    #formReserva textarea, 
-    #formReserva select {
-      width: 100%;
-      padding: 8px;
-      margin-bottom: 10px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      box-sizing: border-box;
-    }
-
-    #formReserva button[type="submit"] {
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      padding: 10px 15px;
-      border-radius: 4px;
-      cursor: pointer;
-      width: 100%;
-      font-size: 16px;
-    }
-
-    #formReserva button[type="submit"]:hover {
-      background-color: #45a049;
-    }
-
-    /* Notificaciones */
-    .notificacion {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 15px 20px;
-      border-radius: 5px;
-      color: white;
-      z-index: 1001;
-      max-width: 300px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-
-    .notificacion-success {
-      background-color: #4CAF50;
-    }
-
-    .notificacion-error {
-      background-color: #f44336;
-    }
-
-    .notificacion-warning {
-      background-color: #ff9800;
-    }
-
-    .notificacion-info {
-      background-color: #2196F3;
-    }
-
-    .notificacion-contenido {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .notificacion-contenido button {
-      background: none;
-      border: none;
-      color: white;
-      cursor: pointer;
-      margin-left: 10px;
-    }
-    /* Contenedor de pestañas centrado */
-    .tabs {
-      display: flex;
-      justify-content: center; /* centra los botones */
-      gap: 8px;                /* espacio entre botones */
-      margin: 20px 0;
-      color: #000;
-    }
-
-    /* Botones de pestañas más pequeños */
-    .tab-button {
-      padding: 6px 12px;        /* menos padding = más pequeños */
-      background: linear-gradient(to right, #b22222, #ff6347);
-      border: none;
-      border-radius: 18px;      /* esquinas redondeadas */
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 14px;          /* tamaño de texto más pequeño */
-      color: #f1eeee;
-      transition: all 0.3s ease;
-    }
-
-    .hora-selector {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-    }
-
-    .hora-selector select {
-      flex: 1;
-      padding: 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-    }
-
-    /* Hover */
-    .tab-button:hover {
-      background-color: #602f2f;
-    }
-
-    /* Pestaña activa */
-    .tab-button.active {
-      background-color: #af844c;
-      color: white;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    }
-    
-    .btn-agregar-mas {
-      background-color: #2196F3;
-      color: white;
-      border: none;
-      padding: 8px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-      margin-top: 10px;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .btn-agregar-mas:hover {
-      background-color: #0b7dda;
-    }
-
-    /* Modal de selección de mesas */
-    #mesasModal .modal-content {
-      max-width: 600px;
-    }
-
-    .modal-actions {
-      margin-top: 15px;
-      text-align: right;
-    }
-
-    .btn-confirmar {
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      padding: 8px 15px;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-
-    .btn-confirmar:hover {
-      background-color: #45a049;
-    }
-
-    #listaClientes, #listaReservas {
-      min-height: 200px;
-    }
-
-    /* Asegurar que las pestañas funcionen correctamente */
-    [data-tab-content] {
-      display: none;
-    }
-
-    [data-tab-content].active {
-      display: block;
-    }
-
-  </style>
 </head>
 <body>
   <div class="dashboard-container">
@@ -931,6 +419,11 @@
               this.cancelarReserva(id);
               return;
           }
+
+          if (boton.classList.contains('btn-asistencia-reserva')) {
+            this.confirmarAsistencia(id);
+            return;
+          }
       }
 
       abrirModalReserva(id) {
@@ -1174,8 +667,8 @@
           return;
         }
 
-        const fechaReserva = new Date(fechaInput);
-        fechaReserva.setHours(fechaReserva.getHours() + 5);
+        const fechaReserva = new Date(fechaInput+ 'T00:00:00.000Z');
+        //fechaReserva.setHours(fechaReserva.getHours() + 5);
 
         console.log('📅 Fecha original:', fechaInput);
         console.log('📅 Fecha procesada:', fechaReserva);
@@ -1186,7 +679,7 @@
         const datosReserva = {
           cliente: this.clienteSeleccionadoId,
           mesas: mesasValidas.map(mesa => mesa._id),
-          diaReserva: fechaReserva.toISOString(),
+          diaReserva: fechaInput,
           horaReserva: this.obtenerHora24(),
           numeroPersonas: parseInt(document.getElementById('numeroPersonas').value),
           observaciones: document.getElementById('observaciones').value.trim(),
@@ -1584,123 +1077,146 @@
           return hora24; // Retorna el valor original si hay error
         }
       }
-
       renderizarReservas(reservas) {
-        console.log('🎨 Renderizando reservas:', reservas.length);
-        this.listaReservas.innerHTML = '';
+          console.log('🎨 Renderizando reservas:', reservas.length);
+          this.listaReservas.innerHTML = '';
 
-        if (!reservas || reservas.length === 0) {
-          this.listaReservas.innerHTML = `
-            <div class="empty-state">
-              <i class="fas fa-calendar-times"></i>
-              <h3>No hay reservas registradas</h3>
-              <p>Las reservas aparecerán aquí cuando se creen.</p>
-            </div>`;
-          return;
-        }
-
-        reservas.forEach(reserva => {
-          const card = document.createElement('div');
-          card.classList.add('card', 'reserva');
-
-          const numerosMesas = reserva.mesas.map(m => m.numeroMesa || 'Sin número').join(', ');
-          const fecha = new Date(reserva.diaReserva).toLocaleDateString('es-PE');
-          const hora = this.formatearHoraAMPM(reserva.horaReserva);
-
-          // Determinar la clase del badge según el estado
-          let badgeClass = '';
-          switch (reserva.estadoReserva) {
-            case 'pendiente':
-              badgeClass = 'badge-pendiente';
-              break;
-            case 'confirmada':
-              badgeClass = 'badge-confirmada';
-              break;
-            case 'cancelada':
-              badgeClass = 'badge-cancelada';
-              break;
-            default:
-              badgeClass = 'badge-pendiente';
+          if (!reservas || reservas.length === 0) {
+            this.listaReservas.innerHTML = `
+              <div class="empty-state">
+                <i class="fas fa-calendar-times"></i>
+                <h3>No hay reservas registradas</h3>
+                <p>Las reservas aparecerán aquí cuando se creen.</p>
+              </div>`;
+            return;
           }
 
-          // Obtener nombre completo del cliente (nombre + apellido)
-          const nombreCliente = reserva.cliente 
-            ? `${reserva.cliente.nombre || ''} ${reserva.cliente.apellido || ''}`.trim()
-            : 'Cliente eliminado';
+          reservas.forEach(reserva => {
+            const card = document.createElement('div');
+            card.classList.add('card', 'reserva');
 
-          const botonConfirmar = (reserva.estadoReserva !== 'cancelada' && reserva.estadoReserva !== 'confirmada')
-            ? `<button type="button" class="btn-confirmar-reserva" data-id="${reserva._id}" title="Confirmar reserva">
-                <i class="fas fa-check"></i>
-              </button>`
-            : '';
-
-          const botonCancelar = reserva.estadoReserva === 'confirmada' 
-            ? `<button type="button" class="btn-cancelar-reserva" data-id="${reserva._id}" title="Cancelar reserva">
-                <i class="fas fa-times"></i>
-              </button>`
-            : '';
+            const numerosMesas = reserva.mesas.map(m => m.numeroMesa || 'Sin número').join(', ');
+            const fecha = this.formatearFecha(reserva.diaReserva);
+            const hora = this.formatearHoraAMPM(reserva.horaReserva);
 
 
-          card.innerHTML = `
-            <div class="card-header">
-              <div class="card-title">
-                <i class="fas fa-user"></i> ${nombreCliente}
+            // Determinar la clase del badge según el estado
+            let badgeClass = '';
+            switch (reserva.estadoReserva) {
+              case 'pendiente':
+                badgeClass = 'badge-pendiente';
+                break;
+              case 'confirmada':
+                badgeClass = 'badge-confirmada';
+                break;
+              case 'cancelada':
+                badgeClass = 'badge-cancelada';
+                break;
+              case 'en_curso':
+                badgeClass = 'badge-en-curso';
+                break;
+              default:
+                badgeClass = 'badge-pendiente';
+            }
+
+            // Obtener nombre completo del cliente (nombre + apellido)
+            const nombreCliente = reserva.cliente 
+              ? `${reserva.cliente.nombre || ''} ${reserva.cliente.apellido || ''}`.trim()
+              : 'Cliente eliminado';
+
+            // Botón para confirmar reserva (solo para reservas pendientes)
+            const botonConfirmar = (reserva.estadoReserva === 'pendiente')
+              ? `<button type="button" class="btn-confirmar-reserva" data-id="${reserva._id}" title="Confirmar reserva">
+                  <i class="fas fa-check"></i> 
+                </button>`
+              : '';
+
+            // Botón para cancelar reserva (solo para reservas confirmadas)
+            const botonCancelar = (reserva.estadoReserva === 'confirmada')
+              ? `<button type="button" class="btn-cancelar-reserva" data-id="${reserva._id}" title="Cancelar reserva">
+                  <i class="fas fa-times"></i> Cancelar
+                </button>`
+              : '';
+
+            // ✅ NUEVO: Botón para confirmar asistencia y liberar mesas (solo para reservas confirmadas)
+            const botonAsistencia = (reserva.estadoReserva === 'confirmada')
+              ? `<button type="button" class="btn-asistencia-reserva" data-id="${reserva._id}" title="Confirmar asistencia y liberar mesas">
+                  <i class="fas fa-user-check"></i> Asistencia
+                </button>`
+              : '';
+
+            card.innerHTML = `
+              <div class="card-header">
+                <div class="card-title">
+                  <i class="fas fa-user"></i> ${nombreCliente}
+                </div>
+                <span class="badge ${badgeClass}">${reserva.estadoReserva}</span>
               </div>
-              <span class="badge ${badgeClass}">${reserva.estadoReserva}</span>
-            </div>
-            <div class="card-body">
-              <div class="card-info">
-                <i class="fas fa-chair"></i>
-                <strong>Mesas:</strong> ${numerosMesas}
+              <div class="card-body">
+                <div class="card-info">
+                  <i class="fas fa-chair"></i>
+                  <strong>Mesas:</strong> ${numerosMesas}
+                </div>
+                <div class="card-info">
+                  <i class="fas fa-calendar-day"></i>
+                  <strong>Fecha:</strong> ${fecha}
+                </div>
+                <div class="card-info">
+                  <i class="fas fa-clock"></i>
+                  <strong>Hora:</strong> ${hora}
+                </div>
+                <div class="card-info">
+                  <i class="fas fa-users"></i>
+                  <strong>Personas:</strong> ${reserva.numeroPersonas}
+                </div>
+                ${reserva.observaciones ? `
+                <div class="card-info">
+                  <i class="fas fa-sticky-note"></i>
+                  <strong>Observaciones:</strong> ${reserva.observaciones}
+                </div>
+                ` : ''}
               </div>
-              <div class="card-info">
-                <i class="fas fa-calendar-day"></i>
-                <strong>Fecha:</strong> ${fecha}
+              <div class="card-actions">
+                <button class="btn-editar-reserva" data-id="${reserva._id}" title="Editar reserva">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn-eliminar-reserva" data-id="${reserva._id}" title="Eliminar reserva">
+                  <i class="fas fa-trash"></i>
+                </button>
+                ${botonConfirmar}
+                ${botonCancelar}
+                ${botonAsistencia}
               </div>
-              <div class="card-info">
-                <i class="fas fa-clock"></i>
-                <strong>Hora:</strong> ${hora}
-              </div>
-              <div class="card-info">
-                <i class="fas fa-users"></i>
-                <strong>Personas:</strong> ${reserva.numeroPersonas}
-              </div>
-              ${reserva.observaciones ? `
-              <div class="card-info">
-                <i class="fas fa-sticky-note"></i>
-                <strong>Observaciones:</strong> ${reserva.observaciones}
-              </div>
-              ` : ''}
-            </div>
-            <div class="card-actions">
-              <button class="btn-editar-reserva" data-id="${reserva._id}" title="Editar reserva">
-                <i class="fas fa-edit"></i>
-              </button>
-              <button class="btn-eliminar-reserva" data-id="${reserva._id}" title="Eliminar reserva">
-                <i class="fas fa-trash"></i>
-              </button>
-              ${botonConfirmar}
-              ${botonCancelar}
-            </div>
-          `;
-          this.listaReservas.appendChild(card);
-        });
-        
-        // Agregar event listeners a los botones de confirmar y cancelar
-        const botonesConfirmar = this.listaReservas.querySelectorAll('.btn-confirmar-reserva');
-        botonesConfirmar.forEach(boton => {
-          boton.addEventListener('click', () => {
-            const reservaId = boton.dataset.id;
-            this.confirmarReserva(reservaId);
+            `;
+            this.listaReservas.appendChild(card);
           });
-        });
+          
+          // Agregar event listeners a los botones
+          this.agregarEventListenersReservas();
+        }
 
-        const botonesCancelar = this.listaReservas.querySelectorAll('.btn-cancelar-reserva');
-        botonesCancelar.forEach(boton => {
-          boton.addEventListener('click', () => this.cancelarReserva(boton.dataset.id));
-        });
+      // Función para formatear fecha correctamente
+      // Función para formatear fecha corrigiendo zona horaria
+      formatearFecha(fechaISO) {
+        if (!fechaISO) return 'Sin fecha';
+        
+        try {
+          const fecha = new Date(fechaISO);
+          
+          // Agregar el offset de zona horaria para corregir la fecha
+          const fechaCorregida = new Date(fecha.getTime() + fecha.getTimezoneOffset() * 60000);
+          
+          const dia = fechaCorregida.getDate().toString().padStart(2, '0');
+          const mes = (fechaCorregida.getMonth() + 1).toString().padStart(2, '0');
+          const año = fechaCorregida.getFullYear();
+          
+          return `${dia}/${mes}/${año}`;
+        } catch (error) {
+          console.error('Error al formatear fecha:', error, fechaISO);
+          return 'Fecha inválida';
+        }
       }
-
+      
       async confirmarReserva(id) {
           try {
               const response = await fetch(`/api/reservas/${id}/estado`, {
@@ -1792,6 +1308,68 @@
               console.error('Error al editar reserva:', error);
               this.mostrarNotificacion('❌ Error al cargar la reserva para editar', 'error');
           }
+      }
+
+      // Agrega este método después del método renderizarReservas
+      agregarEventListenersReservas() {
+        // Botones de confirmar reserva
+        const botonesConfirmar = this.listaReservas.querySelectorAll('.btn-confirmar-reserva');
+        botonesConfirmar.forEach(boton => {
+          boton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const reservaId = boton.dataset.id;
+            this.confirmarReserva(reservaId);
+          });
+        });
+
+        // Botones de cancelar reserva
+        const botonesCancelar = this.listaReservas.querySelectorAll('.btn-cancelar-reserva');
+        botonesCancelar.forEach(boton => {
+          boton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.cancelarReserva(boton.dataset.id);
+          });
+        });
+
+        // ✅ NUEVO: Botones de confirmar asistencia
+        const botonesAsistencia = this.listaReservas.querySelectorAll('.btn-asistencia-reserva');
+        botonesAsistencia.forEach(boton => {
+          boton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const reservaId = boton.dataset.id;
+            this.confirmarAsistencia(reservaId);
+          });
+        });
+      }
+
+
+      // Agrega este método después del método cancelarReserva
+      async confirmarAsistencia(id) {
+        try {
+          console.log('✅ Confirmando asistencia para reserva ID:', id);
+          
+          if (!confirm('¿Confirmar asistencia del cliente y liberar las mesas?\nEsta acción cambiará el estado de la reserva a "en_curso" y liberará las mesas para nuevas reservas.')) {
+            return;
+          }
+
+          const response = await fetch(`/api/reservas/${id}/confirmar-asistencia`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+
+          const result = await response.json();
+          
+          if (!response.ok) {
+            throw new Error(result.mensaje || 'Error al confirmar asistencia');
+          }
+
+          this.mostrarNotificacion('✅ Asistencia confirmada y mesas liberadas correctamente', 'success');
+          this.obtenerReservas(); // Actualizar la lista
+          
+        } catch (error) {
+          console.error('Error al confirmar asistencia:', error);
+          this.mostrarNotificacion('❌ Error al confirmar asistencia: ' + error.message, 'error');
+        }
       }
 
       // Agrega este método en tu clase ClientesApp - después de cancelarReserva
@@ -1942,5 +1520,112 @@
       new ClientesApp();
     });
   </script>
+
+  <!-- Chat flotante -->
+  <button id="chat-toggle" class="chat-toggle">
+    <img src="/favicon.ico" alt="Chat" style="width:24px;height:24px;">
+  </button>
+
+  <div id="chat-modal" class="chat-modal hidden">
+    <div class="chat-header">
+      <h3>ChefIA</h3>
+      <button id="chat-close" class="chat-close">&times;</button>
+    </div>
+    <div id="chat-body" class="chat-body"></div>
+    <form id="chat-form" class="chat-form">
+      <input id="chat-input" type="text" placeholder="Escribe tu mensaje..." autocomplete="off">
+      <button type="submit">Enviar</button>
+    </form>
+  </div>
+
+<style>
+    /* Botón flotante */
+    .chat-toggle {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #eb1f1f;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      font-size: 24px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      transition: transform 0.2s ease;
+      z-index: 999;
+    }
+    .chat-toggle:hover { transform: scale(1.1); }
+
+    /* Ventana modal del chat */
+    .chat-modal {
+      position: fixed;
+      bottom: 100px;
+      right: 30px;
+      width: 320px;
+      max-height: 420px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 1000;
+    }
+    .chat-modal.hidden { display: none; }
+
+    .chat-header {
+      background: #eb1f1f;
+      color: white;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .chat-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      font-size: 14px;
+    }
+    .chat-form {
+      display: flex;
+      border-top: 1px solid #ccc;
+    }
+    .chat-form input {
+      flex: 1;
+      border: none;
+      padding: 10px;
+      font-size: 14px;
+    }
+    .chat-form button {
+      background: #eb1f1f;
+      color: white;
+      border: none;
+      padding: 0 15px;
+      cursor: pointer;
+    }
+    .msg {
+      margin-bottom: 8px;
+      padding: 8px;
+      border-radius: 10px;
+      max-width: 85%;
+    }
+    .msg.user {
+      background: #e9ecef;
+      align-self: flex-end;
+    }
+    .msg.ai {
+      background: #eb1f1f;
+      color: white;
+      align-self: flex-start;
+    }
+  </style>
+
+  <script src="/js/adminChat.js"></script>
+
+
+  
 </body>
 </html> 

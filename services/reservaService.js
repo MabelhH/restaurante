@@ -134,7 +134,8 @@ class ReservaService {
 
   // En ReservaService - método getAll
   async getAll() {
-    return await Reserva.find({ activo: true }) // ✅ Solo reservas activas
+    return await Reserva.find({
+       activo: true }) // ✅ Solo reservas activas
       .populate('cliente', 'nombre apellido email telefono') // ✅ Incluir apellido
       .populate('mesas', 'numeroMesa capacidad piso sector estado')
       .sort({ diaReserva: -1, horaReserva: -1 });
@@ -300,6 +301,8 @@ class ReservaService {
       .populate('mesas', 'numeroMesa capacidad piso sector estado');
   }
 
+
+
   // ReservaService - método delete CORREGIDO
   async delete(id) {
     console.log('🗑️ Eliminando reserva de la base de datos ID:', id);
@@ -315,6 +318,47 @@ class ReservaService {
     console.log('✅ Reserva eliminada permanentemente de la base de datos');
     return { mensaje: 'Reserva eliminada permanentemente' };
   }
+
+  // ==================== MÉTODO PARA CONFIRMAR ASISTENCIA ====================
+
+  // ==================== MÉTODO PARA CONFIRMAR ASISTENCIA Y LIBERAR MESAS ====================
+
+    async confirmarAsistenciaYLiberar(id) {
+      console.log('✅ Confirmando asistencia y liberando mesas para reserva ID:', id);
+      
+      const reserva = await Reserva.findById(id).populate('mesas');
+      if (!reserva || !reserva.activo) {
+        throw new Error('Reserva no encontrada');
+      }
+
+      // Verificar que la reserva esté confirmada
+      if (reserva.estadoReserva !== 'confirmada') {
+        throw new Error('Solo se puede confirmar asistencia en reservas confirmadas');
+      }
+
+      // Cambiar estado de las mesas a "disponible" (liberarlas)
+      for (const mesaId of reserva.mesas) {
+        await Mesa.findByIdAndUpdate(mesaId, {
+          estado: 'disponible'
+        });
+      }
+
+      // ✅ SOLUCIÓN: NO marcar como inactivo, solo cambiar el estado
+      const reservaActualizada = await Reserva.findByIdAndUpdate(
+        id,
+        { 
+          estadoReserva: 'en_curso',
+          horaInicioReal: new Date()
+          // ❌ QUITAR: activo: false (esta línea hace que desaparezca)
+        },
+        { new: true }
+      )
+      .populate('cliente', 'nombre apellido email telefono')
+      .populate('mesas', 'numeroMesa capacidad piso sector estado');
+
+      console.log(`✅ Asistencia confirmada para reserva ${id} - Mesas liberadas`);
+      return reservaActualizada;
+    }
 
 
   // ==================== MÉTODOS DE CONSULTA ====================

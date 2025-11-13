@@ -1,0 +1,104 @@
+
+/* Botón flotante */
+#chat-toggle {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 9999;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 0;
+  background: #eb1f1f;
+  color: white;
+  font-size: 24px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.18);
+  cursor: pointer;
+}
+
+/* Ventana del chat */
+#chat-modal {
+  position: fixed;
+  width: 320px;
+  height: 420px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 0 14px rgba(0,0,0,0.25);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.12s ease, opacity 0.12s ease;
+  z-index: 9999;
+
+  /* posición inicial (se usará como punto de partida) */
+  bottom: 80px;
+  right: 20px;
+
+  /* dejamos left/top en auto inicialmente */
+  left: auto;
+  top: auto;
+}
+
+/* Oculto por defecto */
+.hidden {
+  display: none;
+}
+
+/* Encabezado arrastrable */
+.chat-header {
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f5f7fb;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none; /* evita scroll en móviles al intentar drag */
+}
+
+/* Cuerpo del chat */
+.chat-body {
+  padding: 10px;
+  overflow-y: auto;
+  flex: 1;
+  font-size: 14px;
+}
+
+/* Formulario */
+.chat-form {
+  display: flex;
+  padding: 8px;
+  gap: 6px;
+  border-top: 1px solid #eee;
+}
+
+.chat-form input {
+  flex: 1;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.chat-form button {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 0;
+  background: #eb1f1f;
+  color: white;
+  cursor: pointer;
+}
+
+/* Mensajes */
+.msg {
+  margin-bottom: 8px;
+  padding: 8px;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+.msg.user { background: #e6f0ff; align-self: flex-end; }
+.msg.ai   { background: #f2f2f2; align-self: flex-start; }
+
+/* Clase aplicada al arrastrar */
+#chat-modal.dragging { opacity: 0.95; cursor: grabbing; transform: none; }

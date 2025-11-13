@@ -1,4 +1,3 @@
-// controllers/pedidosController.js
 const Pedido = require('../models/pedidosModel');
 const Mesa = require('../models/mesasModel');
 const Platos = require('../models/platosModel');
@@ -216,10 +215,10 @@ class PedidosController {
     }
   }
 
-  // ✅ RF014 - Consultar estado de pedidos
+  // ✅ RF014 - Consultar estado de pedidos - ACTUALIZADO PARA FILTRAR POR FECHA
   async listarPedidos(req, res) {
     try {
-      const { estadoPedido, estadoPago, mesa } = req.query;
+      const { estadoPedido, estadoPago, mesa, fecha } = req.query;
       const filtro = { activo: true };
 
       // 👇 Aseguramos que el rol del usuario exista
@@ -233,6 +232,22 @@ class PedidosController {
         if (estadoPedido) filtro.estadoPedido = estadoPedido.toLowerCase();
         if (estadoPago) filtro.estadoPago = estadoPago.toLowerCase();
         if (mesa) filtro.mesa = mesa;
+      }
+
+      // ✅ FILTRAR POR FECHA - Si no se especifica fecha, usar fecha actual
+      if (!fecha) {
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        const manana = new Date(hoy);
+        manana.setDate(manana.getDate() + 1);
+        
+        filtro.fechaPedido = { $gte: hoy, $lt: manana };
+      } else {
+        const fechaFiltro = new Date(fecha);
+        fechaFiltro.setHours(0, 0, 0, 0);
+        const fechaSiguiente = new Date(fechaFiltro);
+        fechaSiguiente.setDate(fechaSiguiente.getDate() + 1);
+        filtro.fechaPedido = { $gte: fechaFiltro, $lt: fechaSiguiente };
       }
 
       console.log('🔎 Filtro aplicado:', filtro);
@@ -251,7 +266,7 @@ class PedidosController {
     }
   }
 
-  // Resto de métodos se mantienen igual con pequeñas mejoras...
+  // Resto de métodos se mantienen igual...
   async cambiarEstadoPedido(req, res) {
     try {
       const { pedidoId } = req.params;
@@ -443,52 +458,94 @@ class PedidosController {
     }
   }
 
-  // ✅ NUEVO: Método para cargar la carta con mesa fija
-  async cargarCarta(req, res) {
+  // ✅ NUEVO: Obtener platos listos para servir
+  async obtenerPlatosListos(req, res) {
     try {
-      const { mesa, pedidoExistente, mesaFija } = req.query;
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      const manana = new Date(hoy);
+      manana.setDate(manana.getDate() + 1);
 
-      const mesas = await Mesa.find({
-        $or: [
-          { estado: { $in: ['disponible', 'liberada'] } },
-          // AGREGADO: Incluir la mesa actual si viene de editar pedido
-          ...(mesaFija && mesa ? [{ _id: new mongoose.Types.ObjectId(mesa) }] : [])
-        ]
-      }).sort('numeroMesa');
+      const pedidos = await Pedido.find({
+        fechaPedido: { $gte: hoy, $lt: manana },
+        activo: true,
+        'platos.estado': 'listo'
+      })
+      .populate('mesa', 'numeroMesa')
+      .populate('mesero', 'nombre')
+      .sort({ updatedAt: -1 });
 
-      const platos = await Platos.find({
-        estado: 'activo',
-        stock: { $gt: 0 }
-      }).populate('categoria');
+      let platosListos = [];
+      
+      pedidos.forEach(pedido => {
+        pedido.platos.forEach((plato, index) => {
+          if (plato.estado === 'listo') {
+            platosListos.push({
+              pedidoId: pedido._id,
+              platoIndex: index,
+              mesa: pedido.mesa?.numeroMesa || 'N/A',
+              nombrePlato: plato.nombre,
+              cantidad: plato.cantidad,
+              observaciones: plato.observaciones,
+              numeroPedido: pedido.numeroPedido || pedido._id.toString().slice(-6),
+              fechaActualizacion: pedido.updatedAt,
+              mesero: pedido.mesero?.nombre || 'N/A',
+              estadoPedido: pedido.estadoPedido
+            });
+          }
+        });
+      });
 
-      const categorias = await Categoria.find({ estado: 'activa' });
+      // Ordenar por fecha de actualización (más antiguos primero para atender primero)
+      platosListos.sort((a, b) => new Date(a.fechaActualizacion) - new Date(b.fechaActualizacion));
 
-      const userData = {
-        _id: req.user._id,
-        nombre: req.user.nombre,
-        email: req.user.email,
-        rol: req.user.rol
-      };
+      res.json(platosListos);
 
-      // AGREGADO: Pasar parámetros adicionales a la vista
-      res.render('cartaM', {
-        usuario: userData,
-        platos,
-        mesas,
-        categorias,
-        mesaSeleccionada: mesa, // Mesa fija cuando viene de editar
-        pedidoExistente: pedidoExistente,
-        mesaFija: mesaFija === 'true' // Forzar selección de mesa
+    } catch (error) {
+      console.error('Error al obtener platos listos:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  // ✅ NUEVO: Marcar plato como servido
+  async marcarPlatoServido(req, res) {
+    try {
+      const { pedidoId, platoIndex } = req.params;
+
+      const pedido = await Pedido.findById(pedidoId);
+      if (!pedido) {
+        return res.status(404).json({ error: 'Pedido no encontrado' });
+      }
+
+      if (platoIndex >= pedido.platos.length) {
+        return res.status(404).json({ error: 'Plato no encontrado en el pedido' });
+      }
+
+      // Cambiar estado del plato a "servido"
+      pedido.platos[platoIndex].estado = 'servido';
+      
+      // Verificar si todos los platos están servidos para cambiar estado del pedido
+      const todosServidos = pedido.platos.every(plato => 
+        plato.estado === 'servido' || plato.estado === 'cancelado'
+      );
+
+      if (todosServidos && pedido.estadoPedido !== 'entregado') {
+        pedido.estadoPedido = 'entregado';
+      }
+
+      await pedido.save();
+
+      res.json({
+        mensaje: 'Plato marcado como servido',
+        pedido: pedido
       });
 
     } catch (error) {
-      console.error('Error al cargar carta:', error);
-      res.status(500).render('error', {
-        mensaje: 'Error al cargar la carta',
-        usuario: req.user
-      });
+      console.error('Error al marcar plato como servido:', error);
+      res.status(500).json({ error: error.message });
     }
   }
+
 }
 
 module.exports = new PedidosController();

@@ -77,6 +77,8 @@ const pedidosViewRouter = require('./routers/pedidosViewRouter'); // ✅ Nuevo
 const pagosViewRouter = require('./routers/pagosViewRouter'); 
 const clientesViewRouter = require('./routers/clienteViewRouter');   // ✅ Nuevo
 const reportesRouter = require('./routers/reportesRouter');
+const adminChatRouter = require('./routers/adminChat');
+const meseroChat = require('./routers/meseroChat');
 
 // ===== USAR ROUTERS API =====
 
@@ -107,6 +109,9 @@ app.use('/cajero', cajeroRouter);
 app.use('/clientes', clientesViewRouter);
 app.use('/', userViewRouter); // rutas de usuario (login, register, dashboard)
 app.use('/reportes', reportesRouter);
+app.use('/admin', adminChatRouter);
+app.use('/mesero', meseroChat);
+
 
 
 // ===== Rutas de vistas principales =====

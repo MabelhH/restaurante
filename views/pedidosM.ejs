@@ -21,6 +21,7 @@
       <a href="/mesas"><i class="fas fa-chair"></i> <span>Mesas</span></a>
       <a href="/carta"><i class="fas fa-book-open"></i> <span>Carta</span></a>
       <a href="/pedidos" class="active"><i class="fas fa-receipt"></i> <span>Pedidos</span></a>
+      <a href="/pedidos/historial/todos"><i class="fas fa-history"></i> <span>Historial</span></a>
       <a href="/logout"><i class="fas fa-sign-out-alt"></i> <span>Cerrar sesión</span></a>
     </nav>
   </aside>
@@ -29,18 +30,64 @@
   <main>
     <header class="main-header">
       <h2>Gestión de Pedidos</h2>
-      <div class="welcome">
-        <p>Bienvenido, <strong><%= usuario.nombre %></strong></p>
-        <p>Total de pedidos: <strong><%= pedidos.length %></strong></p>
+      <div class="header-right">
+        <div class="welcome">
+          <p>Bienvenido, <strong><%= usuario.nombre %></strong></p>
+          <p>Total de pedidos hoy: <strong><%= pedidos.length %></strong></p>
+        </div>
+        
+        <!-- =======================
+             🔔 WIDGET DE NOTIFICACIONES PARA PLATOS LISTOS
+        ======================== -->
+        <div class="notification-widget">
+          <div class="notification-trigger" id="notificationIcon">
+            <div class="notification-icon-wrapper">
+              <i class="fas fa-bell"></i>
+              <span class="notification-pulse"></span>
+              <span class="notification-badge" id="notificationBadge">0</span>
+            </div>
+          </div>
+
+          <div class="notification-panel" id="notificationDropdown">
+            <div class="panel-header">
+              <div class="panel-title">
+                <i class="fas fa-utensils"></i>
+                <h4>Platos Listos para Servir</h4>
+              </div>
+              <span class="panel-counter" id="panelCounter">0 platos</span>
+            </div>
+
+            <div class="notification-content">
+              <div class="notification-list" id="notificationList">
+                <!-- Los platos listos aparecerán aquí -->
+              </div>
+
+              <div class="panel-footer">
+                <button class="view-all-btn" onclick="actualizarNotificaciones()">
+                  <i class="fas fa-sync-alt"></i>
+                  Actualizar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- FIN DEL WIDGET DE NOTIFICACIONES -->
       </div>
     </header>
+
+    <!-- Indicador de fecha actual -->
+    <div class="date-indicator">
+      <i class="fas fa-calendar-day"></i>
+      <strong>Mostrando pedidos del:</strong> 
+      <%= new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %>
+    </div>
 
     <!-- =======================
          📋 SECCIÓN: Pedidos Registrados
     ======================== -->
     <section class="cards-section">
       <div class="search-container">
-        <h3><i class="fas fa-clipboard-list"></i> Mis Pedidos Registrados</h3>
+        <h3><i class="fas fa-clipboard-list"></i> Mis Pedidos Registrados - Hoy</h3>
         <div class="search-box">
           <i class="fas fa-search"></i>
           <input type="text" id="searchInput" placeholder="Buscar por mesa...">
@@ -58,7 +105,7 @@
         <% if (!pedidos || pedidos.length === 0) { %>
           <div class="empty-state">
             <i class="fas fa-clipboard-check"></i>
-            <h3>No hay pedidos registrados</h3>
+            <h3>No hay pedidos registrados hoy</h3>
             <p>Cuando realices pedidos desde la carta, aparecerán aquí.</p>
             <a href="/carta" class="btn-primary">
               <i class="fas fa-book-open"></i> Ir a la Carta
@@ -193,13 +240,13 @@
                 <% } %>
 
                 <!-- BOTÓN AGREGAR NUEVOS PEDIDOS - Solo si la mesa está pagada y en estado atendida/ocupada -->
-            <% if (pedido.estadoPago === 'pagado' && pedido.mesa && ['ocupada', 'atendida','disponible'].includes(pedido.mesa.estado) && pedido.platos.every(p => p.estado === 'listo' || p.estado === 'entregado')) { %>
-              <a href="/carta?mesaAuto=<%= pedido.mesa._id %>" 
-                class="btn-action primary" 
-                title="Agregar nuevo pedido a esta mesa ya pagada">
-                <i class="fas fa-plus-circle"></i> Nuevo Pedido
-              </a>
-            <% } %>
+                <% if (pedido.estadoPago === 'pagado' && pedido.mesa && ['ocupada', 'atendida','disponible'].includes(pedido.mesa.estado) && pedido.platos.every(p => p.estado === 'listo' || p.estado === 'entregado')) { %>
+                  <a href="/carta?mesaAuto=<%= pedido.mesa._id %>" 
+                    class="btn-action primary" 
+                    title="Agregar nuevo pedido a esta mesa ya pagada">
+                    <i class="fas fa-plus-circle"></i> Nuevo Pedido
+                  </a>
+                <% } %>
 
                 <!-- BOTÓN LIBERAR MESA - Solo si está pagada y la mesa está atendida/ocupada -->
                 <% if (pedido.estadoPago === 'pagado' && pedido.mesa && ['ocupada', 'atendida'].includes(pedido.mesa.estado) && pedido.platos.every(p => p.estado === 'listo' || p.estado === 'entregado')) { %>
@@ -255,13 +302,143 @@
     let mesaALiberar = null;
     let pedidoALiberar = null;
 
+    // ========== FUNCIONALIDAD DE NOTIFICACIONES ==========
+    const notificationIcon = document.getElementById('notificationIcon');
+    const notificationBadge = document.getElementById('notificationBadge');
+    const notificationDropdown = document.getElementById('notificationDropdown');
+    const notificationList = document.getElementById('notificationList');
+
+    // Función para cargar notificaciones de platos listos
+    async function actualizarNotificaciones() {
+      try {
+        const res = await fetch('/api/pedidos/platos-listos');
+        if (!res.ok) throw new Error('Error al cargar platos listos');
+
+        const data = await res.json();
+        const platosListos = data.platosListos || [];
+
+        // Actualizar badge
+        notificationBadge.textContent = platosListos.length;
+
+        // Actualizar contador del panel
+        document.getElementById('panelCounter').textContent = `${platosListos.length} plato${platosListos.length !== 1 ? 's' : ''}`;
+
+        // Actualizar lista de notificaciones
+        actualizarListaNotificaciones(platosListos);
+
+      } catch (error) {
+        console.error('Error al actualizar notificaciones:', error);
+      }
+    }
+
+    // Función para actualizar la lista de notificaciones
+    function actualizarListaNotificaciones(platosListos) {
+      if (platosListos.length === 0) {
+        notificationList.innerHTML = `
+          <div class="notification-empty">
+            <i class="fas fa-check-circle"></i>
+            <h5>¡Todo servido!</h5>
+            <p>No hay platos listos para servir</p>
+          </div>
+        `;
+        return;
+      }
+
+      notificationList.innerHTML = platosListos.map(plato => {
+        const tiempoTranscurrido = calcularTiempoTranscurrido(plato.fechaActualizacion);
+        
+        return `
+          <div class="notification-item plato-listo">
+            <div class="notification-icon">
+              <i class="fas fa-utensils"></i>
+            </div>
+            <div class="notification-details">
+              <div class="notification-mesa">Mesa ${plato.mesa}</div>
+              <div class="notification-plato">${plato.nombrePlato}</div>
+              <div class="notification-time">Listo hace: ${tiempoTranscurrido}</div>
+              <div class="notification-pedido">Pedido: ${plato.numeroPedido}</div>
+            </div>
+            <div class="notification-actions">
+              <button class="btn-marcar-entregado" onclick="marcarPlatoEntregado('${plato.pedidoId}', ${plato.platoIndex})" title="Marcar como entregado">
+                <i class="fas fa-check"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Función para calcular tiempo transcurrido
+    function calcularTiempoTranscurrido(fecha) {
+      const ahora = new Date();
+      const fechaPlato = new Date(fecha);
+      const diferencia = Math.floor((ahora - fechaPlato) / 60000); // diferencia en minutos
+      
+      if (diferencia < 1) return 'menos de 1 minuto';
+      if (diferencia === 1) return '1 minuto';
+      if (diferencia < 60) return `${diferencia} minutos`;
+      
+      const horas = Math.floor(diferencia / 60);
+      return `${horas} hora${horas !== 1 ? 's' : ''}`;
+    }
+
+    // Función para marcar plato como entregado
+    async function marcarPlatoEntregado(pedidoId, platoIndex) {
+      try {
+        const response = await fetch(`/api/pedidos/${pedidoId}/platos/${platoIndex}/estado`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ estado: 'entregado' })
+        });
+
+        if (response.ok) {
+          mostrarNotificacion('✅ Plato marcado como entregado', 'success');
+          await actualizarNotificaciones();
+          // Recargar la página para actualizar el estado en la vista principal
+          setTimeout(() => {
+            location.reload();
+          }, 1500);
+        } else {
+          throw new Error('Error al actualizar el estado del plato');
+        }
+      } catch (error) {
+        console.error('Error al marcar plato como entregado:', error);
+        mostrarNotificacion('❌ Error al marcar plato como entregado', 'error');
+      }
+    }
+
+    // Event listeners para las notificaciones
+    notificationIcon.addEventListener('click', function(e) {
+      e.stopPropagation();
+      notificationDropdown.classList.toggle('show');
+      // Actualizar notificaciones cuando se abre el panel
+      if (notificationDropdown.classList.contains('show')) {
+        actualizarNotificaciones();
+      }
+    });
+
+    // Cerrar dropdown al hacer click fuera
+    document.addEventListener('click', function(e) {
+      if (!notificationIcon.contains(e.target) && !notificationDropdown.contains(e.target)) {
+        notificationDropdown.classList.remove('show');
+      }
+    });
+
+    // Actualizar notificaciones automáticamente cada 30 segundos
+    setInterval(actualizarNotificaciones, 30000);
+
     document.addEventListener('DOMContentLoaded', function() {
       const searchInput = document.getElementById('searchInput');
       const filterBtns = document.querySelectorAll('.filter-btn[data-filter]');
       const cards = document.querySelectorAll('.sale-card');
 
-      console.log('✅ Vista de pedidos cargada');
-      console.log('Total de pedidos en el DOM:', cards.length);
+      console.log('✅ Vista de pedidos del día cargada');
+      console.log('Total de pedidos hoy:', cards.length);
+
+      // Cargar notificaciones al iniciar
+      actualizarNotificaciones();
 
       // 🔍 Filtro de búsqueda
       if (searchInput) {
@@ -451,6 +628,306 @@
   </script>
 
   <style>
+    /* Estilos para el header derecho */
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    /* Estilos para el indicador de fecha */
+    .date-indicator {
+      background: #e3f2fd;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin: 15px 0;
+      border-left: 4px solid #2196F3;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .date-indicator i {
+      color: #2196F3;
+      font-size: 1.1rem;
+    }
+
+    .date-indicator strong {
+      color: #1976D2;
+    }
+
+    /* ========== ESTILOS PARA NOTIFICACIONES ========== */
+    .notification-widget {
+      position: relative;
+      z-index: 1000;
+    }
+
+    .notification-trigger {
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 8px;
+      transition: background-color 0.3s ease;
+    }
+
+    .notification-trigger:hover {
+      background-color: #f5f5f5;
+    }
+
+    .notification-icon-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+    }
+
+    .notification-icon-wrapper i {
+      font-size: 1.5rem;
+      color: #666;
+    }
+
+    .notification-pulse {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 12px;
+      height: 12px;
+      background: #ff4444;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    .notification-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: #dc3545;
+      color: white;
+      border-radius: 10px;
+      padding: 2px 6px;
+      font-size: 0.7rem;
+      font-weight: bold;
+      min-width: 18px;
+      text-align: center;
+    }
+
+    .notification-badge:empty {
+      display: none;
+    }
+
+    .notification-panel {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      width: 380px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      border: 1px solid #e0e0e0;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: all 0.3s ease;
+      margin-top: 10px;
+    }
+
+    .notification-panel.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .panel-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #333;
+    }
+
+    .panel-title i {
+      color: #28a745;
+      font-size: 1.2rem;
+    }
+
+    .panel-title h4 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .panel-counter {
+      background: #e9ecef;
+      color: #6c757d;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .notification-content {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .notification-list {
+      padding: 0;
+    }
+
+    .notification-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid #f8f9fa;
+      gap: 12px;
+      transition: background-color 0.2s ease;
+    }
+
+    .notification-item:hover {
+      background-color: #f8f9fa;
+    }
+
+    .notification-item.plato-listo {
+      border-left: 4px solid #28a745;
+    }
+
+    .notification-icon {
+      width: 32px;
+      height: 32px;
+      background: #28a745;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .notification-details {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .notification-mesa {
+      font-weight: 600;
+      color: #333;
+      font-size: 0.9rem;
+    }
+
+    .notification-plato {
+      color: #666;
+      font-size: 0.85rem;
+      margin: 2px 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .notification-time {
+      color: #28a745;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .notification-pedido {
+      color: #999;
+      font-size: 0.7rem;
+      margin-top: 2px;
+    }
+
+    .notification-actions {
+      flex-shrink: 0;
+    }
+
+    .btn-marcar-entregado {
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .btn-marcar-entregado:hover {
+      background: #218838;
+    }
+
+    .notification-empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: #6c757d;
+    }
+
+    .notification-empty i {
+      font-size: 3rem;
+      color: #28a745;
+      margin-bottom: 12px;
+      opacity: 0.7;
+    }
+
+    .notification-empty h5 {
+      margin: 0 0 8px 0;
+      font-weight: 600;
+    }
+
+    .notification-empty p {
+      margin: 0;
+      font-size: 0.9rem;
+    }
+
+    .panel-footer {
+      padding: 16px 20px;
+      border-top: 1px solid #f0f0f0;
+      text-align: center;
+    }
+
+    .view-all-btn {
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .view-all-btn:hover {
+      background: #0056b3;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7);
+      }
+      70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 10px rgba(255, 68, 68, 0);
+      }
+      100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(255, 68, 68, 0);
+      }
+    }
+
     .badge {
       padding: 4px 8px;
       border-radius: 12px;
@@ -631,6 +1108,110 @@
       margin-left: 10px;
     }
   </style>
+
+   <!-- Chat flotante -->
+  <button id="chat-toggle" class="chat-toggle">
+    <img src="/favicon.ico" alt="Chat" style="width:24px;height:24px;">
+  </button>
+
+  <div id="chat-modal" class="chat-modal hidden">
+    <div class="chat-header">
+      <h3>ChefIA</h3>
+      <button id="chat-close" class="chat-close">&times;</button>
+    </div>
+    <div id="chat-body" class="chat-body"></div>
+    <form id="chat-form" class="chat-form">
+      <input id="chat-input" type="text" placeholder="Escribe tu mensaje..." autocomplete="off">
+      <button type="submit">Enviar</button>
+    </form>
+  </div>
+
+  <style>
+    /* Botón flotante */
+    .chat-toggle {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #eb1f1f;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      font-size: 24px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      transition: transform 0.2s ease;
+      z-index: 999;
+    }
+    .chat-toggle:hover { transform: scale(1.1); }
+
+    /* Ventana modal del chat */
+    .chat-modal {
+      position: fixed;
+      bottom: 100px;
+      right: 30px;
+      width: 320px;
+      max-height: 420px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 1000;
+    }
+    .chat-modal.hidden { display: none; }
+
+    .chat-header {
+      background: #eb1f1f;
+      color: white;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .chat-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      font-size: 14px;
+    }
+    .chat-form {
+      display: flex;
+      border-top: 1px solid #ccc;
+    }
+    .chat-form input {
+      flex: 1;
+      border: none;
+      padding: 10px;
+      font-size: 14px;
+    }
+    .chat-form button {
+      background: #eb1f1f;
+      color: white;
+      border: none;
+      padding: 0 15px;
+      cursor: pointer;
+    }
+    .msg {
+      margin-bottom: 8px;
+      padding: 8px;
+      border-radius: 10px;
+      max-width: 85%;
+    }
+    .msg.user {
+      background: #e9ecef;
+      align-self: flex-end;
+    }
+    .msg.ai {
+      background: #eb1f1f;
+      color: white;
+      align-self: flex-start;
+    }
+  </style>
+
+  <script src="/js/meseroChat.js"></script>
 
 </body>
 </html>

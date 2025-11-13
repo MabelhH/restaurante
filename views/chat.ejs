@@ -1,0 +1,35 @@
+<!-- views/admin/chat.ejs -->
+<link rel="stylesheet" href="/chat.css">
+
+<div id="admin-chat-root">
+  <!-- Botón flotante -->
+  <button id="chat-toggle" title="Abrir chat">
+    <img src="/favicon.ico" alt="Chat" style="width:24px;height:24px;">
+  </button>
+
+  <!-- Ventana del chat -->
+  <div id="chat-modal" class="hidden" role="dialog" aria-hidden="true">
+    <!-- Encabezado arrastrable -->
+    <div id="chatHeader" class="chat-header">
+      <div class="chat-title">chefIA</div>
+      <button id="chat-close" aria-label="Cerrar chat">✖</button>
+    </div>
+
+    <!-- Cuerpo del chat -->
+    <div id="chat-body" class="chat-body"></div>
+
+    <!-- Formulario -->
+    <form id="chat-form" class="chat-form">
+      <input id="chat-input" placeholder="Escribe tu mensaje..." autocomplete="off">
+      <button type="submit">Enviar</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  // Nombre del admin pasado desde el servidor (asegúrate de que adminName existe)
+  window.ADMIN_NAME = "<%= (typeof adminName !== 'undefined' ? adminName.replace(/\"/g,'') : 'Admin') %>";
+</script>
+
+<!-- El script debe venir al final para asegurar que el DOM ya existe -->
+<script src="/js/adminChat.js"></script>

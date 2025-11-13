@@ -1,3 +1,4 @@
+//pedidosViewRouter.js
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
@@ -22,7 +23,7 @@ function verifyToken(req, res, next) {
   }
 }
 
-// Ruta principal de pedidos (según rol) - CORREGIDA
+// Ruta principal de pedidos (según rol) - MODIFICADA PARA SOLO PEDIDOS DEL DÍA
 router.get('/', verifyToken, async (req, res) => {
   try {
     let filtroPedidos = { activo: true };
@@ -30,6 +31,7 @@ router.get('/', verifyToken, async (req, res) => {
     // Si es mesero, solo ver sus pedidos
     if (req.user.rol === 'mesero') {
       filtroPedidos.mesero = req.user._id;
+      console.log(`🔍 Pedidos filtrados para mesero: ${req.user._id}`);
     }
 
     // ✅ Si es cocinero, solo mostrar pedidos pagados
@@ -37,13 +39,16 @@ router.get('/', verifyToken, async (req, res) => {
       filtroPedidos.estadoPago = 'pagado';
     }
 
-    // Filtrar por fecha actual
+    // ✅ FILTRAR SOLO POR FECHA ACTUAL - CORREGIDO
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
     const manana = new Date(hoy);
     manana.setDate(manana.getDate() + 1);
     
-    filtroPedidos.fechaPedido = { $gte: hoy, $lt: manana };
+    filtroPedidos.fechaPedido = { 
+      $gte: hoy, 
+      $lt: manana 
+    };
 
     const pedidos = await Pedido.find(filtroPedidos)
       .populate('mesa', 'numeroMesa piso sector estado')
@@ -61,7 +66,7 @@ router.get('/', verifyToken, async (req, res) => {
       rol: req.user.rol
     };
 
-    console.log('📋 Cargando pedidos:', {
+    console.log('📋 Cargando pedidos DEL DÍA para:', {
       usuario: userData.nombre,
       rol: userData.rol,
       totalPedidos: pedidos.length,
@@ -103,7 +108,6 @@ router.get('/', verifyToken, async (req, res) => {
     });
   }
 });
-
 
 // Ruta para ver pedidos específicos (si necesitas una vista de detalle)
 router.get('/ver', verifyToken, async (req, res) => {
@@ -299,25 +303,106 @@ router.get('/:id/editar', verifyToken, async (req, res) => {
     });
   }
 });
+// ✅ NUEVA RUTA: Obtener platos listos del día actual
+router.get('/platos-listos', verifyToken, async (req, res) => {
+  try {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const manana = new Date(hoy);
+    manana.setDate(manana.getDate() + 1);
 
-// ✅ NUEVA RUTA: Historial de pedidos (todos los pedidos, no solo del día)
+    // Buscar pedidos del día actual que tengan platos listos
+    const pedidos = await Pedido.find({
+      fechaPedido: { $gte: hoy, $lt: manana },
+      activo: true,
+      'platos.estado': 'listo' // Solo pedidos que tengan al menos un plato listo
+    })
+    .populate('mesa', 'numeroMesa')
+    .populate('mesero', 'nombre')
+    .sort({ fechaPedido: -1 });
+
+    // Recopilar todos los platos listos de todos los pedidos
+    let platosListos = [];
+    
+    pedidos.forEach(pedido => {
+      pedido.platos.forEach((plato, platoIndex) => {
+        if (plato.estado === 'listo') {
+          platosListos.push({
+            pedidoId: pedido._id,
+            platoIndex: platoIndex,
+            mesa: pedido.mesa?.numeroMesa || 'Sin mesa',
+            nombrePlato: plato.nombre,
+            cantidad: plato.cantidad,
+            numeroPedido: pedido.numeroPedido || pedido._id.toString().slice(-4),
+            fechaActualizacion: pedido.updatedAt, // Usamos la fecha de actualización del pedido
+            mesero: pedido.mesero?.nombre || 'Sin mesero'
+          });
+        }
+      });
+    });
+
+    // Ordenar por fecha de actualización (más recientes primero)
+    platosListos.sort((a, b) => new Date(b.fechaActualizacion) - new Date(a.fechaActualizacion));
+
+    console.log(`🔔 Se encontraron ${platosListos.length} platos listos`);
+
+    res.json(platosListos);
+
+  } catch (error) {
+    console.error('Error al obtener platos listos:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// ✅ Ruta para pedidos históricos - CORREGIDA PARA FILTRADO EXACTO
 router.get('/historial/todos', verifyToken, async (req, res) => {
   try {
     let filtroPedidos = { activo: true };
     
-    // Si es mesero, solo ver sus pedidos
+    // Filtrar por mesero si no es admin
     if (req.user.rol === 'mesero') {
       filtroPedidos.mesero = req.user._id;
+      console.log(`🔍 Historial filtrado para mesero: ${req.user._id}`);
     }
 
     const { fecha } = req.query;
+    
     if (fecha) {
-      const fechaInicio = new Date(fecha);
-      fechaInicio.setHours(0, 0, 0, 0);
-      const fechaFin = new Date(fechaInicio);
-      fechaFin.setDate(fechaFin.getDate() + 1);
+      // CORRECCIÓN: Crear el rango exacto para la fecha seleccionada
+      // Considerando la zona horaria de Perú (UTC-5)
+      const fechaSeleccionada = new Date(fecha);
       
-      filtroPedidos.fechaPedido = { $gte: fechaInicio, $lt: fechaFin };
+      // Ajustar para zona horaria de Perú (UTC-5)
+      // Inicio del día en Perú: 00:00:00 UTC-5 = 05:00:00 UTC
+      const fechaInicio = new Date(fechaSeleccionada);
+      fechaInicio.setUTCHours(5, 0, 0, 0); // 00:00 hora Perú = 05:00 UTC
+      
+      // Fin del día en Perú: 23:59:59 UTC-5 = 04:59:59 UTC del día siguiente
+      const fechaFin = new Date(fechaSeleccionada);
+      fechaFin.setUTCHours(28, 59, 59, 999); // 23:59 hora Perú = 04:59 UTC del día siguiente
+      
+      console.log(`📅 Filtro de fechas - Seleccionada: ${fecha}`);
+      console.log(`📅 Rango UTC - Inicio: ${fechaInicio.toISOString()}`);
+      console.log(`📅 Rango UTC - Fin: ${fechaFin.toISOString()}`);
+      
+      filtroPedidos.fechaPedido = { 
+        $gte: fechaInicio, 
+        $lte: fechaFin
+      };
+    } else {
+      // Si no hay fecha, mostrar solo los pedidos de hoy
+      const hoy = new Date();
+      hoy.setUTCHours(5, 0, 0, 0); // Inicio del día en Perú
+      
+      const manana = new Date(hoy);
+      manana.setUTCHours(29, 59, 59, 999); // Fin del día en Perú
+      
+      filtroPedidos.fechaPedido = { 
+        $gte: hoy, 
+        $lte: manana
+      };
+      
+      console.log('📅 Mostrando pedidos de hoy (sin filtro)');
     }
 
     const pedidos = await Pedido.find(filtroPedidos)
@@ -333,14 +418,16 @@ router.get('/historial/todos', verifyToken, async (req, res) => {
       rol: req.user.rol
     };
 
+    console.log(`📊 Historial cargado: ${pedidos.length} pedidos para ${userData.nombre}`);
+
     res.render('historialPedidos', {
       usuario: userData,
       pedidos,
-      fechaSeleccionada: fecha || new Date().toISOString().split('T')[0]
+      fechaSeleccionada: fecha || ''
     });
 
   } catch (error) {
-    console.error('Error al cargar historial de pedidos:', error);
+    console.error('❌ Error al cargar historial de pedidos:', error);
     res.status(500).render('error', { 
       mensaje: 'Error al cargar el historial',
       usuario: req.user 

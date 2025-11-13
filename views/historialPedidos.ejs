@@ -1,0 +1,282 @@
+ <!-- historialPedidos.ejs -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Historial de Pedidos - Mesero</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/historialPedidos.css">
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <h2 class="logo">
+      <i class="fas fa-utensils"></i><br>
+      Restaurante
+    </h2>
+
+    <nav>
+      <a href="/dashboard_mesero"><i class="fas fa-home"></i> <span>Dashboard</span></a>
+      <a href="/mesas"><i class="fas fa-chair"></i> <span>Mesas</span></a>
+      <a href="/carta"><i class="fas fa-book-open"></i> <span>Carta</span></a>
+      <a href="/pedidos"><i class="fas fa-receipt"></i> <span>Pedidos</span></a>
+      <a href="/pedidos/historial/todos" class="active"><i class="fas fa-history"></i> <span>Historial</span></a>
+      <a href="/logout"><i class="fas fa-sign-out-alt"></i> <span>Cerrar sesión</span></a>
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <main>
+    <header class="main-header">
+      <h2>Historial de Mis Pedidos</h2>
+      <div class="header-right">
+        <div class="welcome">
+          <p>Bienvenido, <strong><%= usuario.nombre %></strong></p>
+          <p>Rol: <strong><%= usuario.rol %></strong></p>
+         
+        </div>
+      </div>
+    </header>
+
+    <!-- Filtros -->
+    <div class="filtros-historial">
+      <form class="filtros-form" method="GET">
+        <div class="form-group">
+          <label for="fecha">
+            <i class="fas fa-calendar-alt"></i> Filtrar por fecha:
+          </label>
+          <input type="date" id="fecha" name="fecha" value="<%= fechaSeleccionada %>"
+                 max="<%= new Date().toISOString().split('T')[0] %>">
+        </div>
+        <button type="submit" class="btn-filtrar">
+          <i class="fas fa-filter"></i> Aplicar Filtro
+        </button>
+        <% if (fechaSeleccionada) { %>
+          <a href="/pedidos/historial/todos" class="btn-filtrar" style="background: #6c757d;">
+            <i class="fas fa-calendar-day"></i> Ver Hoy
+          </a>
+        <% } else { %>
+          <a href="/pedidos/historial/todos?fecha=<%= new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0] %>" 
+             class="btn-filtrar" style="background: #17a2b8;">
+            <i class="fas fa-arrow-left"></i> Ver Ayer
+          </a>
+        <% } %>
+      </form>
+      
+      <% if (fechaSeleccionada) { %>
+        <div class="info-filtro">
+          <i class="fas fa-info-circle"></i>
+          Mostrando pedidos del <strong><%= new Date(fechaSeleccionada).toLocaleDateString('es-ES', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          }) %></strong>
+        </div>
+      <% } else { %>
+        <div class="info-filtro" style="background: rgba(40, 167, 69, 0.1); border-color: rgba(40, 167, 69, 0.2); color: #28a745;">
+          <i class="fas fa-info-circle"></i>
+          Mostrando pedidos de <strong>hoy</strong> - 
+          <strong><%= new Date().toLocaleDateString('es-ES', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          }) %></strong>
+        </div>
+      <% } %>
+    </div>
+
+    <!-- Resumen -->
+    <div class="resumen-historial">
+      <h3><i class="fas fa-chart-bar"></i> Resumen del Historial</h3>
+      
+      <% 
+        const totalPedidos = pedidos.length;
+        const pedidosEntregados = pedidos.filter(p => p.estadoPedido === 'entregado').length;
+        const pedidosPagados = pedidos.filter(p => p.estadoPago === 'pagado').length;
+        const totalVentas = pedidos.reduce((sum, p) => sum + p.total, 0);
+        
+        // Calcular porcentajes
+        const porcentajeEntregados = totalPedidos > 0 ? ((pedidosEntregados / totalPedidos) * 100).toFixed(1) : 0;
+        const porcentajePagados = totalPedidos > 0 ? ((pedidosPagados / totalPedidos) * 100).toFixed(1) : 0;
+      %>
+      
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-number"><%= totalPedidos %></span>
+          <span class="stat-label">Total Pedidos</span>
+          <% if (fechaSeleccionada) { %>
+            <div class="stat-subtitle">en la fecha seleccionada</div>
+          <% } else { %>
+            <div class="stat-subtitle">hoy</div>
+          <% } %>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number"><%= pedidosEntregados %></span>
+          <span class="stat-label">Entregados</span>
+          <div class="stat-porcentaje"><%= porcentajeEntregados %>%</div>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number"><%= pedidosPagados %></span>
+          <span class="stat-label">Pagados</span>
+          <div class="stat-porcentaje"><%= porcentajePagados %>%</div>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number">S/ <%= totalVentas.toFixed(2) %></span>
+          <span class="stat-label">Total Ventas</span>
+          <% if (totalPedidos > 0) { %>
+            <div class="stat-subtitle">Promedio: S/ <%= (totalVentas / totalPedidos).toFixed(2) %></div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lista de Pedidos -->
+    <div class="pedidos-container">
+      <% if (pedidos.length === 0) { %>
+        <div class="no-pedidos">
+          <i class="fas fa-inbox"></i>
+          <h3>No hay pedidos</h3>
+          <p>
+            <% if (fechaSeleccionada) { %>
+              No se encontraron pedidos para la fecha <strong><%= new Date(fechaSeleccionada).toLocaleDateString('es-ES') %></strong>.
+            <% } else { %>
+              No hay pedidos registrados para hoy.
+            <% } %>
+          </p>
+          <% if (fechaSeleccionada) { %>
+            <a href="/pedidos/historial/todos" class="btn-ver-todos">
+              <i class="fas fa-eye"></i> Ver pedidos de hoy
+            </a>
+          <% } %>
+        </div>
+      <% } else { %>
+        <div class="pedidos-header">
+          <h4>
+            <i class="fas fa-list"></i> 
+            <% if (fechaSeleccionada) { %>
+              Pedidos del <%= new Date(fechaSeleccionada).toLocaleDateString('es-ES') %> (<%= pedidos.length %>)
+            <% } else { %>
+              Pedidos de hoy (<%= pedidos.length %>)
+            <% } %>
+          </h4>
+        </div>
+        
+        <% pedidos.forEach(pedido => { %>
+          <div class="pedido-card <%= pedido.estadoPedido %>">
+            <div class="pedido-header">
+              <div class="pedido-info">
+                <h3>Pedido #<%= pedido.numeroPedido || pedido._id.toString().slice(-4) %></h3>
+                <div class="pedido-meta">
+                  <span class="mesa-badge">
+                    <i class="fas fa-table"></i> Mesa <%= pedido.mesa.numeroMesa %>
+                  </span>
+                  <span class="fecha">
+                    <i class="fas fa-clock"></i> 
+                    <%= new Date(pedido.fechaPedido).toLocaleDateString('es-ES', { 
+                      year: 'numeric', 
+                      month: 'short', 
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    }) %>
+                  </span>
+                </div>
+              </div>
+              <div class="pedido-estados">
+                <span class="estado-pedido <%= pedido.estadoPedido %>">
+                  <i class="fas fa-<%= 
+                    pedido.estadoPedido === 'entregado' ? 'check-circle' : 
+                    pedido.estadoPedido === 'preparacion' ? 'utensils' : 
+                    pedido.estadoPedido === 'listo' ? 'bell' : 'clock' 
+                  %>"></i>
+                  <%= pedido.estadoPedido %>
+                </span>
+                <span class="estado-pago <%= pedido.estadoPago %>">
+                  <i class="fas fa-<%= pedido.estadoPago === 'pagado' ? 'receipt' : 'money-bill-wave' %>"></i>
+                  <%= pedido.estadoPago %>
+                </span>
+              </div>
+            </div>
+
+            <div class="platos-list">
+              <% pedido.platos.forEach(plato => { %>
+                <div class="plato-item">
+                  <div class="plato-info">
+                    <span class="plato-nombre"><%= plato.nombre %></span>
+                    <span class="plato-precio">S/ <%= plato.precio %></span>
+                  </div>
+                  <div class="plato-detalles">
+                    <span class="cantidad">x<%= plato.cantidad %></span>
+                    <span class="subtotal">S/ <%= plato.subtotal %></span>
+                    <span class="estado-plato <%= plato.estado %>" title="<%= plato.estado %>">
+                      <i class="fas fa-<%= 
+                        plato.estado === 'entregado' ? 'check' : 
+                        plato.estado === 'listo' ? 'bell' : 
+                        plato.estado === 'preparacion' ? 'utensils' : 'clock' 
+                      %>"></i>
+                    </span>
+                  </div>
+                </div>
+              <% }) %>
+            </div>
+
+            <div class="pedido-footer">
+              <div class="pedido-total">
+                <strong>Total: S/ <%= pedido.total %></strong>
+              </div>
+              <div class="pedido-acciones">
+                <% if (pedido.historialPagos && pedido.historialPagos.length > 0) { %>
+                  <span class="metodo-pago">
+                    <i class="fas fa-<%= 
+                      pedido.historialPagos[0].metodo === 'efectivo' ? 'money-bill-wave' :
+                      pedido.historialPagos[0].metodo === 'tarjeta' ? 'credit-card' :
+                      'university'
+                    %>"></i>
+                    <%= pedido.historialPagos[0].metodo %>
+                  </span>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      <% } %>
+    </div>
+  </main>
+
+  <script>
+    // Auto-recargar la página cada 2 minutos para actualizar el historial
+    setTimeout(() => {
+      window.location.reload();
+    }, 120000);
+
+    // Formatear números de manera más legible
+    document.addEventListener('DOMContentLoaded', function() {
+      const stats = document.querySelectorAll('.stat-number');
+      stats.forEach(stat => {
+        const text = stat.textContent;
+        // Solo formatear si es un número puro (no incluye "S/")
+        if (!isNaN(text) && text.length > 3 && !text.includes('S/')) {
+          stat.textContent = parseInt(text).toLocaleString('es-ES');
+        }
+      });
+      
+      // Establecer fecha máxima como hoy
+      const fechaInput = document.getElementById('fecha');
+      if (fechaInput) {
+        const today = new Date().toISOString().split('T')[0];
+        fechaInput.setAttribute('max', today);
+        
+        // Si no hay fecha seleccionada, establecer hoy por defecto
+        if (!fechaInput.value) {
+          fechaInput.value = today;
+        }
+      }
+    });
+  </script>
+
+</body>
+</html>
