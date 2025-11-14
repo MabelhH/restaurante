@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const chatToggle = document.getElementById("chat-toggle");
   const chatModal = document.getElementById("chat-modal");
   const chatClose = document.getElementById("chat-close");
-  const chatHeader = document.getElementById("chatHeader");
+  const chatHeader = document.querySelector(".chat-header");
   const chatBody = document.getElementById("chat-body");
   const chatForm = document.getElementById("chat-form");
   const chatInput = document.getElementById("chat-input");
@@ -60,20 +60,23 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // --- Arrastrar ventana ---
+  // DRAGGABLE
   let isDragging = false;
-  let offsetX = 0, offsetY = 0;
+  let offsetX = 0,
+    offsetY = 0;
 
-  chatHeader.addEventListener("mousedown", (e) => {
-    isDragging = true;
-    chatModal.classList.add("dragging");
+  if (chatHeader) {
+    chatHeader.addEventListener("mousedown", (e) => {
+      isDragging = true;
+      chatModal.classList.add("dragging");
 
-    const rect = chatModal.getBoundingClientRect();
-    offsetX = e.clientX - rect.left;
-    offsetY = e.clientY - rect.top;
+      const rect = chatModal.getBoundingClientRect();
+      offsetX = e.clientX - rect.left;
+      offsetY = e.clientY - rect.top;
 
-    document.body.style.userSelect = "none"; // evitar selección accidental
-  });
+      document.body.style.userSelect = "none";
+    });
+  }
 
   document.addEventListener("mousemove", (e) => {
     if (!isDragging) return;
@@ -81,7 +84,6 @@ document.addEventListener("DOMContentLoaded", () => {
     chatModal.style.left = e.clientX - offsetX + "px";
     chatModal.style.top = e.clientY - offsetY + "px";
 
-    // Para que no se mantenga anclado al bottom/right
     chatModal.style.bottom = "auto";
     chatModal.style.right = "auto";
   });

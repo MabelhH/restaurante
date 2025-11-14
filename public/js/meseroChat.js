@@ -2,26 +2,34 @@ document.addEventListener("DOMContentLoaded", () => {
   const chatToggle = document.getElementById("chat-toggle");
   const chatModal = document.getElementById("chat-modal");
   const chatClose = document.getElementById("chat-close");
-  const chatHeader = document.getElementById("chatHeader");
+  const chatHeader = document.querySelector(".chat-header"); //CORREGIDO
   const chatBody = document.getElementById("chat-body");
   const chatForm = document.getElementById("chat-form");
   const chatInput = document.getElementById("chat-input");
 
   const meseroName = window.MESERO_NAME || "Mesero";
 
-  // --- Abrir / cerrar chat ---
-  chatToggle.addEventListener("click", () => {
-    chatModal.classList.toggle("hidden");
-    if (!chatModal.classList.contains("hidden")) {
-      doGreeting();
-    }
-  });
+  // ---------------------------------------
+  // ⭐ Abrir / cerrar chat
+  // ---------------------------------------
+  if (chatToggle) {
+    chatToggle.addEventListener("click", () => {
+      chatModal.classList.toggle("hidden");
+      if (!chatModal.classList.contains("hidden")) {
+        doGreeting();
+      }
+    });
+  }
 
-  chatClose.addEventListener("click", () => {
-    chatModal.classList.add("hidden");
-  });
+  if (chatClose) {
+    chatClose.addEventListener("click", () => {
+      chatModal.classList.add("hidden");
+    });
+  }
 
-  // --- Mensajes ---
+  // ---------------------------------------
+  // ⭐ Agregar mensajes al chat
+  // ---------------------------------------
   function appendMessage(text, who) {
     const div = document.createElement("div");
     div.className = "msg " + (who === "user" ? "user" : "ai");
@@ -30,7 +38,9 @@ document.addEventListener("DOMContentLoaded", () => {
     chatBody.scrollTop = chatBody.scrollHeight;
   }
 
-  // --- Saludo inicial ---
+  // ---------------------------------------
+  // ⭐ Saludo inicial automático
+  // ---------------------------------------
   let greeted = false;
   function doGreeting() {
     if (greeted) return;
@@ -39,50 +49,63 @@ document.addEventListener("DOMContentLoaded", () => {
     appendMessage(greeting, "ai");
   }
 
-  // --- Enviar mensaje ---
-  chatForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const text = chatInput.value.trim();
-    if (!text) return;
+  // ---------------------------------------
+  // ⭐ Enviar mensaje al servidor IA
+  // ---------------------------------------
+  if (chatForm) {
+    chatForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const text = chatInput.value.trim();
+      if (!text) return;
 
-    appendMessage(text, "user");
-    chatInput.value = "";
+      appendMessage(text, "user");
+      chatInput.value = "";
 
-    try {
-      const resp = await fetch("/mesero/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, name: meseroName }), // ✅ enviar nombre
-      });
+      try {
+        const resp = await fetch("/mesero/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text, name: meseroName }),
+        });
 
-      if (!resp.ok) throw new Error("Error en la respuesta del servidor");
-      const data = await resp.json();
-      appendMessage(data.reply || "No se recibió respuesta del servidor.", "ai");
-    } catch (err) {
-      console.error(err);
-      appendMessage("Error de conexión con el servidor MeseroIA.", "ai");
-    }
-  });
+        if (!resp.ok) throw new Error("Error en la respuesta del servidor");
 
-  // --- Arrastrar ventana ---
+        const data = await resp.json();
+        appendMessage(
+          data.reply || "No se recibió respuesta del servidor.",
+          "ai"
+        );
+      } catch (err) {
+        console.error(err);
+        appendMessage("Error de conexión con el servidor MeseroIA.", "ai");
+      }
+    });
+  }
+
+  // DRAGGABLE
   let isDragging = false;
-  let offsetX = 0, offsetY = 0;
+  let offsetX = 0,
+    offsetY = 0;
 
-  chatHeader.addEventListener("mousedown", (e) => {
-    isDragging = true;
-    chatModal.classList.add("dragging");
+  if (chatHeader) {
+    chatHeader.addEventListener("mousedown", (e) => {
+      isDragging = true;
+      chatModal.classList.add("dragging");
 
-    const rect = chatModal.getBoundingClientRect();
-    offsetX = e.clientX - rect.left;
-    offsetY = e.clientY - rect.top;
+      const rect = chatModal.getBoundingClientRect();
+      offsetX = e.clientX - rect.left;
+      offsetY = e.clientY - rect.top;
 
-    document.body.style.userSelect = "none";
-  });
+      document.body.style.userSelect = "none";
+    });
+  }
 
   document.addEventListener("mousemove", (e) => {
     if (!isDragging) return;
+
     chatModal.style.left = e.clientX - offsetX + "px";
     chatModal.style.top = e.clientY - offsetY + "px";
+
     chatModal.style.bottom = "auto";
     chatModal.style.right = "auto";
   });

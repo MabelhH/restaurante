@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const PDFDocument = require('pdfkit');
 const axios = require('axios'); 
+const os = require('os');
 const jwt = require('jsonwebtoken');
 const SECRET_KEY = 'tu_clave_secreta_aqui';
 
@@ -102,7 +103,7 @@ router.get('/', verifyToken, async (req, res) => {
     console.log('📍 URL del PDF para QR:', pdfUrl);
     console.log('📍 ¿Es localhost?', localIP === 'localhost');
     // Poblar el campo "categoria" para mostrar nombres
-    const platos = await Plato.find({ estado: 'activo', disponible: true })
+    const platos = await Plato.find({ estado: 'activo' })
       .populate('categoria', 'nombre')
       .sort({ nombre: 1 });
 

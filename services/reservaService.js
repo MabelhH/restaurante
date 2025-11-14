@@ -27,7 +27,7 @@ class ReservaService {
   async verificarYActivarReservas() {
     const ahora = new Date();
     
-    // Buscar reservas confirmadas que deben activarse
+    // Buscar reservas confirmadas que deben activarse (EXACTAMENTE a la hora)
     const reservasParaActivar = await Reserva.find({
       estadoReserva: 'confirmada',
       activo: true
@@ -36,8 +36,8 @@ class ReservaService {
     for (const reserva of reservasParaActivar) {
       const fechaHoraReserva = this.combinarFechaYHora(reserva.diaReserva, reserva.horaReserva);
       
-      // Si es la hora de la reserva (con margen de 15 minutos antes)
-      if (fechaHoraReserva <= new Date(ahora.getTime() + 15 * 60000)) {
+      // ✅ ACTIVAR EXACTAMENTE a la hora de la reserva
+      if (fechaHoraReserva <= ahora) {
         await this.activarReserva(reserva);
       }
     }
@@ -45,28 +45,26 @@ class ReservaService {
 
   async verificarYLiberarReservas() {
     const ahora = new Date();
-    const dosHorasAtras = new Date(ahora.getTime() - 2 * 60 * 60000);
+    
+    // Buscar reservas en curso que ya pasaron su hora + 2 horas
+    const reservasParaLiberar = await Reserva.find({
+      estadoReserva: 'en_curso',
+      activo: true
+    }).populate('mesas');
 
-    // Buscar mesas en estado "reserva" que fueron activadas hace más de 2 horas
-    const mesasConReserva = await Mesa.find({
-      estado: 'reserva'
-    });
-
-    for (const mesa of mesasConReserva) {
-      // Buscar la reserva activa para esta mesa
-      const reservaActiva = await Reserva.findOne({
-        mesas: mesa._id,
-        estadoReserva: 'confirmada',
-        activo: true
-      });
-
-      if (reservaActiva) {
-        const fechaHoraReserva = this.combinarFechaYHora(reservaActiva.diaReserva, reservaActiva.horaReserva);
+    for (const reserva of reservasParaLiberar) {
+      const fechaHoraReserva = this.combinarFechaYHora(reserva.diaReserva, reserva.horaReserva);
+      const dosHorasDespues = new Date(fechaHoraReserva.getTime() + 2 * 60 * 60000);
+      
+      // Liberar automáticamente después de 2 horas de la reserva
+      if (ahora >= dosHorasDespues) {
+        await this.liberarMesasDeReserva(reserva._id);
         
-        // Si han pasado más de 2 horas desde la hora de reserva, liberar
-        if (fechaHoraReserva <= dosHorasAtras) {
-          await this.liberarMesaReserva(mesa._id, reservaActiva._id);
-        }
+        await Reserva.findByIdAndUpdate(reserva._id, {
+          estadoReserva: 'finalizada'
+        });
+
+        console.log(`🔄 Reserva ${reserva._id} finalizada automáticamente - Mesas liberadas`);
       }
     }
   }
@@ -93,52 +91,59 @@ class ReservaService {
         });
       }
 
-      console.log(`✅ Reserva ${reserva._id} activada - Mesas marcadas como reservadas`);
+      console.log(`✅ Reserva ${reserva._id} activada EXACTAMENTE a su hora - Mesas marcadas como reservadas`);
     } catch (error) {
       console.error(`❌ Error activando reserva ${reserva._id}:`, error);
     }
   }
 
-  async liberarMesaReserva(mesaId, reservaId) {
-    try {
+  // ==================== MÉTODO PARA CONFIRMAR ASISTENCIA Y LIBERAR MESAS ====================
+
+  async confirmarAsistenciaYLiberar(id) {
+    console.log('✅ Confirmando asistencia y liberando mesas para reserva ID:', id);
+    
+    const reserva = await Reserva.findById(id).populate('mesas');
+    if (!reserva || !reserva.activo) {
+      throw new Error('Reserva no encontrada');
+    }
+
+    // Verificar que la reserva esté confirmada
+    if (reserva.estadoReserva !== 'confirmada') {
+      throw new Error('Solo se puede confirmar asistencia en reservas confirmadas');
+    }
+
+    // ✅ LIBERAR MESAS inmediatamente al confirmar asistencia
+    for (const mesaId of reserva.mesas) {
       await Mesa.findByIdAndUpdate(mesaId, {
         estado: 'disponible'
       });
-
-      console.log(`🔄 Mesa ${mesaId} liberada de reserva ${reservaId}`);
-    } catch (error) {
-      console.error(`❌ Error liberando mesa ${mesaId}:`, error);
     }
-  }
 
-  programarActivacionIndividual(reserva) {
-    const fechaHoraReserva = this.combinarFechaYHora(reserva.diaReserva, reserva.horaReserva);
-    const ahora = new Date();
-    const tiempoEspera = fechaHoraReserva - ahora - (15 * 60000); // 15 minutos antes
+    // Cambiar estado a "en_curso" pero mantener activo: true
+    const reservaActualizada = await Reserva.findByIdAndUpdate(
+      id,
+      { 
+        estadoReserva: 'en_curso',
+        horaInicioReal: new Date()
+      },
+      { new: true }
+    )
+    .populate('cliente', 'nombre apellido email telefono')
+    .populate('mesas', 'numeroMesa capacidad piso sector estado');
 
-    if (tiempoEspera > 0) {
-      setTimeout(async () => {
-        try {
-          const reservaActualizada = await Reserva.findById(reserva._id).populate('mesas');
-          if (reservaActualizada && reservaActualizada.estadoReserva === 'confirmada') {
-            await this.activarReserva(reservaActualizada);
-          }
-        } catch (error) {
-          console.error(`❌ Error en activación programada de reserva ${reserva._id}:`, error);
-        }
-      }, tiempoEspera);
-    }
+    console.log(`✅ Asistencia confirmada para reserva ${id} - Mesas liberadas`);
+    return reservaActualizada;
   }
 
   // ==================== MÉTODOS CRUD PRINCIPALES ====================
 
-  // En ReservaService - método getAll
   async getAll() {
     return await Reserva.find({
-       activo: true }) // ✅ Solo reservas activas
-      .populate('cliente', 'nombre apellido email telefono') // ✅ Incluir apellido
-      .populate('mesas', 'numeroMesa capacidad piso sector estado')
-      .sort({ diaReserva: -1, horaReserva: -1 });
+       activo: true 
+    })
+    .populate('cliente', 'nombre apellido email telefono')
+    .populate('mesas', 'numeroMesa capacidad piso sector estado')
+    .sort({ diaReserva: -1, horaReserva: -1 });
   }
 
   async getById(id) {
@@ -167,13 +172,9 @@ class ReservaService {
       throw new Error('Se requiere al menos una mesa');
     }
 
-    console.log('🔍 Buscando mesas con IDs:', data.mesas);
-
     const mesas = await Mesa.find({ 
       _id: { $in: data.mesas }
     });
-
-    console.log('📋 Mesas encontradas:', mesas);
 
     if (mesas.length !== data.mesas.length) {
       throw new Error('Una o más mesas no existen');
@@ -211,7 +212,10 @@ class ReservaService {
       throw new Error('Una o más mesas están ocupadas en la fecha y hora seleccionadas');
     }
 
-    // Crear la reserva con fecha formateada correctamente
+    // ✅ CORRECCIÓN: NO marcar mesas como reservadas al crear la reserva
+    // Las mesas permanecen disponibles hasta que llegue la hora exacta
+
+    // Crear la reserva
     const nuevaReserva = new Reserva({
       ...data,
       diaReserva: diaReserva
@@ -219,26 +223,20 @@ class ReservaService {
     
     await nuevaReserva.save();
 
-    // Programar activación automática si la reserva está confirmada
-    if (data.estadoReserva === 'confirmada') {
-      this.programarActivacionIndividual(nuevaReserva);
-    }
-
     return await Reserva.findById(nuevaReserva._id)
-      .populate('cliente', 'nombre apellido telefono') // Cambiado para incluir apellido
+      .populate('cliente', 'nombre apellido telefono')
       .populate('mesas', 'numeroMesa capacidad piso sector estado');
   }
+
   async update(id, data) {
     console.log('🔍 Actualizando reserva ID:', id);
-    console.log('🔍 Datos nuevos:', data);
 
-    // Buscar la reserva
     const reserva = await Reserva.findById(id);
     if (!reserva || !reserva.activo) {
       throw new Error('Reserva no encontrada');
     }
 
-    // Validar cliente si se intenta cambiar
+    // Validaciones de cliente y mesas...
     if (data.cliente && data.cliente !== reserva.cliente.toString()) {
       const cliente = await Cliente.findById(data.cliente);
       if (!cliente) {
@@ -246,7 +244,6 @@ class ReservaService {
       }
     }
 
-    // Validar mesas si se intenta cambiar
     if (data.mesas) {
       if (!Array.isArray(data.mesas) || data.mesas.length === 0) {
         throw new Error('Se requiere al menos una mesa');
@@ -270,7 +267,7 @@ class ReservaService {
           data.diaReserva || reserva.diaReserva,
           data.horaReserva || reserva.horaReserva,
           data.mesas,
-          reserva._id // ignorar la reserva actual
+          reserva._id
       );
       if (!disponibles) {
         throw new Error('Una o más mesas están ocupadas en la fecha y hora seleccionadas');
@@ -278,32 +275,21 @@ class ReservaService {
     }
 
     // Actualizar campos permitidos
-    // Actualizar campos permitidos
-      if (data.cliente) reserva.cliente = data.cliente;
-      if (data.mesas) reserva.mesas = data.mesas;
-      if (data.diaReserva) reserva.diaReserva = data.diaReserva;
-      if (data.horaReserva) reserva.horaReserva = data.horaReserva;
-      if (data.estadoReserva) reserva.estadoReserva = data.estadoReserva;
-      if (data.numeroPersonas !== undefined) reserva.numeroPersonas = data.numeroPersonas;
-      if (data.observaciones !== undefined) reserva.observaciones = data.observaciones;
-
+    if (data.cliente) reserva.cliente = data.cliente;
+    if (data.mesas) reserva.mesas = data.mesas;
+    if (data.diaReserva) reserva.diaReserva = data.diaReserva;
+    if (data.horaReserva) reserva.horaReserva = data.horaReserva;
+    if (data.estadoReserva) reserva.estadoReserva = data.estadoReserva;
+    if (data.numeroPersonas !== undefined) reserva.numeroPersonas = data.numeroPersonas;
+    if (data.observaciones !== undefined) reserva.observaciones = data.observaciones;
 
     await reserva.save();
 
-    // Si se confirma la reserva, programar activación
-    if (data.estadoReserva === 'confirmada') {
-      this.programarActivacionIndividual(reserva);
-    }
-
-    // Retornar reserva actualizada con populate
     return await Reserva.findById(reserva._id)
       .populate('cliente', 'nombre email telefono')
       .populate('mesas', 'numeroMesa capacidad piso sector estado');
   }
 
-
-
-  // ReservaService - método delete CORREGIDO
   async delete(id) {
     console.log('🗑️ Eliminando reserva de la base de datos ID:', id);
     
@@ -312,58 +298,17 @@ class ReservaService {
       throw new Error('Reserva no encontrada');
     }
 
-    // ❌ OPCIÓN 1: Eliminación física (RECOMENDADA para eliminar completamente)
+    // Liberar mesas antes de eliminar (por si acaso estaban reservadas)
+    await this.liberarMesasDeReserva(id);
+    
     await Reserva.findByIdAndDelete(id);
     
     console.log('✅ Reserva eliminada permanentemente de la base de datos');
     return { mensaje: 'Reserva eliminada permanentemente' };
   }
 
-  // ==================== MÉTODO PARA CONFIRMAR ASISTENCIA ====================
-
-  // ==================== MÉTODO PARA CONFIRMAR ASISTENCIA Y LIBERAR MESAS ====================
-
-    async confirmarAsistenciaYLiberar(id) {
-      console.log('✅ Confirmando asistencia y liberando mesas para reserva ID:', id);
-      
-      const reserva = await Reserva.findById(id).populate('mesas');
-      if (!reserva || !reserva.activo) {
-        throw new Error('Reserva no encontrada');
-      }
-
-      // Verificar que la reserva esté confirmada
-      if (reserva.estadoReserva !== 'confirmada') {
-        throw new Error('Solo se puede confirmar asistencia en reservas confirmadas');
-      }
-
-      // Cambiar estado de las mesas a "disponible" (liberarlas)
-      for (const mesaId of reserva.mesas) {
-        await Mesa.findByIdAndUpdate(mesaId, {
-          estado: 'disponible'
-        });
-      }
-
-      // ✅ SOLUCIÓN: NO marcar como inactivo, solo cambiar el estado
-      const reservaActualizada = await Reserva.findByIdAndUpdate(
-        id,
-        { 
-          estadoReserva: 'en_curso',
-          horaInicioReal: new Date()
-          // ❌ QUITAR: activo: false (esta línea hace que desaparezca)
-        },
-        { new: true }
-      )
-      .populate('cliente', 'nombre apellido email telefono')
-      .populate('mesas', 'numeroMesa capacidad piso sector estado');
-
-      console.log(`✅ Asistencia confirmada para reserva ${id} - Mesas liberadas`);
-      return reservaActualizada;
-    }
-
-
   // ==================== MÉTODOS DE CONSULTA ====================
 
-  // En todos los métodos de consulta, asegúrate de incluir { activo: true }
   async getReservasPorFecha(fecha) {
     const startOfDay = new Date(fecha);
     startOfDay.setHours(0, 0, 0, 0);
@@ -376,7 +321,7 @@ class ReservaService {
         $gte: startOfDay,
         $lte: endOfDay
       },
-      activo: true // ✅ Solo reservas activas
+      activo: true
     })
     .populate('cliente', 'nombre apellido email telefono')
     .populate('mesas', 'numeroMesa capacidad piso sector estado')
@@ -394,7 +339,7 @@ class ReservaService {
   }
 
   async getReservasPorEstado(estado) {
-    const estadosPermitidos = ['pendiente', 'confirmada', 'cancelada', 'finalizada'];
+    const estadosPermitidos = ['pendiente', 'confirmada', 'cancelada', 'finalizada', 'en_curso'];
     if (!estadosPermitidos.includes(estado)) {
       throw new Error('Estado no válido');
     }
@@ -404,7 +349,7 @@ class ReservaService {
       activo: true
     })
     .populate('cliente', 'nombre email telefono')
-    .populate('mesas', 'numeroMesa capacidad piso sector estado')
+    .populate('mesas', 'numeroMasa capacidad piso sector estado')
     .sort({ diaReserva: 1, horaReserva: 1 });
   }
 
@@ -430,7 +375,7 @@ class ReservaService {
   // ==================== MÉTODOS DE GESTIÓN DE ESTADOS ====================
 
   async cambiarEstado(id, estado) {
-    const estadosPermitidos = ['pendiente', 'confirmada', 'cancelada', 'finalizada'];
+    const estadosPermitidos = ['pendiente', 'confirmada', 'cancelada', 'finalizada', 'en_curso'];
     if (!estadosPermitidos.includes(estado)) {
       throw new Error('Estado no válido');
     }
@@ -440,13 +385,9 @@ class ReservaService {
       throw new Error('Reserva no encontrada');
     }
 
-    // Manejar cambios de estado específicos
-    if (estado === 'confirmada' && reserva.estadoReserva !== 'confirmada') {
-      // Programar activación automática
-      this.programarActivacionIndividual(reserva);
-    } else if ((estado === 'cancelada' || estado === 'finalizada') && 
-               reserva.estadoReserva === 'confirmada') {
-      // Liberar mesas si se cancela o finaliza una reserva confirmada
+    // Al cancelar o finalizar, liberar mesas si estaban reservadas
+    if ((estado === 'cancelada' || estado === 'finalizada') && 
+        reserva.estadoReserva === 'confirmada') {
       await this.liberarMesasDeReserva(id);
     }
 
@@ -454,9 +395,8 @@ class ReservaService {
       id,
       { estadoReserva: estado },
       { new: true }
-    ).populate('cliente', 'nombre apellido email telefono') // ✅ incluir apellido
+    ).populate('cliente', 'nombre apellido email telefono')
     .populate('mesas', 'numeroMesa capacidad piso sector estado');
-
 
     console.log(`🔄 Estado de reserva ${id} cambiado a: ${estado}`);
     return reservaActualizada;
@@ -466,10 +406,8 @@ class ReservaService {
 
   async verificarDisponibilidadMesas(diaReserva, horaReserva, mesasIds, reservaId = null) {
     try {
-      // Normalizar la fecha
       const dia = diaReserva instanceof Date ? diaReserva : new Date(diaReserva);
       
-      // Crear filtro base
       const filtro = {
         mesas: { $in: mesasIds },
         diaReserva: {
@@ -477,11 +415,10 @@ class ReservaService {
           $lte: new Date(dia.setHours(23, 59, 59, 999))
         },
         horaReserva: horaReserva,
-        estadoReserva: { $in: ['pendiente', 'confirmada'] },
+        estadoReserva: { $in: ['pendiente', 'confirmada', 'en_curso'] },
         activo: true
       };
 
-      // Excluir la reserva actual si se está editando
       if (reservaId) {
         filtro._id = { $ne: reservaId };
       }
@@ -501,17 +438,15 @@ class ReservaService {
   async getMesasDisponibles(diaReserva, horaReserva) {
     const dia = new Date(diaReserva);
     
-    // Obtener mesas ocupadas en esa fecha y hora
     const reservas = await Reserva.find({
       diaReserva: dia,
       horaReserva: horaReserva,
-      estadoReserva: { $in: ['pendiente', 'confirmada'] },
+      estadoReserva: { $in: ['pendiente', 'confirmada', 'en_curso'] },
       activo: true
     });
 
     const mesasOcupadasIds = reservas.flatMap(reserva => reserva.mesas);
     
-    // Devolver todas las mesas activas que no estén ocupadas
     return await Mesa.find({
       _id: { $nin: mesasOcupadasIds },
       estado: 'disponible'
@@ -537,18 +472,7 @@ class ReservaService {
     }
   }
 
-  // Método para forzar la activación inmediata de una reserva (útil para testing)
-  async forzarActivacionReserva(reservaId) {
-    const reserva = await Reserva.findById(reservaId).populate('mesas');
-    if (!reserva) {
-      throw new Error('Reserva no encontrada');
-    }
-
-    await this.activarReserva(reserva);
-    return { message: `Reserva ${reservaId} activada manualmente` };
-  }
-
-  // Método para obtener estadísticas de reservas
+  // Método para obtener estadísticas
   async getEstadisticas() {
     const totalReservas = await Reserva.countDocuments({ activo: true });
     const reservasConfirmadas = await Reserva.countDocuments({ 
