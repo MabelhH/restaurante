@@ -208,15 +208,15 @@
       }
 
       iniciarSistemaNotificaciones() {
-        // Verificar notificaciones cada 30 segundos
+       // Verificar notificaciones cada 5 minutos (300000 ms)
         setInterval(async () => {
           await this.verificarNotificaciones();
-        }, 30000);
+        }, 300000);
 
         // Verificar inmediatamente al cargar la página
         setTimeout(() => {
           this.verificarNotificaciones();
-        }, 2000);
+        }, 5000);
 
         // Configurar botón de notificaciones
         this.btnVerNotificaciones.addEventListener('click', () => {
@@ -268,6 +268,7 @@
             // Marcar como leída después de mostrarla
             this.marcarNotificacionLeida(notificacion.id);
           });
+          await this.verificarNotificacionesManual();
 
         } catch (error) {
           console.error('❌ Error al verificar notificaciones:', error);
@@ -280,46 +281,111 @@
 
       async verificarNotificacionesManual() {
         try {
-          console.log('🔔 Verificación manual de notificaciones...');
+          console.log('🔔 Verificación MANUAL de reservas próximas...');
           
-          // Primero forzar verificación de reservas próximas
-          let response = await fetch('/api/reservas/notificaciones/verificar-proximas', {
-            method: 'POST'
-          });
-          
-          // Si falla, intentar endpoint alternativo
+          // Obtener todas las reservas DESDE EL ENDPOINT QUE SÍ EXISTE
+          const response = await fetch('/api/reservas');
           if (!response.ok) {
-            console.log('⚠️ Endpoint de verificación falló, intentando alternativo...');
-            response = await fetch('/api/reservas/proximas/verificar', {
-              method: 'POST'
-            });
+            throw new Error('Error al obtener reservas');
           }
           
           const result = await response.json();
-          console.log('📋 Respuesta verificación manual:', result);
+          const reservas = Array.isArray(result.data) ? result.data : [];
           
-          if (result.success) {
-            const total = result.total || result.reservasProximas || 0;
-            this.mostrarNotificacion(`🔔 Se verificaron ${total} reservas próximas`, 'info');
+          console.log(`📋 Total de reservas obtenidas: ${reservas.length}`);
+          
+          // Filtrar reservas confirmadas para hoy
+          const hoy = new Date();
+          const reservasHoy = reservas.filter(reserva => {
+            if (reserva.estadoReserva !== 'confirmada') {
+              console.log(`❌ Reserva ${reserva._id} no confirmada: ${reserva.estadoReserva}`);
+              return false;
+            }
             
-            // Esperar y luego verificar notificaciones nuevamente
-            setTimeout(() => {
-              this.verificarNotificaciones();
-            }, 2000);
-          } else {
-            this.mostrarNotificacion('ℹ️ No hay reservas próximas para notificar', 'info');
-          }
-        } catch (error) {
-          console.error('❌ Error al verificar notificaciones manualmente:', error);
-          this.mostrarNotificacion('⚠️ No se pudieron verificar las reservas próximas', 'warning');
+            try {
+              const fechaReserva = new Date(reserva.diaReserva);
+              const esHoy = fechaReserva.toDateString() === hoy.toDateString();
+              console.log(`📅 Reserva ${reserva._id}: ${fechaReserva.toDateString()} - Hoy: ${hoy.toDateString()} - Es hoy: ${esHoy}`);
+              return esHoy;
+            } catch (error) {
+              console.error(`❌ Error con fecha de reserva ${reserva._id}:`, error);
+              return false;
+            }
+          });
           
-          // Intentar verificar notificaciones normales de todas formas
-          setTimeout(() => {
-            this.verificarNotificaciones();
-          }, 1000);
+          console.log(`📅 Reservas confirmadas para HOY: ${reservasHoy.length}`);
+          
+          // Verificar reservas próximas (en los próximos 90 minutos)
+          const ahora = new Date();
+          const reservasProximas = reservasHoy.filter(reserva => {
+            try {
+              if (!reserva.horaReserva) {
+                console.log(`❌ Reserva ${reserva._id} sin hora`);
+                return false;
+              }
+              
+              const [horas, minutos] = reserva.horaReserva.split(':');
+              const horaReserva = new Date();
+              horaReserva.setHours(parseInt(horas), parseInt(minutos), 0, 0);
+              
+              const diferencia = horaReserva - ahora;
+              const minutosDiferencia = Math.round(diferencia / (1000 * 60));
+              
+              console.log(`⏰ Reserva ${reserva._id}: ${reserva.horaReserva} - En ${minutosDiferencia} minutos`);
+              
+              // Reservas en los próximos 90 minutos
+              const esProxima = minutosDiferencia > 0 && minutosDiferencia <= 90;
+              console.log(`✅ Reserva ${reserva._id} es próxima: ${esProxima}`);
+              return esProxima;
+              
+            } catch (error) {
+              console.error(`❌ Error al procesar reserva ${reserva._id}:`, error);
+              return false;
+            }
+          });
+          
+          console.log(`⏰ RESERVAS PRÓXIMAS (90 min): ${reservasProximas.length}`);
+          
+          // Mostrar notificaciones para reservas próximas
+          reservasProximas.forEach(reserva => {
+            const nombreCliente = reserva.cliente 
+              ? `${reserva.cliente.nombre || ''} ${reserva.cliente.apellido || ''}`.trim()
+              : 'Cliente';
+            
+            const [horas, minutos] = reserva.horaReserva.split(':');
+            const horaFormateada = `${horas}:${minutos}`;
+            
+            // Calcular minutos restantes
+            const horaReservaObj = new Date();
+            horaReservaObj.setHours(parseInt(horas), parseInt(minutos), 0, 0);
+            const minutosRestantes = Math.round((horaReservaObj - ahora) / (1000 * 60));
+            
+            console.log(`🔔 Mostrando notificación para: ${nombreCliente} a las ${horaFormateada} (en ${minutosRestantes} min)`);
+            
+            this.mostrarNotificacionSistema({
+              titulo: '🕒 Reserva Próxima',
+              mensaje: `${nombreCliente} - ${horaFormateada} (en ${minutosRestantes} minutos)`,
+              tipo: 'reserva_proxima',
+              timestamp: new Date().toISOString()
+            });
+          });
+          
+          // Actualizar contador
+          this.actualizarContadorNotificaciones(reservasProximas.length);
+          console.log(`🔢 Contador actualizado a: ${reservasProximas.length}`);
+          
+          if (reservasProximas.length > 0) {
+            this.mostrarNotificacion(`🔔 ${reservasProximas.length} reserva(s) próxima(s)`, 'info');
+          } else {
+            this.mostrarNotificacion('✅ No hay reservas próximas en los próximos 90 minutos', 'success');
+          }
+          
+        } catch (error) {
+          console.error('❌ Error al verificar reservas próximas:', error);
+          this.mostrarNotificacion('❌ Error al verificar reservas próximas', 'error');
         }
       }
-      
+
       // Agrega este método para debuggear
       debugNotificaciones() {
         console.log('🐛 DEBUG - Estado de notificaciones:');
