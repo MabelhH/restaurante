@@ -17,6 +17,31 @@ router.post('/verificar-disponibilidad', ReservaController.verificarDisponibilid
 // ✅ Ruta para confirmar asistencia - CORREGIDA
 router.post('/:id/confirmar-asistencia', ReservaController.confirmarAsistenciaYLiberar);
 
+router.patch('/:id/confirmar', ReservaController.confirmarReserva);
+router.patch('/:id/cancelar', ReservaController.cancelarReserva);
+
+
+router.get('/notificaciones/todas', ReservaController.obtenerNotificaciones);
+router.get('/notificaciones/verificar-proximas', ReservaController.verificarReservasProximas);
+router.patch('/notificaciones/:id/leer', ReservaController.marcarNotificacionLeida);
+
+// Ruta temporal para testing
+router.get('/notificaciones/prueba', async (req, res) => {
+  try {
+    const notificacion = await reservaService.crearNotificacionPrueba();
+    res.json({
+      success: true,
+      mensaje: 'Notificación de prueba creada',
+      data: notificacion
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      mensaje: error.message
+    });
+  }
+});
+
 // Rutas de gestión de estado
 router.patch('/:id/estado', ReservaController.cambiarEstado);
 

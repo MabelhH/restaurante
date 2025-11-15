@@ -109,6 +109,22 @@ header {
   margin-bottom: 2rem;
 }
 
+/* Agregar después de los estilos de badge-cancelada */
+.badge-finalizada {
+  background-color: #D1ECF1;
+  color: #0C5460;
+  border: 1px solid #BEE5EB;
+}
+
+/* Estilos para las tarjetas con estado finalizada */
+.card.reserva.finalizada {
+  border-left-color: #17A2B8;
+}
+
+/* Si quieres un efecto hover específico para finalizadas */
+.card.reserva.finalizada:hover {
+  box-shadow: 0 8px 25px rgba(23, 162, 184, 0.15);
+} 
 header h1, header h2 {
   font-family: 'Playfair Display', serif;
   text-shadow: 1px 1px 4px #000;

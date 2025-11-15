@@ -5,6 +5,7 @@ const Mesa = require('../models/mesasModel');
 
 class ReservaService {
   constructor() {
+    this.notificaciones = [];
     this.iniciarVerificadorReservas();
   }
 
@@ -16,12 +17,298 @@ class ReservaService {
       try {
         await this.verificarYActivarReservas();
         await this.verificarYLiberarReservas();
+        await this.verificarReservasProximas(); 
+        await this.verificarReservasVencidas(); 
       } catch (error) {
         console.error('Error en verificador de reservas:', error);
       }
     });
 
     console.log('✅ Verificador automático de reservas iniciado');
+  }
+  
+  async generarNotificacionReservaProxima(reserva) {
+    try {
+      const fechaHoraReserva = this.combinarFechaYHora(reserva.diaReserva, reserva.horaReserva);
+      const ahora = new Date();
+      const diferenciaMs = fechaHoraReserva - ahora;
+      const minutosRestantes = Math.floor(diferenciaMs / (1000 * 60));
+
+      const notificacion = {
+        id: Date.now().toString(),
+        tipo: 'reserva_proxima',
+        titulo: '⏰ Reserva Próxima',
+        mensaje: `La reserva de ${reserva.cliente.nombre} ${reserva.cliente.apellido} es en ${minutosRestantes} minutos`,
+        reservaId: reserva._id,
+        cliente: `${reserva.cliente.nombre} ${reserva.cliente.apellido}`,
+        horaReserva: reserva.horaReserva,
+        mesas: reserva.mesas ? reserva.mesas.map(m => m.numeroMesa) : [],
+        timestamp: new Date(),
+        leida: false
+      };
+
+      // ✅ VERIFICAR QUE this.notificaciones EXISTA
+      if (!this.notificaciones) {
+        this.notificaciones = [];
+      }
+
+      this.notificaciones.push(notificacion);
+      
+      // Mantener solo las últimas 50 notificaciones
+      if (this.notificaciones.length > 50) {
+        this.notificaciones = this.notificaciones.slice(-50);
+      }
+
+      console.log(`🔔 NOTIFICACIÓN: ${notificacion.mensaje}`);
+      return notificacion;
+    } catch (error) {
+      console.error('Error al generar notificación de reserva próxima:', error);
+      return null;
+    }
+  }
+
+  async generarNotificacionReservaVencida(reserva) {
+    try {
+      const notificacion = {
+        id: Date.now().toString(),
+        tipo: 'reserva_vencida',
+        titulo: '❌ Reserva Vencida',
+        mensaje: `La reserva de ${reserva.cliente.nombre} ${reserva.cliente.apellido} fue cancelada automáticamente`,
+        reservaId: reserva._id,
+        cliente: `${reserva.cliente.nombre} ${reserva.cliente.apellido}`,
+        timestamp: new Date(),
+        leida: false
+      };
+
+      // ✅ VERIFICAR QUE this.notificaciones EXISTA
+      if (!this.notificaciones) {
+        this.notificaciones = [];
+      }
+
+      this.notificaciones.push(notificacion);
+      
+      if (this.notificaciones.length > 50) {
+        this.notificaciones = this.notificaciones.slice(-50);
+      }
+
+      console.log(`🔔 NOTIFICACIÓN: ${notificacion.mensaje}`);
+      return notificacion;
+    } catch (error) {
+      console.error('Error al generar notificación de reserva vencida:', error);
+      return null;
+    }
+  }
+
+  // Método para obtener notificaciones no leídas
+  getNotificacionesNoLeidas() {
+    try {
+      // ✅ VERIFICAR QUE this.notificaciones EXISTA Y SEA UN ARRAY
+      if (!this.notificaciones || !Array.isArray(this.notificaciones)) {
+        console.log('⚠️ Notificaciones no inicializadas, retornando array vacío');
+        this.notificaciones = [];
+        return [];
+      }
+      
+      return this.notificaciones.filter(notif => !notif.leida);
+    } catch (error) {
+      console.error('Error en getNotificacionesNoLeidas:', error);
+      return [];
+    }
+  }
+
+  // Método para obtener todas las notificaciones
+  getTodasLasNotificaciones() {
+    try {
+      // ✅ VERIFICAR QUE this.notificaciones EXISTA
+      if (!this.notificaciones || !Array.isArray(this.notificaciones)) {
+        console.log('⚠️ Notificaciones no inicializadas, retornando array vacío');
+        this.notificaciones = [];
+        return [];
+      }
+      
+      return this.notificaciones;
+    } catch (error) {
+      console.error('Error en getTodasLasNotificaciones:', error);
+      return [];
+    }
+  }
+
+  // Método para marcar notificación como leída
+  marcarNotificacionLeida(id) {
+    try {
+      // ✅ VERIFICAR QUE this.notificaciones EXISTA
+      if (!this.notificaciones || !Array.isArray(this.notificaciones)) {
+        console.log('⚠️ Notificaciones no inicializadas, no se puede marcar como leída');
+        return;
+      }
+
+      const notificacion = this.notificaciones.find(notif => notif.id === id);
+      if (notificacion) {
+        notificacion.leida = true;
+        console.log(`✅ Notificación ${id} marcada como leída`);
+      }
+    } catch (error) {
+      console.error('Error en marcarNotificacionLeida:', error);
+    }
+  }
+
+  async confirmarReserva(id) {
+    console.log('✅ Confirmando reserva ID:', id);
+    
+    const reserva = await Reserva.findById(id).populate('mesas');
+    if (!reserva || !reserva.activo) {
+      throw new Error('Reserva no encontrada');
+    }
+
+    // Verificar que esté en estado pendiente
+    if (reserva.estadoReserva !== 'pendiente') {
+      throw new Error('Solo se pueden confirmar reservas pendientes');
+    }
+
+    // Verificar tiempo de confirmación (10 min antes hasta 15 min después)
+    const ahora = new Date();
+    const fechaHoraReserva = this.combinarFechaYHora(reserva.diaReserva, reserva.horaReserva);
+    
+    const diferenciaMs = fechaHoraReserva - ahora;
+    const diferenciaMinutos = diferenciaMs / (1000 * 60);
+    
+    // Permitir confirmar desde 10 minutos antes hasta 15 minutos después
+    if (diferenciaMinutos > 10) {
+      throw new Error(`Solo puedes confirmar la reserva 10 minutos antes de la hora programada. Tiempo restante: ${Math.ceil(diferenciaMinutos - 10)} minutos`);
+    }
+    
+    if (diferenciaMinutos < -15) {
+      throw new Error('No se puede confirmar la reserva. Ha pasado más de 15 minutos de la hora programada.');
+    }
+
+    // Cambiar estado a confirmada
+    const reservaActualizada = await Reserva.findByIdAndUpdate(
+      id,
+      { 
+        estadoReserva: 'confirmada',
+        horaConfirmacion: new Date()
+      },
+      { new: true }
+    )
+    .populate('cliente', 'nombre apellido email telefono')
+    .populate('mesas', 'numeroMesa capacidad piso sector estado');
+
+    console.log(`✅ Reserva ${id} confirmada exitosamente`);
+    return reservaActualizada;
+  }
+
+  async cancelarReserva(id) {
+    console.log('❌ Cancelando reserva ID:', id);
+    
+    const reserva = await Reserva.findById(id).populate('mesas');
+    if (!reserva || !reserva.activo) {
+      throw new Error('Reserva no encontrada');
+    }
+
+    // Cambiar estado a cancelada
+    const reservaActualizada = await Reserva.findByIdAndUpdate(
+      id,
+      { 
+        estadoReserva: 'cancelada',
+        motivoCancelacion: 'Cancelada por el restaurante'
+      },
+      { new: true }
+    )
+    .populate('cliente', 'nombre apellido email telefono')
+    .populate('mesas', 'numeroMesa capacidad piso sector estado');
+
+    console.log(`✅ Reserva ${id} cancelada exitosamente`);
+    return reservaActualizada;
+  }
+
+  async verificarReservasProximas() {
+    try {
+      const ahora = new Date();
+      const notificacionesGeneradas = [];
+
+      // Buscar reservas pendientes
+      const reservasProximas = await Reserva.find({
+        estadoReserva: 'pendiente',
+        activo: true
+      }).populate('cliente', 'nombre apellido telefono')
+        .populate('mesas', 'numeroMesa capacidad piso sector estado');
+
+      for (const reserva of reservasProximas) {
+        const fechaHoraReserva = this.combinarFechaYHora(reserva.diaReserva, reserva.horaReserva);
+        const diferenciaMs = fechaHoraReserva - ahora;
+        const diferenciaMinutos = diferenciaMs / (1000 * 60);
+        
+        // Si la reserva está entre 10 y 0 minutos antes
+        if (diferenciaMinutos <= 10 && diferenciaMinutos >= 0) {
+          console.log(`⏰ RESERVA PRÓXIMA: ${reserva.cliente.nombre} - En ${Math.ceil(diferenciaMinutos)} minutos`);
+          
+          // Generar notificación
+          const notificacion = await this.generarNotificacionReservaProxima(reserva);
+          if (notificacion) {
+            notificacionesGeneradas.push(notificacion);
+          }
+        }
+      }
+
+      return notificacionesGeneradas;
+    } catch (error) {
+      console.error('Error en verificarReservasProximas:', error);
+      return [];
+    }
+  }
+
+  async verificarReservasVencidas() {
+    try {
+      const ahora = new Date();
+      const hace15Minutos = new Date(ahora.getTime() - (15 * 60 * 1000));
+      
+      let reservasCanceladas = 0;
+      let mesasLiberadas = 0;
+      const notificacionesGeneradas = [];
+
+      // Buscar reservas pendientes que ya pasaron su hora + 15 minutos
+      const reservasVencidas = await Reserva.find({
+        estadoReserva: 'pendiente',
+        activo: true
+      }).populate('mesas')
+        .populate('cliente', 'nombre apellido telefono');
+
+      for (const reserva of reservasVencidas) {
+        const fechaHoraReserva = this.combinarFechaYHora(reserva.diaReserva, reserva.horaReserva);
+        
+        // Si pasaron más de 15 minutos desde la hora de reserva
+        if (fechaHoraReserva <= hace15Minutos) {
+          // ✅ LIBERAR MESAS antes de cancelar
+          for (const mesa of reserva.mesas) {
+            await Mesa.findByIdAndUpdate(mesa._id, {
+              estado: 'disponible'
+            });
+            mesasLiberadas++;
+            console.log(`✅ Mesa ${mesa.numeroMesa} liberada automáticamente`);
+          }
+
+          // Cancelar la reserva
+          await Reserva.findByIdAndUpdate(reserva._id, {
+            estadoReserva: 'cancelada',
+            motivoCancelacion: 'Cancelación automática por no confirmar a tiempo'
+          });
+          
+          // Generar notificación
+          const notificacion = await this.generarNotificacionReservaVencida(reserva);
+          if (notificacion) {
+            notificacionesGeneradas.push(notificacion);
+          }
+          
+          reservasCanceladas++;
+          console.log(`🔄 Reserva ${reserva._id} cancelada automáticamente por vencimiento - Mesas liberadas`);
+        }
+      }
+
+      return { reservasCanceladas, mesasLiberadas, notificacionesGeneradas };
+    } catch (error) {
+      console.error('Error en verificarReservasVencidas:', error);
+      return { reservasCanceladas: 0, mesasLiberadas: 0, notificacionesGeneradas: [] };
+    }
   }
 
   async verificarYActivarReservas() {
@@ -123,8 +410,9 @@ class ReservaService {
     const reservaActualizada = await Reserva.findByIdAndUpdate(
       id,
       { 
-        estadoReserva: 'en_curso',
-        horaInicioReal: new Date()
+        estadoReserva: 'finalizada',
+        horaInicioReal: new Date(),
+        horaFinReal: new Date()       
       },
       { new: true }
     )

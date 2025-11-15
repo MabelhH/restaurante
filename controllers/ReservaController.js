@@ -176,6 +176,131 @@ class ReservaController {
       }
   }
 
+  async confirmarReserva(req, res) {
+    try {
+      const { id } = req.params;
+      console.log('✅ Confirmando reserva ID:', id);
+      
+      const reservaActualizada = await reservaService.confirmarReserva(id);
+      
+      res.json({
+        success: true,
+        data: reservaActualizada,
+        mensaje: 'Reserva confirmada exitosamente'
+      });
+    } catch (error) {
+      console.error('❌ Error en confirmarReserva:', error);
+      res.status(400).json({
+        success: false,
+        mensaje: error.message
+      });
+    }
+  }
+
+  async cancelarReserva(req, res) {
+    try {
+      const { id } = req.params;
+      console.log('❌ Cancelando reserva ID:', id);
+      
+      const reservaActualizada = await reservaService.cancelarReserva(id);
+      
+      res.json({
+        success: true,
+        data: reservaActualizada,
+        mensaje: 'Reserva cancelada exitosamente'
+      });
+    } catch (error) {
+      console.error('❌ Error en cancelarReserva:', error);
+      res.status(400).json({
+        success: false,
+        mensaje: error.message
+      });
+    }
+  }
+
+  // En tu ReservaController.js - método obtenerNotificaciones
+  async obtenerNotificaciones(req, res) {
+    try {
+      console.log('🔔 Solicitando notificaciones...');
+      
+      // ✅ USAR EL MÉTODO CORREGIDO
+      const notificaciones = reservaService.getTodasLasNotificaciones();
+      
+      console.log(`📋 Notificaciones encontradas: ${notificaciones.length}`);
+      
+      res.json({
+        success: true,
+        data: notificaciones,
+        total: notificaciones.length
+      });
+    } catch (error) {
+      console.error('❌ Error al obtener notificaciones:', error);
+      res.status(500).json({
+        success: false,
+        mensaje: 'Error interno del servidor al obtener notificaciones',
+        error: error.message,
+        data: [] // ✅ ENVIAR ARRAY VACÍO EN CASO DE ERROR
+      });
+    }
+  }
+
+  // Método para obtener notificaciones no leídas específicamente
+  async obtenerNotificacionesNoLeidas(req, res) {
+    try {
+      const notificaciones = reservaService.getNotificacionesNoLeidas();
+      
+      res.json({
+        success: true,
+        data: notificaciones,
+        total: notificaciones.length
+      });
+    } catch (error) {
+      console.error('❌ Error al obtener notificaciones no leídas:', error);
+      res.status(500).json({
+        success: false,
+        mensaje: error.message,
+        data: []
+      });
+    }
+  }
+
+  async marcarNotificacionLeida(req, res) {
+    try {
+      const { id } = req.params;
+      reservaService.marcarNotificacionLeida(id);
+      
+      res.json({
+        success: true,
+        mensaje: 'Notificación marcada como leída'
+      });
+    } catch (error) {
+      console.error('❌ Error al marcar notificación:', error);
+      res.status(500).json({
+        success: false,
+        mensaje: error.message
+      });
+    }
+  }
+
+  async verificarReservasProximas(req, res) {
+    try {
+      const notificaciones = await reservaService.verificarReservasProximas();
+      
+      res.json({
+        success: true,
+        data: notificaciones,
+        total: notificaciones.length,
+        mensaje: `${notificaciones.length} notificaciones generadas`
+      });
+    } catch (error) {
+      console.error('❌ Error en verificarReservasProximas:', error);
+      res.status(500).json({
+        success: false,
+        mensaje: error.message
+      });
+    }
+  }
+
 
   // Cambiar estado de reserva
   async cambiarEstado(req, res) {

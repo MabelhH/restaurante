@@ -209,12 +209,16 @@
                     1. Pedidos pendientes no pagados
                     2. Pedidos pagados dentro de los 5 minutos
                 -->
-                <% 
-                  let puedeCancelar = pedido.estadoPedido === 'pendiente';
+                <%
+                  let puedeCancelar = false;
                   let motivoCancelacion = '';
-                  
+
                   // Caso 1: Pedido pendiente no pagado
-                  if (pedido.estadoPedido === 'pendiente' && pedido.estadoPago === 'pendiente') {
+                  if (
+                    pedido.estadoPedido === 'pendiente' &&
+                    pedido.estadoPago === 'pendiente' &&
+                    pedido.platos.every(plato => plato.estado === 'pendiente')
+                  ) {
                     puedeCancelar = true;
                     motivoCancelacion = 'Pedido pendiente no pagado';
                   }
@@ -223,8 +227,11 @@
                     const fechaPago = new Date(pedido.fechaPago);
                     const ahora = new Date();
                     const diferenciaMinutos = (ahora - fechaPago) / (1000 * 60);
-                    
-                    if (diferenciaMinutos <= 5) {
+
+                    if (
+                      diferenciaMinutos <= 5 &&
+                      pedido.platos.every(plato => plato.estado === 'pendiente')
+                    ) {
                       puedeCancelar = true;
                       motivoCancelacion = `Pagado hace ${Math.floor(diferenciaMinutos)} minutos`;
                     }
@@ -1037,7 +1044,7 @@
     
     .welcome p {
       margin: 0;
-      color: #6c757d;
+      color: #f7f7f7;
     }
 
     /* Estilos para modales */

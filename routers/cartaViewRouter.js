@@ -64,7 +64,7 @@ async function obtenerImagenParaPDF(urlImagen) {
       const path = require('path');
       
       // Ajusta esta ruta según tu estructura de archivos
-      const rutaCompleta = path.join(__dirname, '..', 'public', urlImagen);
+      const rutaCompleta = path.join(__dirname, '..', urlImagen);
       
       if (fs.existsSync(rutaCompleta)) {
         return fs.readFileSync(rutaCompleta);

@@ -7,6 +7,9 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="/clientes.css">
 </head>
+
+
+
 <body>
   <div class="dashboard-container">
     <!-- Sidebar -->
@@ -35,6 +38,14 @@
         <div class="welcome">
           <h2>Bienvenido,  usuario.nombre %></h2>
           <p>Gestiona tus clientes de manera eficiente</p>
+        </div>
+
+        <div class="header-actions">
+          <button id="btnVerNotificaciones" class="btn-notificaciones">
+            <i class="fas fa-bell"></i>
+            Notificaciones
+            <span id="contadorNotificaciones" class="notificacion-contador">0</span>
+          </button>
         </div>
       </header>
 
@@ -159,6 +170,8 @@
         this.horaSelect = document.getElementById('horaReserva');
         this.minutoSelect = document.getElementById('minutoReserva');
         this.periodoSelect = document.getElementById('periodoReserva');
+        this.btnVerNotificaciones = document.getElementById('btnVerNotificaciones');
+        this.contadorNotificaciones = document.getElementById('contadorNotificaciones');
 
         this.tabButtons = document.querySelectorAll('.tab-button') || [];
 
@@ -182,10 +195,223 @@
         this.configurarEventListeners();
         this.inicializarSelectorHora();
         this.cambiarTab('clientes');
+        this.iniciarSistemaNotificaciones();
+
+        // Agregar debug de notificaciones
+        setTimeout(() => {
+          this.debugNotificaciones();
+        }, 3000);
 
         setTimeout(() => {
           this.debugEndpointMesas();
         }, 2000);
+      }
+
+      iniciarSistemaNotificaciones() {
+        // Verificar notificaciones cada 30 segundos
+        setInterval(async () => {
+          await this.verificarNotificaciones();
+        }, 30000);
+
+        // Verificar inmediatamente al cargar la página
+        setTimeout(() => {
+          this.verificarNotificaciones();
+        }, 2000);
+
+        // Configurar botón de notificaciones
+        this.btnVerNotificaciones.addEventListener('click', () => {
+          this.verificarNotificacionesManual();
+        });
+      }
+
+      async verificarNotificaciones() {
+        try {
+          console.log('🔔 Verificando notificaciones...');
+          
+          // Primero, intentar con el endpoint específico
+          let response = await fetch('/api/reservas/notificaciones/todas');
+          
+          // Si falla, intentar con endpoint alternativo
+          if (!response.ok) {
+            console.log('⚠️ Endpoint principal falló, intentando alternativo...');
+            response = await fetch('/api/notificaciones');
+          }
+          
+          if (!response.ok) {
+            throw new Error(`Error ${response.status} al obtener notificaciones`);
+          }
+          
+          const result = await response.json();
+          console.log('📋 Respuesta de notificaciones:', result);
+
+          let notificaciones = [];
+          
+          // Manejar diferentes estructuras de respuesta
+          if (result.success && result.data) {
+            notificaciones = result.data;
+          } else if (Array.isArray(result)) {
+            notificaciones = result;
+          } else if (result.notificaciones) {
+            notificaciones = result.notificaciones;
+          }
+          
+          const notificacionesNoLeidas = notificaciones.filter(notif => !notif.leida);
+          console.log(`📊 Notificaciones no leídas: ${notificacionesNoLeidas.length}`);
+          
+          // Actualizar contador
+          this.actualizarContadorNotificaciones(notificacionesNoLeidas.length);
+          
+          // Mostrar notificaciones nuevas
+          notificacionesNoLeidas.forEach(notificacion => {
+            this.mostrarNotificacionSistema(notificacion);
+            
+            // Marcar como leída después de mostrarla
+            this.marcarNotificacionLeida(notificacion.id);
+          });
+
+        } catch (error) {
+          console.error('❌ Error al verificar notificaciones:', error);
+          // Mostrar notificación de error solo en modo debug
+          if (window.location.hostname === 'localhost') {
+            this.mostrarNotificacion('❌ Error al cargar notificaciones', 'error');
+          }
+        }
+      }
+
+      async verificarNotificacionesManual() {
+        try {
+          console.log('🔔 Verificación manual de notificaciones...');
+          
+          // Primero forzar verificación de reservas próximas
+          let response = await fetch('/api/reservas/notificaciones/verificar-proximas', {
+            method: 'POST'
+          });
+          
+          // Si falla, intentar endpoint alternativo
+          if (!response.ok) {
+            console.log('⚠️ Endpoint de verificación falló, intentando alternativo...');
+            response = await fetch('/api/reservas/proximas/verificar', {
+              method: 'POST'
+            });
+          }
+          
+          const result = await response.json();
+          console.log('📋 Respuesta verificación manual:', result);
+          
+          if (result.success) {
+            const total = result.total || result.reservasProximas || 0;
+            this.mostrarNotificacion(`🔔 Se verificaron ${total} reservas próximas`, 'info');
+            
+            // Esperar y luego verificar notificaciones nuevamente
+            setTimeout(() => {
+              this.verificarNotificaciones();
+            }, 2000);
+          } else {
+            this.mostrarNotificacion('ℹ️ No hay reservas próximas para notificar', 'info');
+          }
+        } catch (error) {
+          console.error('❌ Error al verificar notificaciones manualmente:', error);
+          this.mostrarNotificacion('⚠️ No se pudieron verificar las reservas próximas', 'warning');
+          
+          // Intentar verificar notificaciones normales de todas formas
+          setTimeout(() => {
+            this.verificarNotificaciones();
+          }, 1000);
+        }
+      }
+      
+      // Agrega este método para debuggear
+      debugNotificaciones() {
+        console.log('🐛 DEBUG - Estado de notificaciones:');
+        console.log('🔔 Botón notificaciones:', this.btnVerNotificaciones);
+        console.log('🔔 Contador:', this.contadorNotificaciones);
+        
+        // Probar notificación de prueba
+        this.mostrarNotificacion('✅ Sistema de notificaciones funcionando', 'success');
+        
+        // Probar diferentes tipos de notificaciones
+        setTimeout(() => {
+          this.mostrarNotificacion('⚠️ Esta es una notificación de advertencia', 'warning');
+        }, 1000);
+        
+        setTimeout(() => {
+          this.mostrarNotificacion('❌ Esta es una notificación de error', 'error');
+        }, 2000);
+        
+        setTimeout(() => {
+          this.mostrarNotificacion('ℹ️ Esta es una notificación informativa', 'info');
+        }, 3000);
+      }
+
+      mostrarNotificacionSistema(notificacion) {
+        // Crear notificación más destacada
+        const notificacionElement = document.createElement('div');
+        notificacionElement.className = `notificacion-sistema notificacion-${notificacion.tipo === 'reserva_proxima' ? 'warning' : 'error'}`;
+        notificacionElement.innerHTML = `
+          <div class="notificacion-sistema-contenido">
+            <div class="notificacion-sistema-header">
+              <strong>${notificacion.titulo}</strong>
+              <button onclick="this.parentElement.parentElement.parentElement.remove()">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <div class="notificacion-sistema-body">
+              <p>${notificacion.mensaje}</p>
+              <small>${new Date(notificacion.timestamp).toLocaleTimeString('es-PE')}</small>
+            </div>
+          </div>
+        `;
+        
+        document.body.appendChild(notificacionElement);
+
+        // Auto-eliminar después de 10 segundos
+        setTimeout(() => {
+          if (notificacionElement.parentElement) {
+            notificacionElement.classList.add('fade-out');
+            setTimeout(() => {
+              if (notificacionElement.parentElement) {
+                notificacionElement.remove();
+              }
+            }, 300);
+          }
+        }, 10000);
+      }
+
+      actualizarContadorNotificaciones(cantidad) {
+        this.contadorNotificaciones.textContent = cantidad;
+        if (cantidad > 0) {
+          this.contadorNotificaciones.style.display = 'flex';
+        } else {
+          this.contadorNotificaciones.style.display = 'none';
+        }
+      }
+
+      async marcarNotificacionLeida(id) {
+        try {
+          if (!id) {
+            console.warn('⚠️ ID de notificación inválido');
+            return;
+          }
+          
+          let response = await fetch(`/api/reservas/notificaciones/${id}/leer`, {
+            method: 'PATCH'
+          });
+          
+          // Si falla, intentar endpoint alternativo
+          if (!response.ok) {
+            response = await fetch(`/api/notificaciones/${id}/leer`, {
+              method: 'PATCH'
+            });
+          }
+          
+          if (!response.ok) {
+            console.warn(`⚠️ No se pudo marcar notificación ${id} como leída`);
+          } else {
+            console.log(`✅ Notificación ${id} marcada como leída`);
+          }
+        } catch (error) {
+          console.error('❌ Error al marcar notificación como leída:', error);
+        }
       }
 
       inicializarSelectorHora() {
@@ -812,6 +1038,18 @@
           const mesaElement = document.createElement('div');
           mesaElement.className = 'mesa-option';
           mesaElement.dataset.id = mesa._id;
+
+          const estadoClass = this.obtenerClaseEstadoMesa(mesa.estado);
+          const estadoText = this.obtenerTextoEstadoMesa(mesa.estado);
+          
+          // ✅ NUEVO FORMATO CON ESTADO
+          let contenidoHTML = `
+            <div class="mesa-header">
+              <strong>Mesa ${mesa.numeroMesa}</strong>
+              <span class="estado-mesa ${estadoClass}">${estadoText}</span>
+            </div>
+            <div class="mesa-detalles">
+          `;
           
           // ✅ FORMATO CORREGIDO - igual al de las mesas seleccionadas
           const numeroMesa = mesa.numeroMesa;
@@ -880,6 +1118,20 @@
           }
         } catch (error) {
           console.error('❌ Error en debug:', error);
+        }
+      }
+      obtenerTextoEstadoMesa(estado) {
+        switch (estado) {
+          case 'disponible':
+            return 'DISPONIBLE';
+          case 'reserva':
+            return 'RESERVADA';
+          case 'ocupada':
+            return 'OCUPADA';
+          case 'liberada':
+            return 'LIBERADA';
+          default:
+            return 'DISPONIBLE';
         }
       }
       toggleSeleccionMesa(mesa, elemento) {
@@ -977,6 +1229,22 @@
         console.log('🏁 Mesas seleccionadas renderizadas');
       }
       // Agrega este método para debuggear
+      obtenerClaseEstadoMesa(estado) {
+        switch (estado) {
+          case 'disponible':
+            return 'estado-disponible';
+          case 'reserva':
+            return 'estado-reserva';
+          case 'ocupada':
+            return 'estado-ocupada';
+          case 'liberada':
+            return 'estado-liberada';
+          default:
+            return 'estado-disponible';
+        }
+      }
+      
+      
       debugMesasSeleccionadas() {
         console.log('🐛 DEBUG - Mesas seleccionadas:');
         console.log('Cantidad:', this.mesasSeleccionadas.length);
@@ -1112,8 +1380,8 @@
               case 'cancelada':
                 badgeClass = 'badge-cancelada';
                 break;
-              case 'en_curso':
-                badgeClass = 'badge-en-curso';
+              case 'finalizada':
+                badgeClass = 'badge-finalizada';
                 break;
               default:
                 badgeClass = 'badge-pendiente';
@@ -1145,6 +1413,13 @@
                 </button>`
               : '';
 
+            const horaInicioInfo = reserva.horaInicioReal 
+              ? `<div class="card-info">
+                  <i class="fas fa-play-circle"></i>
+                  <strong>Inició:</strong> ${new Date(reserva.horaInicioReal).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}
+                </div>`
+              : '';
+
             card.innerHTML = `
               <div class="card-header">
                 <div class="card-title">
@@ -1169,6 +1444,7 @@
                   <i class="fas fa-users"></i>
                   <strong>Personas:</strong> ${reserva.numeroPersonas}
                 </div>
+                ${horaInicioInfo}
                 ${reserva.observaciones ? `
                 <div class="card-info">
                   <i class="fas fa-sticky-note"></i>
@@ -1219,6 +1495,12 @@
       
       async confirmarReserva(id) {
           try {
+              console.log('✅ Confirmando asistencia para reserva ID:', id);
+
+              if (!confirm('¿Estás seguro de confirmar esta reserva?\n\n✅ El cliente recibirá una notificación\n✅ Las mesas se prepararán para la reserva')) {
+                return;
+              }
+
               const response = await fetch(`/api/reservas/${id}/estado`, {
                   method: 'PATCH',
                   headers: { 'Content-Type': 'application/json' },
@@ -1343,12 +1625,12 @@
       }
 
 
-      // Agrega este método después del método cancelarReserva
       async confirmarAsistencia(id) {
         try {
           console.log('✅ Confirmando asistencia para reserva ID:', id);
           
-          if (!confirm('¿Confirmar asistencia del cliente y liberar las mesas?\nEsta acción cambiará el estado de la reserva a "en_curso" y liberará las mesas para nuevas reservas.')) {
+          // Mensaje más específico
+          if (!confirm('¿Confirmar que el cliente asistió y LIBERAR LAS MESAS?\n\n✅ Estado de reserva: FINALIZADA\n✅ Mesas: LIBERADAS (disponibles)\n✅ No se podrá revertir esta acción')) {
             return;
           }
 
@@ -1363,7 +1645,13 @@
             throw new Error(result.mensaje || 'Error al confirmar asistencia');
           }
 
-          this.mostrarNotificacion('✅ Asistencia confirmada y mesas liberadas correctamente', 'success');
+          // Verificar que realmente se liberaron las mesas
+          if (result.mesasLiberadas && result.mesasLiberadas.length > 0) {
+            this.mostrarNotificacion(`✅ Asistencia confirmada y ${result.mesasLiberadas.length} mesa(s) liberadas`, 'success');
+          } else {
+            this.mostrarNotificacion('✅ Asistencia confirmada', 'success');
+          }
+          
           this.obtenerReservas(); // Actualizar la lista
           
         } catch (error) {
@@ -1517,7 +1805,16 @@
 
     // Inicializar la aplicación cuando el DOM esté listo
     document.addEventListener('DOMContentLoaded', () => {
-      new ClientesApp();
+      window.clientesApp = new ClientesApp();
+  
+      // También para compatibilidad
+      window.app = window.clientesApp;
+
+      // Probar notificaciones manualmente
+      window.clientesApp.mostrarNotificacion('✅ ¡Funciona! Notificación de éxito', 'success');
+      window.clientesApp.mostrarNotificacion('⚠️ Advertencia de prueba', 'warning');
+      window.clientesApp.mostrarNotificacion('❌ Error de prueba', 'error');
+      window.clientesApp.mostrarNotificacion('ℹ️ Información de prueba', 'info');
     });
   </script>
 
@@ -1537,7 +1834,280 @@
       <button type="submit">Enviar</button>
     </form>
   </div>
+<style>
+    /* Estilos para notificaciones del sistema */
+    @keyframes slideInRight {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
 
+    @keyframes slideOutRight {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+    }
+
+    /* Estilos para notificaciones normales */
+    .notificacion {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      border-radius: 8px;
+      padding: 15px;
+      max-width: 350px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 10000;
+      animation: slideInRight 0.3s ease;
+      font-family: Arial, sans-serif;
+    }
+
+    .notificacion-success {
+      background: #d4edda;
+      border: 1px solid #c3e6cb;
+      color: #155724;
+    }
+
+    .notificacion-error {
+      background: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+    }
+
+    .notificacion-info {
+      background: #d1ecf1;
+      border: 1px solid #bee5eb;
+      color: #0c5460;
+    }
+
+    .notificacion-warning {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      color: #856404;
+    }
+
+    .notificacion-contenido {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .notificacion-contenido button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: inherit;
+      padding: 0;
+      margin-left: 10px;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .notificacion-sistema {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      border-radius: 8px;
+      padding: 15px;
+      max-width: 350px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 10000;
+      animation: slideInRight 0.3s ease;
+      font-family: Arial, sans-serif;
+    }
+
+    .notificacion-sistema.warning {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      color: #856404;
+    }
+
+    .notificacion-sistema.error {
+      background: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+    }
+
+    .notificacion-sistema-contenido {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .notificacion-sistema-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .notificacion-sistema-header strong {
+      font-size: 1.1em;
+      font-weight: bold;
+    }
+
+    .notificacion-sistema-header button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: inherit;
+      padding: 0;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .notificacion-sistema-body p {
+      margin: 0 0 5px 0;
+      line-height: 1.4;
+    }
+
+    .notificacion-sistema-body small {
+      color: #666;
+      font-size: 0.8em;
+    }
+
+    /* Efecto de desaparición */
+    .notificacion-sistema.fade-out {
+      animation: slideOutRight 0.3s ease forwards;
+    }
+
+    /* Botón flotante */
+    .chat-toggle {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #eb1f1f;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      font-size: 24px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      transition: transform 0.2s ease;
+      z-index: 999;
+    }
+    .chat-toggle:hover { transform: scale(1.1); }
+
+    /* Ventana modal del chat */
+    .chat-modal {
+      position: fixed;
+      bottom: 100px;
+      right: 30px;
+      width: 320px;
+      max-height: 420px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 1000;
+    }
+    .chat-modal.hidden { display: none; }
+
+    .chat-header {
+      background: #eb1f1f;
+      color: white;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .chat-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      font-size: 14px;
+    }
+    .chat-form {
+      display: flex;
+      border-top: 1px solid #ccc;
+    }
+    .chat-form input {
+      flex: 1;
+      border: none;
+      padding: 10px;
+      font-size: 14px;
+    }
+    .chat-form button {
+      background: #eb1f1f;
+      color: white;
+      border: none;
+      padding: 0 15px;
+      cursor: pointer;
+    }
+    .msg {
+      margin-bottom: 8px;
+      padding: 8px;
+      border-radius: 10px;
+      max-width: 85%;
+    }
+    .msg.user {
+      background: #e9ecef;
+      align-self: flex-end;
+    }
+    .msg.ai {
+      background: #eb1f1f;
+      color: white;
+      align-self: flex-start;
+    }
+
+    /* Botón de notificaciones en header */
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-notificaciones {
+      background: #eb1f1f;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 15px;
+      font-size: 1em;
+      cursor: pointer;
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.3s ease;
+    }
+
+    .btn-notificaciones:hover {
+      background: #c41a1a;
+    }
+
+    .notificacion-contador {
+      background: #ff6b6b;
+      color: white;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      font-size: 0.7em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+  </style>
 <style>
     /* Botón flotante */
     .chat-toggle {
