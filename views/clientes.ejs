@@ -792,10 +792,17 @@
         }
       }
 
+      
       abrirModalReserva(id) {
         this.clienteSeleccionadoId = id;
         
-        const hoy = new Date().toISOString().split('T')[0];
+        // Corregir problema de zona horaria
+        const ahora = new Date();
+        const offset = ahora.getTimezoneOffset();
+        const hoy = new Date(ahora.getTime() - (offset * 60 * 1000)).toISOString().split('T')[0];
+        
+        console.log('📅 Fecha corregida (local):', hoy);
+        
         document.getElementById('diaReserva').min = hoy;
         
         if (!document.getElementById('diaReserva').value) {
