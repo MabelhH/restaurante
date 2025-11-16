@@ -8,8 +8,6 @@
   <link rel="stylesheet" href="/clientes.css">
 </head>
 
-
-
 <body>
   <div class="dashboard-container">
     <!-- Sidebar -->
@@ -20,8 +18,8 @@
       </h2>
 
       <nav>
-        <a href="/dashboard" class="active"><i class="fas fa-home"></i> <span>Dashboard</span></a>
-        <a href="/clientes"><i class="fa-solid fa-users"></i> <span>Clientes</span></a>
+        <a href="/dashboard" ><i class="fas fa-home"></i> <span>Dashboard</span></a>
+        <a href="/clientes" class="active"><i class="fa-solid fa-users"></i> <span>Clientes</span></a>
         <a href="/register_admin"><i class="fas fa-user-plus"></i> <span>Registro</span></a>
         <a href="/platos"><i class="fas fa-bowl-food"></i> <span>Platos</span></a>
         <a href="/mesas"><i class="fas fa-chair"></i> <span>Mesas</span></a>
@@ -36,27 +34,72 @@
       <!-- Header -->
       <header class="top-header">
         <div class="welcome">
-          <h2>Bienvenido,  usuario.nombre %></h2>
+          <h2>Bienvenido, <%= usuario.nombre %></h2>
           <p>Gestiona tus clientes de manera eficiente</p>
         </div>
 
         <div class="header-actions">
-          <button id="btnVerNotificaciones" class="btn-notificaciones">
-            <i class="fas fa-bell"></i>
-            Notificaciones
-            <span id="contadorNotificaciones" class="notificacion-contador">0</span>
-          </button>
+          <!-- Widget de Notificaciones de Reservas -->
+          <div class="notification-widget">
+            <div class="notification-trigger" id="notificationIcon">
+              <div class="notification-icon-wrapper">
+                <i class="fas fa-bell"></i>
+                <span class="notification-pulse"></span>
+                <span class="notification-badge" id="notificationBadge">0</span>
+              </div>
+              <span class="notification-label">Notificaciones</span>
+            </div>
+
+            <div class="notification-panel" id="notificationDropdown">
+              <div class="panel-header">
+                <div class="panel-title">
+                  <i class="fas fa-calendar-alt"></i>
+                  <h4>Notificaciones de Reservas</h4>
+                </div>
+                <span class="panel-counter" id="panelCounter">0 notificaciones</span>
+              </div>
+
+              <div class="notification-content">
+                <div class="notification-list" id="notificationList">
+                  <!-- Las notificaciones aparecerán aquí -->
+                  <div class="notification-empty">
+                    <i class="fas fa-check-circle"></i>
+                    <h5>¡Todo en orden!</h5>
+                    <p>No hay notificaciones de reservas</p>
+                  </div>
+                </div>
+
+                <div class="panel-footer">
+                  <div class="stock-summary">
+                    <div class="summary-item critical">
+                      <span class="summary-dot"></span>
+                      <span>Críticas: <strong id="criticalCount">0</strong></span>
+                    </div>
+                    <div class="summary-item low">
+                      <span class="summary-dot"></span>
+                      <span>Hoy: <strong id="todayCount">0</strong></span>
+                    </div>
+                  </div>
+                  <button class="view-all-btn" onclick="window.clientesApp.verificarNotificacionesManual()">
+                    <i class="fas fa-sync-alt"></i>
+                    Actualizar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Fin del Widget de Notificaciones -->
         </div>
       </header>
 
       <!-- Content Area -->
-       <div class="content">
+      <div class="content">
         <!-- Formulario -->
         <section class="form-section">
           <h3 id="formTitulo">Registrar nuevo cliente</h3>
           <form id="formCliente">
             <input type="text" id="nombre" placeholder="Nombre" required>
-            <input type="text" id="apellido" placeholder="Apellido" required> <!-- obligatorio -->
+            <input type="text" id="apellido" placeholder="Apellido" required>
             <input type="text" id="telefono" placeholder="Teléfono" required>
             <button type="submit" id="btnSubmit">
               <i class="fas fa-plus"></i> Agregar Cliente
@@ -66,7 +109,7 @@
 
         <!-- Content Area -->
         <div class="tabs">
-          <button class="tab-button" data-tab="clientes">Clientes</button>
+          <button class="tab-button active" data-tab="clientes">Clientes</button>
           <button class="tab-button" data-tab="reservas">Reservas</button>
         </div>
         <br>
@@ -136,14 +179,15 @@
           </div>
         </div>
 
-       <section class="cards-container" id="listaClientes">
+        <!-- Lista de Clientes -->
+        <section class="cards-container" id="listaClientes">
           <!-- Los clientes se renderizan aquí -->
         </section>
-          <!-- Lista de Reservas -->
-          <section class="cards-container" id="listaReservas">
-            <!-- Las reservas se renderizan aquí -->
-          </section>
-        
+
+        <!-- Lista de Reservas -->
+        <section class="cards-container" id="listaReservas" style="display: none;">
+          <!-- Las reservas se renderizan aquí -->
+        </section>
       </div>
     </main>
   </div>
@@ -170,10 +214,15 @@
         this.horaSelect = document.getElementById('horaReserva');
         this.minutoSelect = document.getElementById('minutoReserva');
         this.periodoSelect = document.getElementById('periodoReserva');
-        this.btnVerNotificaciones = document.getElementById('btnVerNotificaciones');
-        this.contadorNotificaciones = document.getElementById('contadorNotificaciones');
-
-        this.tabButtons = document.querySelectorAll('.tab-button') || [];
+        
+        // Elementos de notificaciones
+        this.notificationIcon = document.getElementById('notificationIcon');
+        this.notificationDropdown = document.getElementById('notificationDropdown');
+        this.notificationBadge = document.getElementById('notificationBadge');
+        this.notificationList = document.getElementById('notificationList');
+        this.panelCounter = document.getElementById('panelCounter');
+        this.criticalCount = document.getElementById('criticalCount');
+        this.todayCount = document.getElementById('todayCount');
 
         // Array para almacenar las mesas seleccionadas
         this.mesasSeleccionadas = [];
@@ -184,7 +233,7 @@
         this.reservaEditandoId = null;
         this.clienteSeleccionadoId = null;
 
-        
+        this.tabButtons = document.querySelectorAll('.tab-button') || [];
 
         this.init();
       }
@@ -196,94 +245,45 @@
         this.inicializarSelectorHora();
         this.cambiarTab('clientes');
         this.iniciarSistemaNotificaciones();
-
-        // Agregar debug de notificaciones
-        setTimeout(() => {
-          this.debugNotificaciones();
-        }, 3000);
-
-        setTimeout(() => {
-          this.debugEndpointMesas();
-        }, 2000);
       }
 
+      // ========== SISTEMA DE NOTIFICACIONES ==========
+
       iniciarSistemaNotificaciones() {
-       // Verificar notificaciones cada 5 minutos (300000 ms)
+        // Verificar notificaciones cada 1 minuto
         setInterval(async () => {
-          await this.verificarNotificaciones();
-        }, 300000);
+          await this.verificarNotificacionesReservas();
+        }, 60000);
 
         // Verificar inmediatamente al cargar la página
         setTimeout(() => {
-          this.verificarNotificaciones();
-        }, 5000);
+          this.verificarNotificacionesReservas();
+        }, 3000);
 
-        // Configurar botón de notificaciones
-        this.btnVerNotificaciones.addEventListener('click', () => {
-          this.verificarNotificacionesManual();
-        });
+        // Configurar el widget de notificaciones
+        this.configurarWidgetNotificaciones();
       }
 
-      async verificarNotificaciones() {
-        try {
-          console.log('🔔 Verificando notificaciones...');
-          
-          // Primero, intentar con el endpoint específico
-          let response = await fetch('/api/reservas/notificaciones/todas');
-          
-          // Si falla, intentar con endpoint alternativo
-          if (!response.ok) {
-            console.log('⚠️ Endpoint principal falló, intentando alternativo...');
-            response = await fetch('/api/notificaciones');
-          }
-          
-          if (!response.ok) {
-            throw new Error(`Error ${response.status} al obtener notificaciones`);
-          }
-          
-          const result = await response.json();
-          console.log('📋 Respuesta de notificaciones:', result);
-
-          let notificaciones = [];
-          
-          // Manejar diferentes estructuras de respuesta
-          if (result.success && result.data) {
-            notificaciones = result.data;
-          } else if (Array.isArray(result)) {
-            notificaciones = result;
-          } else if (result.notificaciones) {
-            notificaciones = result.notificaciones;
-          }
-          
-          const notificacionesNoLeidas = notificaciones.filter(notif => !notif.leida);
-          console.log(`📊 Notificaciones no leídas: ${notificacionesNoLeidas.length}`);
-          
-          // Actualizar contador
-          this.actualizarContadorNotificaciones(notificacionesNoLeidas.length);
-          
-          // Mostrar notificaciones nuevas
-          notificacionesNoLeidas.forEach(notificacion => {
-            this.mostrarNotificacionSistema(notificacion);
-            
-            // Marcar como leída después de mostrarla
-            this.marcarNotificacionLeida(notificacion.id);
+      configurarWidgetNotificaciones() {
+        if (this.notificationIcon && this.notificationDropdown) {
+          this.notificationIcon.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.notificationDropdown.classList.toggle('show');
           });
-          await this.verificarNotificacionesManual();
-
-        } catch (error) {
-          console.error('❌ Error al verificar notificaciones:', error);
-          // Mostrar notificación de error solo en modo debug
-          if (window.location.hostname === 'localhost') {
-            this.mostrarNotificacion('❌ Error al cargar notificaciones', 'error');
-          }
+          
+          // Cerrar al hacer click fuera
+          document.addEventListener('click', (e) => {
+            if (!this.notificationIcon.contains(e.target) && !this.notificationDropdown.contains(e.target)) {
+              this.notificationDropdown.classList.remove('show');
+            }
+          });
         }
       }
 
-      async verificarNotificacionesManual() {
+      async verificarNotificacionesReservas() {
         try {
-          console.log('🔔 Verificación MANUAL de reservas próximas...');
+          console.log('🔔 Verificando notificaciones de reservas...');
           
-          // Obtener todas las reservas DESDE EL ENDPOINT QUE SÍ EXISTE
           const response = await fetch('/api/reservas');
           if (!response.ok) {
             throw new Error('Error al obtener reservas');
@@ -292,127 +292,215 @@
           const result = await response.json();
           const reservas = Array.isArray(result.data) ? result.data : [];
           
-          console.log(`📋 Total de reservas obtenidas: ${reservas.length}`);
+          console.log(`📋 Total de reservas: ${reservas.length}`);
           
-          // Filtrar reservas confirmadas para hoy
-          const hoy = new Date();
-          const reservasHoy = reservas.filter(reserva => {
-            if (reserva.estadoReserva !== 'confirmada') {
-              console.log(`❌ Reserva ${reserva._id} no confirmada: ${reserva.estadoReserva}`);
-              return false;
+          // Filtrar solo reservas confirmadas
+          const reservasConfirmadas = reservas.filter(reserva => 
+            reserva.estadoReserva === 'confirmada'
+          );
+          
+          const notificaciones = this.generarNotificacionesReservas(reservasConfirmadas);
+          
+          // Actualizar contador
+          this.actualizarContadorNotificaciones(notificaciones.length);
+          
+          // Mostrar notificaciones en el panel
+          this.mostrarPanelNotificaciones(notificaciones);
+          
+          // Mostrar notificaciones del sistema si hay nuevas
+          notificaciones.forEach(notificacion => {
+            if (!notificacion.vista) {
+              this.mostrarNotificacionSistema(notificacion);
+            }
+          });
+          
+        } catch (error) {
+          console.error('❌ Error al verificar notificaciones:', error);
+        }
+      }
+
+      generarNotificacionesReservas(reservas) {
+        const notificaciones = [];
+        const ahora = new Date();
+        const hoy = new Date();
+        const manana = new Date();
+        manana.setDate(manana.getDate() + 1);
+        
+        // Formatear fechas para comparación
+        const hoyStr = hoy.toISOString().split('T')[0];
+        const mananaStr = manana.toISOString().split('T')[0];
+
+        reservas.forEach(reserva => {
+          try {
+            const fechaReserva = new Date(reserva.diaReserva);
+            const fechaReservaStr = fechaReserva.toISOString().split('T')[0];
+            
+            // Obtener hora de la reserva
+            const [horas, minutos] = reserva.horaReserva.split(':');
+            const horaReserva = new Date(fechaReserva);
+            horaReserva.setHours(parseInt(horas), parseInt(minutos), 0, 0);
+            
+            const diferencia = horaReserva - ahora;
+            const minutosDiferencia = Math.round(diferencia / (1000 * 60));
+            
+            // Determinar tipo de notificación
+            let tipo = 'normal';
+            let prioridad = 'baja';
+            
+            if (fechaReservaStr === hoyStr) {
+              // RESERVA PARA HOY
+              if (minutosDiferencia <= 0) {
+                // RESERVA PASADA - Color naranja/rojo
+                tipo = 'reserva_pasada';
+                prioridad = 'alta';
+              } else if (minutosDiferencia <= 90) {
+                // RESERVA CRÍTICA (próximas 90 minutos) - Color rojo
+                tipo = 'reserva_critica';
+                prioridad = 'critica';
+              } else {
+                // RESERVA PARA HOY normal
+                tipo = 'reserva_hoy';
+                prioridad = 'media';
+              }
+            } else if (fechaReservaStr === mananaStr) {
+              // RESERVA PARA MAÑANA - Color amarillo
+              tipo = 'reserva_manana';
+              prioridad = 'media';
             }
             
-            try {
-              const fechaReserva = new Date(reserva.diaReserva);
-              const esHoy = fechaReserva.toDateString() === hoy.toDateString();
-              console.log(`📅 Reserva ${reserva._id}: ${fechaReserva.toDateString()} - Hoy: ${hoy.toDateString()} - Es hoy: ${esHoy}`);
-              return esHoy;
-            } catch (error) {
-              console.error(`❌ Error con fecha de reserva ${reserva._id}:`, error);
-              return false;
-            }
-          });
-          
-          console.log(`📅 Reservas confirmadas para HOY: ${reservasHoy.length}`);
-          
-          // Verificar reservas próximas (en los próximos 90 minutos)
-          const ahora = new Date();
-          const reservasProximas = reservasHoy.filter(reserva => {
-            try {
-              if (!reserva.horaReserva) {
-                console.log(`❌ Reserva ${reserva._id} sin hora`);
-                return false;
-              }
-              
-              const [horas, minutos] = reserva.horaReserva.split(':');
-              const horaReserva = new Date();
-              horaReserva.setHours(parseInt(horas), parseInt(minutos), 0, 0);
-              
-              const diferencia = horaReserva - ahora;
-              const minutosDiferencia = Math.round(diferencia / (1000 * 60));
-              
-              console.log(`⏰ Reserva ${reserva._id}: ${reserva.horaReserva} - En ${minutosDiferencia} minutos`);
-              
-              // Reservas en los próximos 90 minutos
-              const esProxima = minutosDiferencia > 0 && minutosDiferencia <= 90;
-              console.log(`✅ Reserva ${reserva._id} es próxima: ${esProxima}`);
-              return esProxima;
-              
-            } catch (error) {
-              console.error(`❌ Error al procesar reserva ${reserva._id}:`, error);
-              return false;
-            }
-          });
-          
-          console.log(`⏰ RESERVAS PRÓXIMAS (90 min): ${reservasProximas.length}`);
-          
-          // Mostrar notificaciones para reservas próximas
-          reservasProximas.forEach(reserva => {
             const nombreCliente = reserva.cliente 
               ? `${reserva.cliente.nombre || ''} ${reserva.cliente.apellido || ''}`.trim()
               : 'Cliente';
             
-            const [horas, minutos] = reserva.horaReserva.split(':');
-            const horaFormateada = `${horas}:${minutos}`;
-            
-            // Calcular minutos restantes
-            const horaReservaObj = new Date();
-            horaReservaObj.setHours(parseInt(horas), parseInt(minutos), 0, 0);
-            const minutosRestantes = Math.round((horaReservaObj - ahora) / (1000 * 60));
-            
-            console.log(`🔔 Mostrando notificación para: ${nombreCliente} a las ${horaFormateada} (en ${minutosRestantes} min)`);
-            
-            this.mostrarNotificacionSistema({
-              titulo: '🕒 Reserva Próxima',
-              mensaje: `${nombreCliente} - ${horaFormateada} (en ${minutosRestantes} minutos)`,
-              tipo: 'reserva_proxima',
-              timestamp: new Date().toISOString()
+            notificaciones.push({
+              id: reserva._id,
+              tipo,
+              prioridad,
+              titulo: this.obtenerTituloNotificacion(tipo),
+              mensaje: `${nombreCliente} - ${reserva.horaReserva} - ${reserva.numeroPersonas} personas`,
+              fechaReserva: fechaReservaStr,
+              horaReserva: reserva.horaReserva,
+              minutosRestantes: minutosDiferencia,
+              timestamp: new Date().toISOString(),
+              vista: false
             });
-          });
-          
-          // Actualizar contador
-          this.actualizarContadorNotificaciones(reservasProximas.length);
-          console.log(`🔢 Contador actualizado a: ${reservasProximas.length}`);
-          
-          if (reservasProximas.length > 0) {
-            this.mostrarNotificacion(`🔔 ${reservasProximas.length} reserva(s) próxima(s)`, 'info');
-          } else {
-            this.mostrarNotificacion('✅ No hay reservas próximas en los próximos 90 minutos', 'success');
+            
+          } catch (error) {
+            console.error('Error al procesar reserva para notificación:', error);
           }
-          
-        } catch (error) {
-          console.error('❌ Error al verificar reservas próximas:', error);
-          this.mostrarNotificacion('❌ Error al verificar reservas próximas', 'error');
-        }
+        });
+        
+        // Ordenar por prioridad (crítico > alta > media > baja)
+        return notificaciones.sort((a, b) => {
+          const prioridades = { critica: 0, alta: 1, media: 2, baja: 3 };
+          return prioridades[a.prioridad] - prioridades[b.prioridad];
+        });
       }
 
-      // Agrega este método para debuggear
-      debugNotificaciones() {
-        console.log('🐛 DEBUG - Estado de notificaciones:');
-        console.log('🔔 Botón notificaciones:', this.btnVerNotificaciones);
-        console.log('🔔 Contador:', this.contadorNotificaciones);
+      obtenerTituloNotificacion(tipo) {
+        const titulos = {
+          reserva_critica: '🕒 RESERVA CRÍTICA',
+          reserva_pasada: '⚠️ RESERVA PASADA',
+          reserva_hoy: '📅 RESERVA HOY',
+          reserva_manana: '📆 RESERVA MAÑANA'
+        };
+        return titulos[tipo] || '📋 RESERVA';
+      }
+
+      mostrarPanelNotificaciones(notificaciones) {
+        if (!this.notificationList) {
+          console.warn('⚠️ No se encontró el elemento notificationList');
+          return;
+        }
         
-        // Probar notificación de prueba
-        this.mostrarNotificacion('✅ Sistema de notificaciones funcionando', 'success');
+        // Actualizar contadores
+        const criticasCount = notificaciones.filter(n => n.prioridad === 'critica').length;
+        const hoyCount = notificaciones.filter(n => n.tipo === 'reserva_hoy').length;
         
-        // Probar diferentes tipos de notificaciones
-        setTimeout(() => {
-          this.mostrarNotificacion('⚠️ Esta es una notificación de advertencia', 'warning');
-        }, 1000);
+        if (this.notificationBadge) {
+          this.notificationBadge.textContent = notificaciones.length;
+          this.notificationBadge.style.display = notificaciones.length > 0 ? 'flex' : 'none';
+          
+          // Cambiar color del badge según la prioridad más alta
+          if (criticasCount > 0) {
+            this.notificationBadge.className = 'notification-badge high';
+          } else if (notificaciones.length > 0) {
+            this.notificationBadge.className = 'notification-badge medium';
+          } else {
+            this.notificationBadge.className = 'notification-badge';
+          }
+        }
         
-        setTimeout(() => {
-          this.mostrarNotificacion('❌ Esta es una notificación de error', 'error');
-        }, 2000);
+        if (this.panelCounter) {
+          this.panelCounter.textContent = `${notificaciones.length} notificaciones`;
+        }
         
-        setTimeout(() => {
-          this.mostrarNotificacion('ℹ️ Esta es una notificación informativa', 'info');
-        }, 3000);
+        if (this.criticalCount) {
+          this.criticalCount.textContent = criticasCount;
+        }
+        
+        if (this.todayCount) {
+          this.todayCount.textContent = hoyCount;
+        }
+        
+        // Mostrar lista de notificaciones
+        if (notificaciones.length === 0) {
+          this.notificationList.innerHTML = `
+            <div class="notification-empty">
+              <i class="fas fa-check-circle"></i>
+              <h5>¡Todo en orden!</h5>
+              <p>No hay notificaciones de reservas</p>
+            </div>
+          `;
+          return;
+        }
+        
+        this.notificationList.innerHTML = notificaciones.map(notif => {
+          const claseNotificacion = `notification-item ${notif.tipo} ${notif.prioridad}`;
+          const icono = this.obtenerIconoNotificacion(notif.tipo);
+          
+          return `
+            <div class="${claseNotificacion}">
+              <div class="notification-icon">
+                <i class="${icono}"></i>
+              </div>
+              <div class="notification-details">
+                <div class="notification-title">${notif.titulo}</div>
+                <div class="notification-message">${notif.mensaje}</div>
+                <div class="notification-meta">
+                  <span class="notification-time">${this.formatearTiempoRestante(notif)}</span>
+                  <span class="notification-date">${notif.fechaReserva}</span>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      obtenerIconoNotificacion(tipo) {
+        const iconos = {
+          reserva_critica: 'fas fa-fire',
+          reserva_pasada: 'fas fa-exclamation-triangle',
+          reserva_hoy: 'fas fa-calendar-day',
+          reserva_manana: 'fas fa-calendar-alt'
+        };
+        return iconos[tipo] || 'fas fa-bell';
+      }
+
+      formatearTiempoRestante(notificacion) {
+        if (notificacion.tipo === 'reserva_critica') {
+          return `En ${notificacion.minutosRestantes} min`;
+        } else if (notificacion.tipo === 'reserva_pasada') {
+          return `Pasó hace ${Math.abs(notificacion.minutosRestantes)} min`;
+        } else if (notificacion.tipo === 'reserva_manana') {
+          return 'Para mañana';
+        }
+        return 'Para hoy';
       }
 
       mostrarNotificacionSistema(notificacion) {
-        // Crear notificación más destacada
         const notificacionElement = document.createElement('div');
-        notificacionElement.className = `notificacion-sistema notificacion-${notificacion.tipo === 'reserva_proxima' ? 'warning' : 'error'}`;
+        notificacionElement.className = `notificacion-sistema ${notificacion.tipo}`;
         notificacionElement.innerHTML = `
           <div class="notificacion-sistema-contenido">
             <div class="notificacion-sistema-header">
@@ -423,14 +511,14 @@
             </div>
             <div class="notificacion-sistema-body">
               <p>${notificacion.mensaje}</p>
-              <small>${new Date(notificacion.timestamp).toLocaleTimeString('es-PE')}</small>
+              <small>${this.formatearTiempoRestante(notificacion)} • ${new Date(notificacion.timestamp).toLocaleTimeString('es-PE')}</small>
             </div>
           </div>
         `;
         
         document.body.appendChild(notificacionElement);
 
-        // Auto-eliminar después de 10 segundos
+        // Auto-eliminar después de 8 segundos
         setTimeout(() => {
           if (notificacionElement.parentElement) {
             notificacionElement.classList.add('fade-out');
@@ -440,45 +528,26 @@
               }
             }, 300);
           }
-        }, 10000);
+        }, 8000);
       }
 
       actualizarContadorNotificaciones(cantidad) {
-        this.contadorNotificaciones.textContent = cantidad;
-        if (cantidad > 0) {
-          this.contadorNotificaciones.style.display = 'flex';
-        } else {
-          this.contadorNotificaciones.style.display = 'none';
+        if (this.notificationBadge) {
+          this.notificationBadge.textContent = cantidad;
+          if (cantidad > 0) {
+            this.notificationBadge.style.display = 'flex';
+          } else {
+            this.notificationBadge.style.display = 'none';
+          }
         }
       }
 
-      async marcarNotificacionLeida(id) {
-        try {
-          if (!id) {
-            console.warn('⚠️ ID de notificación inválido');
-            return;
-          }
-          
-          let response = await fetch(`/api/reservas/notificaciones/${id}/leer`, {
-            method: 'PATCH'
-          });
-          
-          // Si falla, intentar endpoint alternativo
-          if (!response.ok) {
-            response = await fetch(`/api/notificaciones/${id}/leer`, {
-              method: 'PATCH'
-            });
-          }
-          
-          if (!response.ok) {
-            console.warn(`⚠️ No se pudo marcar notificación ${id} como leída`);
-          } else {
-            console.log(`✅ Notificación ${id} marcada como leída`);
-          }
-        } catch (error) {
-          console.error('❌ Error al marcar notificación como leída:', error);
-        }
+      async verificarNotificacionesManual() {
+        await this.verificarNotificacionesReservas();
+        this.mostrarNotificacion('✅ Notificaciones actualizadas', 'success');
       }
+
+      // ========== FIN SISTEMA DE NOTIFICACIONES ==========
 
       inicializarSelectorHora() {
         // Llenar selector de horas (1-12)
@@ -497,7 +566,8 @@
           option.textContent = valor;
           this.minutoSelect.appendChild(option);
         }
-         // Establecer valores por defecto
+        
+        // Establecer valores por defecto
         this.horaSelect.value = "12";
         this.minutoSelect.value = "00";
         this.periodoSelect.value = "PM";
@@ -567,6 +637,17 @@
         const clientesSection = this.listaClientes;
         const reservasSection = this.listaReservas;
 
+        // Actualizar estado activo de los botones
+        this.tabButtons.forEach(button => {
+          button.classList.remove('active');
+        });
+        
+        // Activar el botón clickeado
+        const activeButton = Array.from(this.tabButtons).find(btn => btn.dataset.tab === tab);
+        if (activeButton) {
+          activeButton.classList.add('active');
+        }
+
         if (tab === 'clientes') {
           clientesSection.style.display = 'grid';
           reservasSection.style.display = 'none';
@@ -574,7 +655,6 @@
           clientesSection.style.display = 'none';
           reservasSection.style.display = 'grid';
         }
-
       }
 
       async manejarSubmitCliente(e) {
@@ -582,10 +662,9 @@
         
         const datosCliente = {
           nombre: document.getElementById('nombre').value.trim(),
-          apellido: document.getElementById('apellido').value.trim(), // ✅
+          apellido: document.getElementById('apellido').value.trim(),
           telefono: document.getElementById('telefono').value.trim()
         };
-
 
         try {
           if (this.modoEdicion) {
@@ -640,11 +719,7 @@
         } else if (boton.classList.contains('btn-eliminar')) {
           this.eliminarCliente(id);
         }
-
-        
       }
-
-      // Agrega este método después del método eliminarCliente
 
       async editarCliente(id) {
         try {
@@ -690,32 +765,31 @@
         // Detener la propagación inmediatamente
         e.stopPropagation();
 
-        // Verificar clases específicas con mayor precisión
         if (boton.classList.contains('btn-eliminar-reserva')) {
             console.log('🔴 SOLICITANDO ELIMINAR RESERVA ID:', id);
             this.eliminarReserva(id);
-            return; // Importante: salir después de manejar el evento
-          }
-          
-          if (boton.classList.contains('btn-editar-reserva')) {
-              this.editarReserva(id);
-              return;
-          }
-          
-          if (boton.classList.contains('btn-confirmar-reserva')) {
-              this.confirmarReserva(id);
-              return;
-          }
-          
-          if (boton.classList.contains('btn-cancelar-reserva')) {
-              this.cancelarReserva(id);
-              return;
-          }
-
-          if (boton.classList.contains('btn-asistencia-reserva')) {
-            this.confirmarAsistencia(id);
             return;
           }
+          
+        if (boton.classList.contains('btn-editar-reserva')) {
+            this.editarReserva(id);
+            return;
+        }
+          
+        if (boton.classList.contains('btn-confirmar-reserva')) {
+            this.confirmarReserva(id);
+            return;
+        }
+          
+        if (boton.classList.contains('btn-cancelar-reserva')) {
+            this.cancelarReserva(id);
+            return;
+        }
+
+        if (boton.classList.contains('btn-asistencia-reserva')) {
+          this.confirmarAsistencia(id);
+          return;
+        }
       }
 
       abrirModalReserva(id) {
@@ -789,10 +863,9 @@
             console.error('Error al editar reserva:', error);
             this.mostrarNotificacion('❌ Error al cargar la reserva', 'error');
         }
-    }
+      }
 
       async eliminarCliente(id) {
-
         if (!confirm('¿Estás seguro de que deseas eliminar este cliente?\nEsta acción no se puede deshacer.')) {
           return;
         }
@@ -814,8 +887,6 @@
         }
       }
 
-      // En tu frontend - método eliminarReserva (versión con más debug)
-      // Agrega más debug en tu método eliminarReserva
       async eliminarReserva(id) {
           console.log('🔴 INICIANDO ELIMINACIÓN DE RESERVA ID:', id);
           
@@ -836,7 +907,6 @@
               console.log('📡 Status de respuesta:', response.status);
               console.log('📡 OK?:', response.ok);
 
-              // Verifica el contenido de la respuesta
               const responseText = await response.text();
               console.log('📋 Respuesta como texto:', responseText);
               
@@ -853,14 +923,13 @@
               }
 
               this.mostrarNotificacion('✅ Reserva eliminada correctamente', 'success');
-              this.obtenerReservas(); // Actualizar la lista
+              this.obtenerReservas();
               
           } catch (error) {
               console.error('❌ Error completo al eliminar reserva:', error);
               this.mostrarNotificacion('❌ Error al eliminar la reserva: ' + error.message, 'error');
           }
       }
-
 
       async cargarMesasDisponibles() {
         try {
@@ -889,7 +958,6 @@
             console.log('✅ Mesas cargadas desde data.data');
           } else {
             console.warn('⚠️ Estructura de respuesta no reconocida:', data);
-            // Intentar extraer mesas de otras propiedades comunes
             if (data.mesasDisponibles && Array.isArray(data.mesasDisponibles)) {
               mesas = data.mesasDisponibles;
               console.log('✅ Mesas cargadas desde mesasDisponibles');
@@ -924,8 +992,6 @@
         }
       }
 
-      // En el frontend - método manejarSubmitReserva
-      // En el frontend - método manejarSubmitReserva
       async manejarSubmitReserva(e) {
         e.preventDefault();
 
@@ -960,7 +1026,6 @@
         }
 
         const fechaReserva = new Date(fechaInput+ 'T00:00:00.000Z');
-        //fechaReserva.setHours(fechaReserva.getHours() + 5);
 
         console.log('📅 Fecha original:', fechaInput);
         console.log('📅 Fecha procesada:', fechaReserva);
@@ -1085,7 +1150,7 @@
         const mesasDisponibles = mesasValidas.filter(mesa => 
           mesa.estado === 'disponible' || 
           mesa.estado === 'liberada' || 
-          !mesa.estado // Si no hay estado, asumir disponible
+          !mesa.estado
         );
 
         console.log('✅ Mesas disponibles:', mesasDisponibles);
@@ -1108,7 +1173,6 @@
           const estadoClass = this.obtenerClaseEstadoMesa(mesa.estado);
           const estadoText = this.obtenerTextoEstadoMesa(mesa.estado);
           
-          // ✅ NUEVO FORMATO CON ESTADO
           let contenidoHTML = `
             <div class="mesa-header">
               <strong>Mesa ${mesa.numeroMesa}</strong>
@@ -1117,18 +1181,14 @@
             <div class="mesa-detalles">
           `;
           
-          // ✅ FORMATO CORREGIDO - igual al de las mesas seleccionadas
           const numeroMesa = mesa.numeroMesa;
           let texto = `Mesa ${numeroMesa}`;
           
-          // Agregar capacidad si existe
           if (mesa.capacidad) {
             texto += ` (${mesa.capacidad} pers.)`;
           }
           
-          // Agregar piso si existe - con formato corregido
           if (mesa.piso) {
-            // Limpiar formato del piso (remover "piso" duplicado si existe)
             let pisoFormateado = mesa.piso.toString().toLowerCase();
             if (pisoFormateado.includes('piso')) {
               pisoFormateado = pisoFormateado.replace('piso', '').trim();
@@ -1136,7 +1196,6 @@
             texto += ` – Piso ${pisoFormateado}`;
           }
           
-          // Agregar sector si existe
           if (mesa.sector) {
             texto += ` – ${mesa.sector}`;
           }
@@ -1144,7 +1203,6 @@
           mesaElement.textContent = texto;
           mesaElement.title = `Haz clic para seleccionar Mesa ${numeroMesa}`;
           
-          // Verificar si ya está seleccionada
           const yaSeleccionada = this.mesasSeleccionadas.some(m => 
             m && m._id === mesa._id
           );
@@ -1165,27 +1223,6 @@
         console.log(`🏁 ${mesasDisponibles.length} mesas renderizadas en el DOM`);
       }
             
-      // Método temporal para verificar la respuesta del servidor
-      async debugEndpointMesas() {
-        try {
-          console.log('🔍 Debug: Probando endpoint /api/mesas...');
-          const response = await fetch('/api/mesas');
-          console.log('📋 Status:', response.status);
-          console.log('📋 Headers:', response.headers);
-          
-          const text = await response.text();
-          console.log('📋 Respuesta como texto:', text);
-          
-          try {
-            const data = JSON.parse(text);
-            console.log('📋 Respuesta como JSON:', data);
-          } catch (e) {
-            console.error('❌ No se pudo parsear como JSON:', e);
-          }
-        } catch (error) {
-          console.error('❌ Error en debug:', error);
-        }
-      }
       obtenerTextoEstadoMesa(estado) {
         switch (estado) {
           case 'disponible':
@@ -1200,8 +1237,8 @@
             return 'DISPONIBLE';
         }
       }
+
       toggleSeleccionMesa(mesa, elemento) {
-        // ✅ VERIFICAR QUE LA MESA SEA VÁLIDA
         if (!mesa || !mesa._id) {
           console.error('Mesa inválida:', mesa);
           return;
@@ -1210,11 +1247,9 @@
         const index = this.mesasSeleccionadas.findIndex(m => m && m._id === mesa._id);
         
         if (index === -1) {
-          // Agregar mesa a la selección
           this.mesasSeleccionadas.push(mesa);
           elemento.classList.add('selected');
         } else {
-          // Quitar mesa de la selección
           this.mesasSeleccionadas.splice(index, 1);
           elemento.classList.remove('selected');
         }
@@ -1231,7 +1266,6 @@
         console.log('🔄 Renderizando mesas seleccionadas...');
         this.mesasSeleccionadasLista.innerHTML = '';
         
-        // Filtrar mesas válidas
         const mesasValidas = this.mesasSeleccionadas.filter(mesa => 
           mesa && mesa._id && mesa.numeroMesa !== undefined && mesa.numeroMesa !== null
         );
@@ -1250,18 +1284,14 @@
           const mesaElement = document.createElement('div');
           mesaElement.className = 'mesa-item';
           
-          // ✅ FORMATO CORREGIDO - igual a tu ejemplo
           const numeroMesa = mesa.numeroMesa || 'Sin número';
           let texto = `Mesa ${numeroMesa}`;
           
-          // Agregar capacidad si existe
           if (mesa.capacidad) {
             texto += ` (${mesa.capacidad} pers.)`;
           }
           
-          // Agregar piso si existe - con formato corregido
           if (mesa.piso) {
-            // Limpiar formato del piso (remover "piso" duplicado si existe)
             let pisoFormateado = mesa.piso.toString().toLowerCase();
             if (pisoFormateado.includes('piso')) {
               pisoFormateado = pisoFormateado.replace('piso', '').trim();
@@ -1269,7 +1299,6 @@
             texto += ` – Piso ${pisoFormateado}`;
           }
           
-          // Agregar sector si existe
           if (mesa.sector) {
             texto += ` – ${mesa.sector}`;
           }
@@ -1281,7 +1310,6 @@
             </button>
           `;
           
-          // Agregar evento para eliminar mesa
           const btnEliminar = mesaElement.querySelector('button');
           btnEliminar.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -1294,7 +1322,7 @@
         
         console.log('🏁 Mesas seleccionadas renderizadas');
       }
-      // Agrega este método para debuggear
+
       obtenerClaseEstadoMesa(estado) {
         switch (estado) {
           case 'disponible':
@@ -1310,19 +1338,10 @@
         }
       }
       
-      
-      debugMesasSeleccionadas() {
-        console.log('🐛 DEBUG - Mesas seleccionadas:');
-        console.log('Cantidad:', this.mesasSeleccionadas.length);
-        this.mesasSeleccionadas.forEach((mesa, index) => {
-          console.log(`Mesa ${index}:`, mesa);
-        });
-      }
       eliminarMesaSeleccionada(id) {
         this.mesasSeleccionadas = this.mesasSeleccionadas.filter(mesa => mesa._id !== id);
         this.renderizarMesasSeleccionadas();
         
-        // Actualizar estado en el modal de mesas
         const mesaElement = this.mesasDisponibles.querySelector(`[data-id="${id}"]`);
         if (mesaElement) {
           mesaElement.classList.remove('selected');
@@ -1343,7 +1362,6 @@
         this.reservaEditandoId = null;
         this.clienteSeleccionadoId = null;
         
-        // Restaurar texto del botón
         const submitButton = this.formReserva.querySelector('button[type="submit"]');
         submitButton.innerHTML = '<i class="fas fa-plus"></i> Crear Reserva';
       }
@@ -1373,7 +1391,6 @@
 
               console.log('📋 Respuesta completa de /api/reservas:', result);
               
-              // Verifica si result.data es un array
               const reservas = Array.isArray(result.data) ? result.data : [];
               console.log('👥 Reservas recibidas:', reservas.length);
 
@@ -1390,9 +1407,6 @@
           }
       }
 
-      // Dentro de la clase ClientesApp, agrega este método y modifica renderizarReservas:
-
-      // Función para convertir hora de 24h a 12h con AM/PM
       formatearHoraAMPM(hora24) {
         if (!hora24 || hora24 === 'Sin hora') return 'Sin hora';
         
@@ -1401,16 +1415,16 @@
           let hora = parseInt(horas);
           const ampm = hora >= 12 ? 'PM' : 'AM';
           
-          // Convertir a formato 12h
           hora = hora % 12;
-          hora = hora ? hora : 12; // la hora 0 se convierte en 12
+          hora = hora ? hora : 12;
           
           return `${hora}:${minutos} ${ampm}`;
         } catch (error) {
           console.error('Error al formatear hora:', error);
-          return hora24; // Retorna el valor original si hay error
+          return hora24;
         }
       }
+
       renderizarReservas(reservas) {
           console.log('🎨 Renderizando reservas:', reservas.length);
           this.listaReservas.innerHTML = '';
@@ -1433,8 +1447,6 @@
             const fecha = this.formatearFecha(reserva.diaReserva);
             const hora = this.formatearHoraAMPM(reserva.horaReserva);
 
-
-            // Determinar la clase del badge según el estado
             let badgeClass = '';
             switch (reserva.estadoReserva) {
               case 'pendiente':
@@ -1453,26 +1465,22 @@
                 badgeClass = 'badge-pendiente';
             }
 
-            // Obtener nombre completo del cliente (nombre + apellido)
             const nombreCliente = reserva.cliente 
               ? `${reserva.cliente.nombre || ''} ${reserva.cliente.apellido || ''}`.trim()
               : 'Cliente eliminado';
 
-            // Botón para confirmar reserva (solo para reservas pendientes)
             const botonConfirmar = (reserva.estadoReserva === 'pendiente')
               ? `<button type="button" class="btn-confirmar-reserva" data-id="${reserva._id}" title="Confirmar reserva">
                   <i class="fas fa-check"></i> 
                 </button>`
               : '';
 
-            // Botón para cancelar reserva (solo para reservas confirmadas)
             const botonCancelar = (reserva.estadoReserva === 'confirmada')
               ? `<button type="button" class="btn-cancelar-reserva" data-id="${reserva._id}" title="Cancelar reserva">
                   <i class="fas fa-times"></i> Cancelar
                 </button>`
               : '';
 
-            // ✅ NUEVO: Botón para confirmar asistencia y liberar mesas (solo para reservas confirmadas)
             const botonAsistencia = (reserva.estadoReserva === 'confirmada')
               ? `<button type="button" class="btn-asistencia-reserva" data-id="${reserva._id}" title="Confirmar asistencia y liberar mesas">
                   <i class="fas fa-user-check"></i> Asistencia
@@ -1533,19 +1541,14 @@
             this.listaReservas.appendChild(card);
           });
           
-          // Agregar event listeners a los botones
           this.agregarEventListenersReservas();
         }
 
-      // Función para formatear fecha correctamente
-      // Función para formatear fecha corrigiendo zona horaria
       formatearFecha(fechaISO) {
         if (!fechaISO) return 'Sin fecha';
         
         try {
           const fecha = new Date(fechaISO);
-          
-          // Agregar el offset de zona horaria para corregir la fecha
           const fechaCorregida = new Date(fecha.getTime() + fecha.getTimezoneOffset() * 60000);
           
           const dia = fechaCorregida.getDate().toString().padStart(2, '0');
@@ -1570,7 +1573,7 @@
               const response = await fetch(`/api/reservas/${id}/estado`, {
                   method: 'PATCH',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ estado: 'confirmada' }) // ⚡ usar "estado" aquí
+                  body: JSON.stringify({ estado: 'confirmada' })
               });
 
               const result = await response.json();
@@ -1584,13 +1587,12 @@
           }
       }
 
-      // Función para cancelar reserva (cambia estado a "cancelada")
       async cancelarReserva(id) {
           try {
               const response = await fetch(`/api/reservas/${id}/estado`, {
                   method: 'PATCH',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ estado: 'cancelada' }) // ⚡ cambia a "cancelada"
+                  body: JSON.stringify({ estado: 'cancelada' })
               });
 
               const result = await response.json();
@@ -1598,69 +1600,14 @@
               if (!response.ok) throw new Error(result.mensaje || 'Error al cancelar la reserva');
 
               this.mostrarNotificacion('✅ Reserva cancelada correctamente', 'success');
-              this.obtenerReservas(); // refresca la lista para reflejar el nuevo estado
+              this.obtenerReservas();
           } catch (error) {
               console.error(error);
               this.mostrarNotificacion('❌ Error al cancelar la reserva', 'error');
           }
       }
 
-      // === AGREGAR ESTOS MÉTODOS DESPUÉS DE cancelarReserva ===
-
-      async editarReserva(id) {
-          try {
-              console.log('✏️ Iniciando edición de reserva ID:', id);
-              
-              const response = await fetch(`/api/reservas/${id}`);
-              if (!response.ok) throw new Error('Error al cargar reserva');
-              
-              const reserva = await response.json();
-              console.log('📋 Reserva cargada para editar:', reserva);
-
-              // Validar que la reserva tenga cliente
-              if (reserva.cliente) {
-                  // Si es un objeto poblado, usa _id; si es solo string, úsalo directamente
-                  this.clienteSeleccionadoId = reserva.cliente._id || reserva.cliente;
-              } else {
-                  console.error('No se encontró el cliente en la reserva');
-                  this.mostrarNotificacion('❌ No se pudo cargar el cliente de la reserva', 'error');
-                  return;
-              }
-
-              // Establecer modo edición
-              this.modoEdicionReserva = true;
-              this.reservaEditandoId = id;
-
-              // Llenar formulario con datos de la reserva
-              const fechaInput = reserva.diaReserva.split('T')[0];
-              document.getElementById('diaReserva').value = fechaInput;
-              
-              // Establecer hora desde formato 24h
-              this.establecerHoraDesde24h(reserva.horaReserva);
-              
-              document.getElementById('numeroPersonas').value = reserva.numeroPersonas;
-              document.getElementById('observaciones').value = reserva.observaciones || '';
-
-              // Cargar mesas seleccionadas
-              this.mesasSeleccionadas = reserva.mesas || [];
-              this.renderizarMesasSeleccionadas();
-
-              // Abrir modal de reserva
-              this.modal.style.display = 'flex';
-
-              // Cambiar texto del botón
-              const submitButton = this.formReserva.querySelector('button[type="submit"]');
-              submitButton.innerHTML = '<i class="fas fa-save"></i> Actualizar Reserva';
-
-          } catch (error) {
-              console.error('Error al editar reserva:', error);
-              this.mostrarNotificacion('❌ Error al cargar la reserva para editar', 'error');
-          }
-      }
-
-      // Agrega este método después del método renderizarReservas
       agregarEventListenersReservas() {
-        // Botones de confirmar reserva
         const botonesConfirmar = this.listaReservas.querySelectorAll('.btn-confirmar-reserva');
         botonesConfirmar.forEach(boton => {
           boton.addEventListener('click', (e) => {
@@ -1670,7 +1617,6 @@
           });
         });
 
-        // Botones de cancelar reserva
         const botonesCancelar = this.listaReservas.querySelectorAll('.btn-cancelar-reserva');
         botonesCancelar.forEach(boton => {
           boton.addEventListener('click', (e) => {
@@ -1679,7 +1625,6 @@
           });
         });
 
-        // ✅ NUEVO: Botones de confirmar asistencia
         const botonesAsistencia = this.listaReservas.querySelectorAll('.btn-asistencia-reserva');
         botonesAsistencia.forEach(boton => {
           boton.addEventListener('click', (e) => {
@@ -1690,12 +1635,10 @@
         });
       }
 
-
       async confirmarAsistencia(id) {
         try {
           console.log('✅ Confirmando asistencia para reserva ID:', id);
           
-          // Mensaje más específico
           if (!confirm('¿Confirmar que el cliente asistió y LIBERAR LAS MESAS?\n\n✅ Estado de reserva: FINALIZADA\n✅ Mesas: LIBERADAS (disponibles)\n✅ No se podrá revertir esta acción')) {
             return;
           }
@@ -1711,50 +1654,19 @@
             throw new Error(result.mensaje || 'Error al confirmar asistencia');
           }
 
-          // Verificar que realmente se liberaron las mesas
           if (result.mesasLiberadas && result.mesasLiberadas.length > 0) {
             this.mostrarNotificacion(`✅ Asistencia confirmada y ${result.mesasLiberadas.length} mesa(s) liberadas`, 'success');
           } else {
             this.mostrarNotificacion('✅ Asistencia confirmada', 'success');
           }
           
-          this.obtenerReservas(); // Actualizar la lista
+          this.obtenerReservas();
           
         } catch (error) {
           console.error('Error al confirmar asistencia:', error);
           this.mostrarNotificacion('❌ Error al confirmar asistencia: ' + error.message, 'error');
         }
       }
-
-      // Agrega este método en tu clase ClientesApp - después de cancelarReserva
-      async eliminarReserva(id) {
-          if (!confirm('¿Estás seguro de que deseas eliminar esta reserva?\nEsta acción no se puede deshacer.')) {
-              return;
-          }
-
-          try {
-              console.log('🗑️ Eliminando reserva ID:', id);
-              
-              const response = await fetch(`/api/reservas/${id}`, {
-                  method: 'DELETE'
-              });
-
-              const result = await response.json();
-              console.log('📋 Respuesta de eliminación:', result);
-
-              if (!response.ok) {
-                  throw new Error(result.mensaje || 'Error al eliminar reserva');
-              }
-
-              this.mostrarNotificacion('✅ Reserva eliminada correctamente', 'success');
-              this.obtenerReservas(); // Actualizar la lista
-              
-          } catch (error) {
-              console.error('Error al eliminar reserva:', error);
-              this.mostrarNotificacion('❌ Error al eliminar la reserva: ' + error.message, 'error');
-          }
-      }
-
 
       async obtenerClientes() {
         try {
@@ -1789,7 +1701,6 @@
           const card = document.createElement('div');
           card.classList.add('card', 'cliente');
           
-          // Obtener iniciales para el avatar
           const iniciales = (cliente.nombre.charAt(0) + (cliente.apellido ? cliente.apellido.charAt(0) : '')).toUpperCase();
           
           card.innerHTML = `
@@ -1854,12 +1765,10 @@
         
         let pisoStr = piso.toString().toLowerCase().trim();
         
-        // Remover "piso" si ya está incluido
         if (pisoStr.includes('piso')) {
           pisoStr = pisoStr.replace('piso', '').trim();
         }
         
-        // Si queda vacío, usar el original
         if (!pisoStr) {
           return piso.toString();
         }
@@ -1868,19 +1777,10 @@
       }
     }
 
-
     // Inicializar la aplicación cuando el DOM esté listo
     document.addEventListener('DOMContentLoaded', () => {
       window.clientesApp = new ClientesApp();
-  
-      // También para compatibilidad
       window.app = window.clientesApp;
-
-      // Probar notificaciones manualmente
-      window.clientesApp.mostrarNotificacion('✅ ¡Funciona! Notificación de éxito', 'success');
-      window.clientesApp.mostrarNotificacion('⚠️ Advertencia de prueba', 'warning');
-      window.clientesApp.mostrarNotificacion('❌ Error de prueba', 'error');
-      window.clientesApp.mostrarNotificacion('ℹ️ Información de prueba', 'info');
     });
   </script>
 
@@ -1900,368 +1800,7 @@
       <button type="submit">Enviar</button>
     </form>
   </div>
-<style>
-    /* Estilos para notificaciones del sistema */
-    @keyframes slideInRight {
-      from {
-        transform: translateX(100%);
-        opacity: 0;
-      }
-      to {
-        transform: translateX(0);
-        opacity: 1;
-      }
-    }
-
-    @keyframes slideOutRight {
-      from {
-        transform: translateX(0);
-        opacity: 1;
-      }
-      to {
-        transform: translateX(100%);
-        opacity: 0;
-      }
-    }
-
-    /* Estilos para notificaciones normales */
-    .notificacion {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      border-radius: 8px;
-      padding: 15px;
-      max-width: 350px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      z-index: 10000;
-      animation: slideInRight 0.3s ease;
-      font-family: Arial, sans-serif;
-    }
-
-    .notificacion-success {
-      background: #d4edda;
-      border: 1px solid #c3e6cb;
-      color: #155724;
-    }
-
-    .notificacion-error {
-      background: #f8d7da;
-      border: 1px solid #f5c6cb;
-      color: #721c24;
-    }
-
-    .notificacion-info {
-      background: #d1ecf1;
-      border: 1px solid #bee5eb;
-      color: #0c5460;
-    }
-
-    .notificacion-warning {
-      background: #fff3cd;
-      border: 1px solid #ffeaa7;
-      color: #856404;
-    }
-
-    .notificacion-contenido {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .notificacion-contenido button {
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: inherit;
-      padding: 0;
-      margin-left: 10px;
-      width: 20px;
-      height: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .notificacion-sistema {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      border-radius: 8px;
-      padding: 15px;
-      max-width: 350px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      z-index: 10000;
-      animation: slideInRight 0.3s ease;
-      font-family: Arial, sans-serif;
-    }
-
-    .notificacion-sistema.warning {
-      background: #fff3cd;
-      border: 1px solid #ffeaa7;
-      color: #856404;
-    }
-
-    .notificacion-sistema.error {
-      background: #f8d7da;
-      border: 1px solid #f5c6cb;
-      color: #721c24;
-    }
-
-    .notificacion-sistema-contenido {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .notificacion-sistema-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-
-    .notificacion-sistema-header strong {
-      font-size: 1.1em;
-      font-weight: bold;
-    }
-
-    .notificacion-sistema-header button {
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: inherit;
-      padding: 0;
-      width: 20px;
-      height: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .notificacion-sistema-body p {
-      margin: 0 0 5px 0;
-      line-height: 1.4;
-    }
-
-    .notificacion-sistema-body small {
-      color: #666;
-      font-size: 0.8em;
-    }
-
-    /* Efecto de desaparición */
-    .notificacion-sistema.fade-out {
-      animation: slideOutRight 0.3s ease forwards;
-    }
-
-    /* Botón flotante */
-    .chat-toggle {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background-color: #eb1f1f;
-      color: #fff;
-      border: none;
-      border-radius: 50%;
-      width: 60px;
-      height: 60px;
-      font-size: 24px;
-      cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      transition: transform 0.2s ease;
-      z-index: 999;
-    }
-    .chat-toggle:hover { transform: scale(1.1); }
-
-    /* Ventana modal del chat */
-    .chat-modal {
-      position: fixed;
-      bottom: 100px;
-      right: 30px;
-      width: 320px;
-      max-height: 420px;
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      z-index: 1000;
-    }
-    .chat-modal.hidden { display: none; }
-
-    .chat-header {
-      background: #eb1f1f;
-      color: white;
-      padding: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .chat-body {
-      flex: 1;
-      overflow-y: auto;
-      padding: 10px;
-      font-size: 14px;
-    }
-    .chat-form {
-      display: flex;
-      border-top: 1px solid #ccc;
-    }
-    .chat-form input {
-      flex: 1;
-      border: none;
-      padding: 10px;
-      font-size: 14px;
-    }
-    .chat-form button {
-      background: #eb1f1f;
-      color: white;
-      border: none;
-      padding: 0 15px;
-      cursor: pointer;
-    }
-    .msg {
-      margin-bottom: 8px;
-      padding: 8px;
-      border-radius: 10px;
-      max-width: 85%;
-    }
-    .msg.user {
-      background: #e9ecef;
-      align-self: flex-end;
-    }
-    .msg.ai {
-      background: #eb1f1f;
-      color: white;
-      align-self: flex-start;
-    }
-
-    /* Botón de notificaciones en header */
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .btn-notificaciones {
-      background: #eb1f1f;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      padding: 10px 15px;
-      font-size: 1em;
-      cursor: pointer;
-      position: relative;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: background 0.3s ease;
-    }
-
-    .btn-notificaciones:hover {
-      background: #c41a1a;
-    }
-
-    .notificacion-contador {
-      background: #ff6b6b;
-      color: white;
-      border-radius: 50%;
-      width: 20px;
-      height: 20px;
-      font-size: 0.7em;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-    }
-  </style>
-<style>
-    /* Botón flotante */
-    .chat-toggle {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background-color: #eb1f1f;
-      color: #fff;
-      border: none;
-      border-radius: 50%;
-      width: 60px;
-      height: 60px;
-      font-size: 24px;
-      cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      transition: transform 0.2s ease;
-      z-index: 999;
-    }
-    .chat-toggle:hover { transform: scale(1.1); }
-
-    /* Ventana modal del chat */
-    .chat-modal {
-      position: fixed;
-      bottom: 100px;
-      right: 30px;
-      width: 320px;
-      max-height: 420px;
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      z-index: 1000;
-    }
-    .chat-modal.hidden { display: none; }
-
-    .chat-header {
-      background: #eb1f1f;
-      color: white;
-      padding: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .chat-body {
-      flex: 1;
-      overflow-y: auto;
-      padding: 10px;
-      font-size: 14px;
-    }
-    .chat-form {
-      display: flex;
-      border-top: 1px solid #ccc;
-    }
-    .chat-form input {
-      flex: 1;
-      border: none;
-      padding: 10px;
-      font-size: 14px;
-    }
-    .chat-form button {
-      background: #eb1f1f;
-      color: white;
-      border: none;
-      padding: 0 15px;
-      cursor: pointer;
-    }
-    .msg {
-      margin-bottom: 8px;
-      padding: 8px;
-      border-radius: 10px;
-      max-width: 85%;
-    }
-    .msg.user {
-      background: #e9ecef;
-      align-self: flex-end;
-    }
-    .msg.ai {
-      background: #eb1f1f;
-      color: white;
-      align-self: flex-start;
-    }
-  </style>
 
   <script src="/js/adminChat.js"></script>
-
-
-  
 </body>
-</html> 
+</html>

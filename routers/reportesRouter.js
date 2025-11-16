@@ -10,14 +10,53 @@ const { verifyToken } = require('../controllers/userController');
 // =============== RUTA PRINCIPAL ===============
 router.get('/', verifyToken, async (req, res) => {
   try {
+    const { fechaInicio, fechaFin, mesero } = req.query;
     const meseros = await Usuario.find({ rol: 'mesero' }).lean();
+
+    let pedidos = [];
+    let totalGeneral = 0;
+
+    // Si hay fechas, buscar pedidos
+    if (fechaInicio && fechaFin) {
+      const inicio = new Date(fechaInicio);
+      inicio.setHours(0, 0, 0, 0);
+      const fin = new Date(fechaFin);
+      fin.setHours(23, 59, 59, 999);
+
+      const filtro = { fechaPedido: { $gte: inicio, $lte: fin } };
+      if (mesero && mesero !== 'todos') filtro.mesero = mesero;
+
+      const pedidosEncontrados = await Pedido.find(filtro)
+        .populate('mesero', 'nombre apellido')
+        .sort({ fechaPedido: -1 })
+        .lean();
+
+      pedidos = pedidosEncontrados.map((p, idx) => ({
+        numeroPedido: idx + 1,
+        _id: p._id,
+        fechaPedido: p.fechaPedido,
+        platos: Array.isArray(p.platos)
+          ? p.platos.map(pl => ({
+              nombre: pl.nombre || 'Sin nombre',
+              cantidad: pl.cantidad ?? 0,
+              subtotal: pl.subtotal ?? (pl.precio * pl.cantidad || 0),
+            }))
+          : [],
+        total: (p.total || 0).toFixed(2),
+        estadoPago: p.estadoPago || p.estadoPedido || 'pendiente',
+        mesero: p.mesero ? `${p.mesero.nombre} ${p.mesero.apellido}` : 'Sin asignar',
+      }));
+
+      totalGeneral = pedidosEncontrados.reduce((sum, p) => sum + (p.total || 0), 0);
+    }
 
     res.render('reportes', {
       meseros,
-      pedidos: [],
-      totalGeneral: 0,
-      fechaInicio: '',
-      fechaFin: ''
+      pedidos,
+      totalGeneral: totalGeneral.toFixed(2),
+      fechaInicio: fechaInicio || '',
+      fechaFin: fechaFin || '',
+      meseroSeleccionado: mesero || 'todos'
     });
   } catch (error) {
     console.error('Error cargando /reportes:', error);
@@ -31,13 +70,12 @@ router.get('/filtrar', verifyToken, async (req, res) => {
     const { fechaInicio, fechaFin, mesero } = req.query;
 
     if (!fechaInicio || !fechaFin) {
-      return res.status(400).send('Debe seleccionar un rango de fechas');
+      return res.status(400).json({ error: 'Debe seleccionar un rango de fechas' });
     }
 
-    const inicio = new Date(fechaInicio);
-    inicio.setHours(0, 0, 0, 0);
-    const fin = new Date(fechaFin);
-    fin.setHours(23, 59, 59, 999);
+    const inicio = new Date(`${fechaInicio}T00:00:00`);
+    const fin = new Date(`${fechaFin}T23:59:59`);
+
 
     const filtro = { fechaPedido: { $gte: inicio, $lte: fin } };
     if (mesero && mesero !== 'todos') filtro.mesero = mesero;
@@ -65,10 +103,14 @@ router.get('/filtrar', verifyToken, async (req, res) => {
 
     const totalGeneral = pedidos.reduce((sum, p) => sum + (p.total || 0), 0);
 
-    res.json({ resultados, totalGeneral: totalGeneral.toFixed(2) });
+    res.json({ 
+      resultados, 
+      totalGeneral: totalGeneral.toFixed(2),
+      message: resultados.length > 0 ? 'Reportes cargados correctamente' : 'No hay pedidos en el rango seleccionado'
+    });
   } catch (error) {
     console.error('Error al filtrar pedidos:', error);
-    res.status(500).send('Error filtrando pedidos');
+    res.status(500).json({ error: 'Error filtrando pedidos' });
   }
 });
 

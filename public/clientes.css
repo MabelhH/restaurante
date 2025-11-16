@@ -945,5 +945,764 @@ header h2 {
       align-self: flex-start;
     }
 
+ /* Estilos para notificaciones del sistema */
+    @keyframes slideInRight {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
 
-    
+    @keyframes slideOutRight {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+    }
+
+    /* Estilos para notificaciones normales */
+    .notificacion {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      border-radius: 8px;
+      padding: 15px;
+      max-width: 350px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 10000;
+      animation: slideInRight 0.3s ease;
+      font-family: Arial, sans-serif;
+    }
+
+    .notificacion-success {
+      background: #d4edda;
+      border: 1px solid #c3e6cb;
+      color: #155724;
+    }
+
+    .notificacion-error {
+      background: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+    }
+
+    .notificacion-info {
+      background: #d1ecf1;
+      border: 1px solid #bee5eb;
+      color: #0c5460;
+    }
+
+    .notificacion-warning {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      color: #856404;
+    }
+
+    .notificacion-contenido {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .notificacion-contenido button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: inherit;
+      padding: 0;
+      margin-left: 10px;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .notificacion-sistema {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      border-radius: 8px;
+      padding: 15px;
+      max-width: 350px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 10000;
+      animation: slideInRight 0.3s ease;
+      font-family: Arial, sans-serif;
+    }
+
+    .notificacion-sistema.warning {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      color: #856404;
+    }
+
+    .notificacion-sistema.error {
+      background: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+    }
+
+    .notificacion-sistema-contenido {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .notificacion-sistema-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .notificacion-sistema-header strong {
+      font-size: 1.1em;
+      font-weight: bold;
+    }
+
+    .notificacion-sistema-header button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: inherit;
+      padding: 0;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .notificacion-sistema-body p {
+      margin: 0 0 5px 0;
+      line-height: 1.4;
+    }
+
+    .notificacion-sistema-body small {
+      color: #666;
+      font-size: 0.8em;
+    }
+
+    /* Efecto de desaparición */
+    .notificacion-sistema.fade-out {
+      animation: slideOutRight 0.3s ease forwards;
+    }
+
+    /* Botón flotante */
+    .chat-toggle {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #eb1f1f;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      font-size: 24px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      transition: transform 0.2s ease;
+      z-index: 999;
+    }
+    .chat-toggle:hover { transform: scale(1.1); }
+
+    /* Ventana modal del chat */
+    .chat-modal {
+      position: fixed;
+      bottom: 100px;
+      right: 30px;
+      width: 320px;
+      max-height: 420px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 1000;
+    }
+    .chat-modal.hidden { display: none; }
+
+    .chat-header {
+      background: #eb1f1f;
+      color: white;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .chat-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      font-size: 14px;
+    }
+    .chat-form {
+      display: flex;
+      border-top: 1px solid #ccc;
+    }
+    .chat-form input {
+      flex: 1;
+      border: none;
+      padding: 10px;
+      font-size: 14px;
+    }
+    .chat-form button {
+      background: #eb1f1f;
+      color: white;
+      border: none;
+      padding: 0 15px;
+      cursor: pointer;
+    }
+    .msg {
+      margin-bottom: 8px;
+      padding: 8px;
+      border-radius: 10px;
+      max-width: 85%;
+    }
+    .msg.user {
+      background: #e9ecef;
+      align-self: flex-end;
+    }
+    .msg.ai {
+      background: #eb1f1f;
+      color: white;
+      align-self: flex-start;
+    }
+
+    /* Botón de notificaciones en header */
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-notificaciones {
+      background: #eb1f1f;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 15px;
+      font-size: 1em;
+      cursor: pointer;
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.3s ease;
+    }
+
+    .btn-notificaciones:hover {
+      background: #c41a1a;
+    }
+
+    .notificacion-contador {
+      background: #ff6b6b;
+      color: white;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      font-size: 0.7em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+ 
+    /* Botón flotante */
+    .chat-toggle {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #eb1f1f;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      font-size: 24px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      transition: transform 0.2s ease;
+      z-index: 999;
+    }
+    .chat-toggle:hover { transform: scale(1.1); }
+
+    /* Ventana modal del chat */
+    .chat-modal {
+      position: fixed;
+      bottom: 100px;
+      right: 30px;
+      width: 320px;
+      max-height: 420px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 1000;
+    }
+    .chat-modal.hidden { display: none; }
+
+    .chat-header {
+      background: #eb1f1f;
+      color: white;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .chat-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      font-size: 14px;
+    }
+    .chat-form {
+      display: flex;
+      border-top: 1px solid #ccc;
+    }
+    .chat-form input {
+      flex: 1;
+      border: none;
+      padding: 10px;
+      font-size: 14px;
+    }
+    .chat-form button {
+      background: #eb1f1f;
+      color: white;
+      border: none;
+      padding: 0 15px;
+      cursor: pointer;
+    }
+    .msg {
+      margin-bottom: 8px;
+      padding: 8px;
+      border-radius: 10px;
+      max-width: 85%;
+    }
+    .msg.user {
+      background: #e9ecef;
+      align-self: flex-end;
+    }
+    .msg.ai {
+      background: #eb1f1f;
+      color: white;
+      align-self: flex-start;
+    }
+
+    /* ======= ESTILOS PARA NOTIFICACIONES DE RESERVAS ======= */
+
+/* Widget de Notificaciones */
+.notification-widget {
+  position: relative;
+  display: inline-block;
+}
+
+.notification-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 15px;
+  background: linear-gradient(to right, #b22222, #ff6347);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.notification-trigger:hover {
+  background: linear-gradient(to right, #a01818, #e55337);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(178, 34, 34, 0.3);
+}
+
+.notification-icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.notification-pulse {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  background: #ff6b6b;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #ff6b6b;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 0.7em;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  border: 2px solid white;
+}
+
+.notification-label {
+  font-size: 0.9em;
+}
+
+/* Panel de Notificaciones */
+.notification-panel {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 400px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  display: none;
+  margin-top: 10px;
+  border: 1px solid #e0e0e0;
+}
+
+.notification-panel.show {
+  display: block;
+  animation: slideDown 0.3s ease;
+}
+
+.panel-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+  background: #f8f9fa;
+  border-radius: 12px 12px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.panel-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #333;
+}
+
+.panel-title i {
+  color: #b22222;
+  font-size: 1.2em;
+}
+
+.panel-title h4 {
+  margin: 0;
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+.panel-counter {
+  font-size: 0.8em;
+  color: #666;
+  background: #e9ecef;
+  padding: 4px 8px;
+  border-radius: 12px;
+}
+
+.notification-content {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.notification-list {
+  padding: 10px;
+}
+
+.notification-empty {
+  text-align: center;
+  padding: 30px 20px;
+  color: #666;
+}
+
+.notification-empty i {
+  font-size: 3em;
+  color: #28a745;
+  margin-bottom: 15px;
+  opacity: 0.7;
+}
+
+.notification-empty h5 {
+  margin: 0 0 10px 0;
+  font-size: 1.1em;
+  color: #555;
+}
+
+.notification-empty p {
+  margin: 0;
+  font-size: 0.9em;
+  color: #777;
+}
+
+/* Items de Notificación */
+.notification-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  border-left: 4px solid #ddd;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.notification-item:hover {
+  background: #f8f9fa;
+  transform: translateX(2px);
+}
+
+/* Colores para diferentes tipos de notificaciones */
+.notification-item.reserva_critica {
+  border-left-color: #dc3545;
+  background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+}
+
+.notification-item.reserva_pasada {
+  border-left-color: #fd7e14;
+  background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+}
+
+.notification-item.reserva_hoy {
+  border-left-color: #007bff;
+  background: linear-gradient(135deg, #d1ecf1, #bee5eb);
+}
+
+.notification-item.reserva_manana {
+  border-left-color: #ffc107;
+  background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+}
+
+.notification-icon {
+  font-size: 1.2em;
+  margin-top: 2px;
+  width: 20px;
+  text-align: center;
+}
+
+.notification-item.reserva_critica .notification-icon {
+  color: #dc3545;
+}
+
+.notification-item.reserva_pasada .notification-icon {
+  color: #fd7e14;
+}
+
+.notification-item.reserva_hoy .notification-icon {
+  color: #007bff;
+}
+
+.notification-item.reserva_manana .notification-icon {
+  color: #ffc107;
+}
+
+.notification-details {
+  flex: 1;
+}
+
+.notification-title {
+  font-weight: bold;
+  margin-bottom: 4px;
+  font-size: 0.9em;
+  color: #333;
+}
+
+.notification-message {
+  color: #555;
+  margin-bottom: 4px;
+  font-size: 0.85em;
+  line-height: 1.3;
+}
+
+.notification-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75em;
+  color: #666;
+}
+
+.notification-time {
+  font-weight: 500;
+}
+
+.notification-date {
+  color: #888;
+}
+
+/* Panel Footer */
+.panel-footer {
+  padding: 15px 20px;
+  border-top: 1px solid #eee;
+  background: #f8f9fa;
+  border-radius: 0 0 12px 12px;
+}
+
+.stock-summary {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 10px;
+  justify-content: center;
+}
+
+.summary-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8em;
+  color: #555;
+}
+
+.summary-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.summary-item.critical .summary-dot {
+  background: #dc3545;
+}
+
+.summary-item.low .summary-dot {
+  background: #fd7e14;
+}
+
+.view-all-btn {
+  width: 100%;
+  padding: 10px;
+  background: linear-gradient(to right, #b22222, #ff6347);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.view-all-btn:hover {
+  background: linear-gradient(to right, #a01818, #e55337);
+  transform: translateY(-1px);
+}
+
+/* Notificaciones del Sistema con Colores */
+.notificacion-sistema.reserva_critica {
+  background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+  border-left: 4px solid #dc3545;
+}
+
+.notificacion-sistema.reserva_pasada {
+  background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+  border: 1px solid #ffeaa7;
+  color: #856404;
+  border-left: 4px solid #fd7e14;
+}
+
+.notificacion-sistema.reserva_hoy {
+  background: linear-gradient(135deg, #d1ecf1, #bee5eb);
+  border: 1px solid #bee5eb;
+  color: #0c5460;
+  border-left: 4px solid #007bff;
+}
+
+.notificacion-sistema.reserva_manana {
+  background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+  border: 1px solid #ffeaa7;
+  color: #856404;
+  border-left: 4px solid #ffc107;
+}
+
+/* Animaciones */
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.7; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive para notificaciones */
+@media (max-width: 768px) {
+  .notification-panel {
+    width: 320px;
+    right: -50px;
+  }
+  
+  .notification-trigger .notification-label {
+    display: none;
+  }
+  
+  .panel-header {
+    padding: 12px 15px;
+  }
+  
+  .notification-item {
+    padding: 10px;
+  }
+}
+
+/* Mejoras para el contador de notificaciones */
+.notification-badge.high {
+  background: #dc3545;
+  animation: pulse 1s infinite;
+}
+
+.notification-badge.medium {
+  background: #fd7e14;
+}
+
+.notification-badge.low {
+  background: #ffc107;
+}
+
+/* Estados de prioridad para notificaciones */
+.notification-item.critical {
+  border-left-width: 6px;
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
+}
+
+.notification-item.high {
+  border-left-width: 5px;
+}
+
+.notification-item.medium {
+  border-left-width: 4px;
+}
+
+/* Efectos de hover mejorados */
+.notification-item.critical:hover {
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+  transform: translateX(3px) scale(1.02);
+}
+
+.notification-item.high:hover {
+  box-shadow: 0 3px 10px rgba(253, 126, 20, 0.2);
+  transform: translateX(2px) scale(1.01);
+}
