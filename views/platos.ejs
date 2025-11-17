@@ -174,6 +174,35 @@
                     <!-- Tabla de productos -->
                     <section class="list-section">
                         <h3>Lista de productos</h3>
+                        
+                        <!-- BUSCADOR Y FILTROS -->
+                        <div class="filtros-container">
+                            <div class="buscador-container">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="buscadorNombre" placeholder="Buscar por nombre...">
+                            </div>
+                            
+                            <div class="filtros-estado">
+                                <select id="filtroEstado">
+                                    <option value="todos">Todos los estados</option>
+                                    <option value="activo">Activos</option>
+                                    <option value="inactivo">Inactivos</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- FILTRO POR CATEGORÍA -->
+                        <div class="filtro-categoria">
+                            <span class="filtro-categoria-label">Categoría:</span>
+                            <div class="categoria-filtros">
+                                <button class="categoria-filtro-btn active" data-categoria="todas">Todas</button>
+                                <button class="categoria-filtro-btn" data-categoria="Platos principales">Platos principales</button>
+                                <button class="categoria-filtro-btn" data-categoria="Postres">Postres</button>
+                                <button class="categoria-filtro-btn" data-categoria="Bebidas">Bebidas</button>
+                                <button class="categoria-filtro-btn" data-categoria="Entrada">Entrada</button>
+                            </div>
+                        </div>
+                        
                         <div id="productosContainer" class="cards-container"></div>
                     </section>
                 </main>
@@ -185,7 +214,12 @@
         const tabla = document.querySelector('#tablaProductos tbody');
         const container = document.getElementById('productosContainer');
         let editarId = null;
+        let todosLosProductos = []; // Para almacenar todos los productos y filtrar
 
+        // ========== VARIABLES PARA FILTROS ==========
+        const buscadorNombre = document.getElementById('buscadorNombre');
+        const filtroEstado = document.getElementById('filtroEstado');
+        const filtroCategoriaBtns = document.querySelectorAll('.categoria-filtro-btn');
 
         // ========== FUNCIONALIDAD PARA EL BOTÓN DE ARCHIVO ==========
         const fileInput = document.getElementById('imagenFile');
@@ -269,73 +303,117 @@
             });
         }
         
+        // ========== FUNCIONALIDAD DE FILTROS ==========
+        
+        // Función para aplicar todos los filtros
+        function aplicarFiltros() {
+            const textoBusqueda = buscadorNombre.value.toLowerCase();
+            const estadoSeleccionado = filtroEstado.value;
+            const categoriaSeleccionada = document.querySelector('.categoria-filtro-btn.active').dataset.categoria;
+            
+            const productosFiltrados = todosLosProductos.filter(producto => {
+                // Filtro por nombre
+                const coincideNombre = producto.nombre.toLowerCase().includes(textoBusqueda);
+                
+                // Filtro por estado
+                const coincideEstado = estadoSeleccionado === 'todos' || producto.estado === estadoSeleccionado;
+                
+                // Filtro por categoría
+                const coincideCategoria = categoriaSeleccionada === 'todas' || 
+                                         (producto.categoria && producto.categoria.nombre === categoriaSeleccionada);
+                
+                return coincideNombre && coincideEstado && coincideCategoria;
+            });
+            
+            mostrarProductosFiltrados(productosFiltrados);
+        }
+        
+        // Función para mostrar productos filtrados
+        function mostrarProductosFiltrados(productos) {
+            container.innerHTML = '';
 
-        // Modificar la función cargarProductos para ordenar con stock bajo primero
+            if (productos.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                      <i class="fas fa-utensils"></i>
+                      <p>No hay productos que coincidan con los filtros</p>
+                      <p>Intenta ajustar los criterios de búsqueda</p>
+                    </div>
+                  `;
+                return;
+            }
+
+            // Ordenar productos: stock bajo primero
+            const productosOrdenados = ordenarProductosConStockBajoPrimero(productos);
+
+            productosOrdenados.forEach(p => {
+                const stockBajo = p.stock <= p.stockMinimo;
+                const card = document.createElement('div');
+                card.classList.add('card');
+
+                if (stockBajo) {
+                    card.classList.add('stock-bajo');
+                }
+
+                card.innerHTML = `
+                    <img src="${p.imagen || 'https://via.placeholder.com/150'}" alt="${p.nombre}" 
+                        onerror="this.src='https://via.placeholder.com/150'">
+                    <h4>${p.nombre}</h4>
+                    <p><strong>Categoría:</strong> ${p.categoria?.nombre || 'Sin categoría'}</p>
+                    <p><strong>Precio:</strong> S/. ${p.precio.toFixed(2)}</p>
+                    <p class="${stockBajo ? 'stock-low' : ''}">
+                      <strong>Stock:</strong> ${p.stock} 
+                      ${stockBajo ? '<span class="stock-warning">(!)</span>' : ''}
+                    </p>
+                    <p><strong>Stock Mínimo:</strong> ${p.stockMinimo}</p>
+                    <div class="card-actions">
+                      <button class="editar" data-id="${p._id}">
+                        <i class="fas fa-edit"></i>
+                        Editar
+                      </button>
+                      <button class="eliminar" data-id="${p._id}">
+                        <i class="fas fa-trash"></i>
+                        Eliminar
+                      </button>
+                      <button class="toggle-estado" data-id="${p._id}">
+                        ${p.estado === 'activo' ? 'Desactivar' : 'Activar'}
+                      </button>
+                    </div>
+                  `;
+                container.appendChild(card);
+            });
+        }
+
+        // Modificar la función cargarProductos para almacenar todos los productos
         async function cargarProductos() {
             try {
                 const res = await fetch('/api/platos');
                 if (!res.ok) throw new Error('Error al cargar productos');
 
-                const productos = await res.json();
-
-                // Ordenar productos: stock bajo primero
-                const productosOrdenados = ordenarProductosConStockBajoPrimero(productos);
-
-                container.innerHTML = '';
-
-                if (productosOrdenados.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                          <i class="fas fa-utensils"></i>
-                          <p>No hay productos registrados</p>
-                          <p>Comienza agregando tu primer producto</p>
-                        </div>
-                      `;
-                    return;
-                }
-
-                productosOrdenados.forEach(p => {
-                    const stockBajo = p.stock <= p.stockMinimo;
-                    const card = document.createElement('div');
-                    card.classList.add('card');
-
-                    if (stockBajo) {
-                        card.classList.add('stock-bajo');
-                    }
-
-                    card.innerHTML = `
-                        <img src="${p.imagen || 'https://via.placeholder.com/150'}" alt="${p.nombre}" 
-                            onerror="this.src='https://via.placeholder.com/150'">
-                        <h4>${p.nombre}</h4>
-                        <p><strong>Categoría:</strong> ${p.categoria?.nombre || 'Sin categoría'}</p>
-                        <p><strong>Precio:</strong> S/. ${p.precio.toFixed(2)}</p>
-                        <p class="${stockBajo ? 'stock-low' : ''}">
-                          <strong>Stock:</strong> ${p.stock} 
-                          ${stockBajo ? '<span class="stock-warning">(!)</span>' : ''}
-                        </p>
-                        <p><strong>Stock Mínimo:</strong> ${p.stockMinimo}</p>
-                        <div class="card-actions">
-                          <button class="editar" data-id="${p._id}">
-                            <i class="fas fa-edit"></i>
-                            Editar
-                          </button>
-                          <button class="eliminar" data-id="${p._id}">
-                            <i class="fas fa-trash"></i>
-                            Eliminar
-                          </button>
-                          <button class="toggle-estado" data-id="${p._id}">
-                            ${p.estado === 'activo' ? 'Desactivar' : 'Activar'}
-                          </button>
-                        </div>
-                      `;
-                    container.appendChild(card);
-                });
+                todosLosProductos = await res.json();
+                aplicarFiltros();
 
             } catch (error) {
                 console.error('Error:', error);
                 mostrarError('Error al cargar los productos');
             }
         }
+
+        // Event listeners para filtros
+        buscadorNombre.addEventListener('input', aplicarFiltros);
+        filtroEstado.addEventListener('change', aplicarFiltros);
+        
+        // Event listeners para filtros de categoría
+        filtroCategoriaBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Remover clase active de todos los botones
+                filtroCategoriaBtns.forEach(b => b.classList.remove('active'));
+                // Agregar clase active al botón clickeado
+                this.classList.add('active');
+                // Aplicar filtros
+                aplicarFiltros();
+            });
+        });
 
         // Event listeners para las notificaciones
         notificationIcon.addEventListener('click', function(e) {
@@ -857,142 +935,6 @@
 
         // ========== FUNCIONES PRINCIPALES ==========
 
-        // Función para cargar productos
-        async function cargarProductos() {
-            try {
-                const res = await fetch('/api/platos');
-                if (!res.ok) throw new Error('Error al cargar productos');
-
-                const productos = await res.json();
-                container.innerHTML = '';
-
-                if (productos.length === 0) {
-                    container.innerHTML = `
-        <div class="empty-state">
-          <i class="fas fa-utensils"></i>
-          <p>No hay productos registrados</p>
-          <p>Comienza agregando tu primer producto</p>
-        </div>
-      `;
-                    return;
-                }
-
-                productos.forEach(p => {
-                    const card = document.createElement('div');
-                    card.classList.add('card');
-
-                    // Verificar si el stock está bajo
-                    const stockBajo = p.stock <= p.stockMinimo;
-                    if (stockBajo) {
-                        card.classList.add('stock-bajo');
-                    }
-
-                    card.innerHTML = `
-                        <img src="${p.imagen || 'https://via.placeholder.com/150'}" alt="${p.nombre}" 
-                            onerror="this.src='https://via.placeholder.com/150'">
-                        <h4>${p.nombre}</h4>
-                        <p><strong>Categoría:</strong>${p.categoria?.nombre || 'Sin categoría'}</p>
-                        <p><strong>Precio:</strong> S/. ${p.precio.toFixed(2)}</p>
-                        <p class="${stockBajo ? 'stock-low' : ''}">
-                          <strong>Stock:</strong> ${p.stock} 
-                          ${stockBajo ? '<span class="stock-warning">(!)</span>' : ''}
-                        </p>
-                        <p><strong>Stock Mínimo:</strong> ${p.stockMinimo}</p>
-                        <p><strong>Estado:</strong> 
-                          <span class="${p.estado === 'activo' ? 'activo' : 'inactivo'}">
-                            ${p.estado}
-                          </span>
-                        </p>
-                        <div class="card-actions">
-                          <button class="toggle-estado" data-id="${p._id}">
-                            <i class="fas fa-power-off"></i>
-                          </button>
-                          <button class="editar" data-id="${p._id}">
-                            <i class="fas fa-edit"></i>
-                            Editar
-                          </button>
-                          <button class="eliminar" data-id="${p._id}">
-                            <i class="fas fa-trash"></i>
-                            Eliminar
-                          </button>
-                        </div>
-                      `;
-                    container.appendChild(card);
-                });
-            } catch (error) {
-                console.error('Error:', error);
-                mostrarError('Error al cargar los productos');
-            }
-        }
-
-        // Función para crear o actualizar producto
-        async function enviarProducto(e) {
-            e.preventDefault();
-
-            // Validaciones básicas
-            if (!form.nombre.value.trim()) {
-                mostrarError('El nombre del producto es requerido');
-                return;
-            }
-
-            if (form.precio.value <= 0) {
-                mostrarError('El precio debe ser mayor a 0');
-                return;
-            }
-
-            if (form.stock.value < 0) {
-                mostrarError('El stock no puede ser negativo');
-                return;
-            }
-
-            try {
-                const formData = new FormData();
-
-                formData.append('nombre', form.nombre.value.trim());
-                formData.append('categoria', form.categoria.value.trim());
-                formData.append('descripcion', form.descripcion.value.trim());
-                formData.append('precio', parseFloat(form.precio.value));
-                formData.append('stock', parseInt(form.stock.value));
-                formData.append('stockMinimo', parseInt(form.stockMinimo.value));
-                formData.append('estado', form.estado.value);
-
-                // Priorizar archivo sobre URL
-                if (form.imagenFile.files[0]) {
-                    formData.append('imagenFile', form.imagenFile.files[0]);
-                } else if (form.imagenUrl.value.trim()) {
-                    formData.append('imagenUrl', form.imagenUrl.value.trim());
-                }
-
-                let url = '/api/platos';
-                let method = 'POST';
-                if (editarId) {
-                    url = `/api/platos/${editarId}`;
-                    method = 'PUT';
-                }
-
-                const response = await fetch(url, {
-                    method,
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Error al guardar el producto');
-                }
-
-                // Mostrar mensaje de éxito
-                mostrarExito(editarId ? 'Producto actualizado correctamente' : 'Producto agregado correctamente');
-
-                // Resetear formulario
-                resetearFormulario();
-                await cargarProductos();
-
-            } catch (error) {
-                console.error('Error:', error);
-                mostrarError(error.message || 'Error al guardar el producto');
-            }
-        }
-
         function mostrarExito(mensaje) {
             const exitoDiv = document.createElement('div');
             exitoDiv.style.cssText = `
@@ -1181,6 +1123,84 @@
     font-weight: 600;
     margin-bottom: 0.5rem;
   }
+  
+  /* ESTILOS PARA LOS FILTROS */
+  .filtros-container {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  
+  .buscador-container {
+    position: relative;
+    flex: 1;
+    min-width: 250px;
+  }
+  
+  .buscador-container i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+  }
+  
+  #buscadorNombre {
+    width: 100%;
+    padding: 10px 10px 10px 35px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+  }
+  
+  .filtros-estado select {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+    min-width: 180px;
+  }
+  
+  .filtro-categoria {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
+  }
+  
+  .filtro-categoria-label {
+    font-weight: 600;
+    color: #333;
+  }
+  
+  .categoria-filtros {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  
+  .categoria-filtro-btn {
+    padding: 8px 16px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    background: #f8f9fa;
+    color: #333;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+  }
+  
+  .categoria-filtro-btn:hover {
+    background: #e9ecef;
+  }
+  
+  .categoria-filtro-btn.active {
+    background: #b22222;
+    color: white;
+    border-color: #b22222;
+  }
 `;
         document.head.appendChild(style);
 
@@ -1207,91 +1227,6 @@
       <button type="submit">Enviar</button>
     </form>
   </div>
-
-    <style>
-    /* Botón flotante */
-    .chat-toggle {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background-color: #eb1f1f;
-      color: #fff;
-      border: none;
-      border-radius: 50%;
-      width: 60px;
-      height: 60px;
-      font-size: 24px;
-      cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      transition: transform 0.2s ease;
-      z-index: 999;
-    }
-    .chat-toggle:hover { transform: scale(1.1); }
-
-    /* Ventana modal del chat */
-    .chat-modal {
-      position: fixed;
-      bottom: 100px;
-      right: 30px;
-      width: 320px;
-      max-height: 420px;
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      z-index: 1000;
-    }
-    .chat-modal.hidden { display: none; }
-
-    .chat-header {
-      background: #eb1f1f;
-      color: white;
-      padding: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .chat-body {
-      flex: 1;
-      overflow-y: auto;
-      padding: 10px;
-      font-size: 14px;
-    }
-    .chat-form {
-      display: flex;
-      border-top: 1px solid #ccc;
-    }
-    .chat-form input {
-      flex: 1;
-      border: none;
-      padding: 10px;
-      font-size: 14px;
-    }
-    .chat-form button {
-      background: #eb1f1f;
-      color: white;
-      border: none;
-      padding: 0 15px;
-      cursor: pointer;
-    }
-    .msg {
-      margin-bottom: 8px;
-      padding: 8px;
-      border-radius: 10px;
-      max-width: 85%;
-    }
-    .msg.user {
-      background: #e9ecef;
-      align-self: flex-end;
-    }
-    .msg.ai {
-      background: #eb1f1f;
-      color: white;
-      align-self: flex-start;
-    }
-  </style>
 
   <script src="/js/adminChat.js"></script>
 </body>

@@ -721,417 +721,549 @@ main h2 {
   }
 }
 
-.dashboard-cajero {
-      padding: 20px;
-      max-width: 1400px;
-      margin: 0 auto;
-    }
-
-    .stats-overview {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
-      margin-bottom: 30px;
-    }
-
-    .stat-card {
-      background: white;
-      padding: 25px;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+.pedido-actions {
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 6px;
+      margin: 10px 0;
       text-align: center;
-      border-left: 4px solid #007bff;
     }
 
-    .stat-card.pendientes { border-left-color: #ffc107; }
-    .stat-card.pagados { border-left-color: #28a745; }
-    .stat-card.cancelados { border-left-color: #dc3545; }
-    .stat-card.preparacion { border-left-color: #17a2b8; }
-
-    .stat-value {
-      font-size: 2.5em;
-      font-weight: bold;
-      margin-bottom: 5px;
-      color: #2c3e50;
-    }
-
-    .stat-label {
-      color: #6c757d;
-      font-size: 1em;
-      font-weight: 600;
-    }
-
-    .search-filters {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
-    }
-
-    .search-box {
-      position: relative;
-      margin-bottom: 15px;
-    }
-
-    .search-box i {
-      position: absolute;
-      left: 15px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #6c757d;
-    }
-
-    .search-box input {
-      width: 100%;
-      padding: 12px 12px 12px 45px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      font-size: 16px;
-      transition: border-color 0.3s ease;
-    }
-
-    .search-box input:focus {
-      outline: none;
-      border-color: #007bff;
-      box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
-    }
-
-    .filter-buttons {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .filter-btn {
-      padding: 10px 20px;
-      border: 1px solid #ddd;
-      background: white;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      font-weight: 500;
-    }
-
-    .filter-btn.active, .filter-btn:hover {
-      background: #007bff;
+    .btn-pedido-preparacion {
+      background: #17a2b8;
       color: white;
-      border-color: #007bff;
-    }
-
-    .cards-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-      gap: 20px;
-    }
-
-    .sale-card {
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      padding: 20px;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .sale-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-    }
-
-    .sale-header {
-      display: flex;
-      align-items: center;
-      margin-bottom: 15px;
-      padding-bottom: 15px;
-      border-bottom: 1px solid #eee;
-    }
-
-    .client-avatar {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: bold;
-      font-size: 1.2em;
-      margin-right: 15px;
-    }
-
-    .sale-info {
-      flex: 1;
-    }
-
-    .client-name {
-      font-weight: bold;
-      font-size: 1.2em;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 5px;
-    }
-
-    .sale-date {
-      color: #6c757d;
-      font-size: 0.9em;
-      margin-bottom: 5px;
-    }
-
-    .sale-meta {
-      color: #6c757d;
-      font-size: 0.85em;
-    }
-
-    .sale-meta small {
-      display: block;
-      margin-top: 2px;
-    }
-
-    .sale-products {
-      margin-bottom: 15px;
-    }
-
-    .sale-products h4 {
-      margin-bottom: 10px;
-      color: #2c3e50;
-      font-size: 1.1em;
-    }
-
-    .product-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-      padding: 5px 0;
-    }
-
-    .product-info {
-      flex: 1;
-    }
-
-    .product-name {
-      font-weight: 500;
-    }
-
-    .observaciones {
-      display: block;
-      color: #6c757d;
-      font-style: italic;
-      font-size: 0.85em;
-      margin-top: 2px;
-    }
-
-    .product-price {
-      font-weight: bold;
-      color: #28a745;
-    }
-
-    .product-item.total {
-      border-top: 2px solid #eee;
-      padding-top: 10px;
-      margin-top: 10px;
-      font-size: 1.1em;
-      font-weight: bold;
-    }
-
-    .pago-status {
-      margin-top: 10px;
-      padding-top: 10px;
-      border-top: 1px dashed #dee2e6;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .sale-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 15px;
-      padding-top: 15px;
-      border-top: 1px solid #eee;
-    }
-
-    .btn-action {
-      padding: 8px 16px;
       border: none;
+      padding: 10px 15px;
       border-radius: 6px;
       cursor: pointer;
-      font-size: 0.85rem;
-      text-decoration: none;
+      font-size: 0.9em;
+      transition: all 0.3s ease;
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      transition: all 0.3s ease;
-      font-weight: 500;
     }
 
-    .btn-action:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    .btn-pedido-preparacion:hover:not(:disabled) {
+      background: #138496;
+      transform: translateY(-2px);
     }
 
-    .btn-action.primary { background: #007bff; color: white; }
-    .btn-action.success { background: #28a745; color: white; }
-    .btn-action.info { background: #17a2b8; color: white; }
-    .btn-action.warning { background: #ffc107; color: #212529; }
-    .btn-action.danger { background: #dc3545; color: white; }
-    .btn-action:disabled {
-      background: #ccc;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
-
-    .badge {
-      padding: 4px 8px;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      display: inline-block;
-    }
-
-    .badge.warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
-    .badge.info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
-    .badge.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-    .badge.secondary { background: #e2e3e5; color: #383d41; border: 1px solid #d6d8db; }
-    .badge.danger { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-
-    .empty-state {
-      text-align: center;
-      padding: 60px 20px;
-      color: #6c757d;
-      grid-column: 1 / -1;
-    }
-
-    .empty-state i {
-      font-size: 4em;
-      margin-bottom: 20px;
-      color: #b0b0b0;
-    }
-
-    .empty-state h3 {
-      margin-bottom: 10px;
-      color: #495057;
-    }
-
-    .main-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 30px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid #dee2e6;
-    }
-
-    .main-header h2 {
-      color: #e4eaef;
-      margin: 0;
-    }
-
-    .welcome {
-      text-align: right;
-    }
-
-    .welcome p {
-      margin: 0;
-      color: #edf1f5;
-    }
-
-    .welcome strong {
-      color: #eaedf0;
-    }
-
-
-    /* Modal Styles */
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.5);
-    }
-
-    .modal-content {
-      background-color: white;
-      margin: 10% auto;
-      padding: 25px;
-      border-radius: 10px;
-      width: 90%;
-      max-width: 500px;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    }
-
-    .modal-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-      margin-top: 20px;
-    }
-
-    .modal h3 {
-      margin-top: 0;
-      color: #2c3e50;
-      margin-bottom: 15px;
-    }
-
-    .modal p {
-      margin: 10px 0;
-      line-height: 1.5;
-      color: #495057;
-    }
-
-    /* Notificaciones */
-    .notificacion {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 15px 20px;
-      border-radius: 8px;
-      z-index: 1001;
-      max-width: 400px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      animation: slideIn 0.3s ease;
-    }
-
-    @keyframes slideIn {
-      from { transform: translateX(100%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-
-    .notificacion.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-    .notificacion.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-    .notificacion.info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
-
-    .notificacion-contenido {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .notificacion-contenido button {
-      background: none;
-      border: none;
-      cursor: pointer;
-      margin-left: 10px;
-      color: inherit;
-    }
-
-    .nuevos-platos {
-      background: #e8f5e8;
-      border-left: 4px solid #28a745;
+    .plato-item {
+      border: 1px solid #e9ecef;
+      border-radius: 6px;
       padding: 10px;
-      margin: 10px 0;
-      border-radius: 4px;
+      margin-bottom: 8px;
+      background: #f8f9fa;
     }
 
-    .nuevos-platos h5 {
-      color: #155724;
-      margin: 0 0 5px 0;
-      font-size: 0.9em;
+    .plato-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #dee2e6;
     }
+
+    .plato-buttons {
+      display: flex;
+      gap: 5px;
+    }
+
+    .btn-plato {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8em;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .btn-preparacion {
+      background: #17a2b8;
+      color: white;
+    }
+
+    .btn-listo {
+      background: #28a745;
+      color: white;
+    }
+
+    .btn-entregado {
+      background: #007bff;
+      color: white;
+    }
+
+    .btn-plato:hover:not(:disabled) {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .btn-plato:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
+    }
+
+    .plato-completado {
+      color: #28a745;
+      font-size: 0.8em;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .plato-estado-badge {
+      font-size: 0.75em;
+      padding: 4px 8px;
+    }
+
+    .estado-feedback {
+      margin-top: 10px;
+      padding: 8px;
+      border-radius: 4px;
+      text-align: center;
+      font-size: 0.85em;
+      display: none;
+    }
+
+    .estado-feedback.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+      display: block;
+    }
+
+    .estado-feedback.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+      display: block;
+    }
+
+    .badge.warning {
+      background: #ffc107;
+      color: #212529;
+    }
+
+    .badge.info {
+      background: #17a2b8;
+      color: white;
+    }
+
+    .badge.success {
+      background: #28a745;
+      color: white;
+    }
+
+    .badge.primary {
+      background: #007bff;
+      color: white;
+    }
+
+    .badge.secondary {
+      background: #6c757d;
+      color: white;
+    }
+    /* ===== ESTILOS MEJORADOS PARA CUADROS DE PEDIDOS ===== */
+
+/* Contenedor principal de tarjetas */
+.cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 20px;
+  padding: 15px 0;
+}
+
+/* Tarjeta de pedido renovada */
+.sale-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  position: relative;
+}
+
+.sale-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+/* Cabecera de tarjeta mejorada */
+.sale-header {
+  padding: 18px 20px 15px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.sale-header::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  transform: rotate(30deg);
+}
+
+.client-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  background: rgba(255, 255, 255, 0.2) !important;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.client-avatar i {
+  font-size: 1.2rem;
+  color: white;
+}
+
+.sale-info {
+  position: relative;
+  z-index: 1;
+}
+
+.client-name {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.sale-date {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  opacity: 0.9;
+  margin-bottom: 5px;
+}
+
+.sale-meta small {
+  opacity: 0.85;
+  font-size: 0.8rem;
+}
+
+/* Badges mejorados */
+.badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.badge.warning {
+  background: linear-gradient(135deg, #ffd166, #ffb347);
+  color: #7a5a00;
+}
+
+.badge.info {
+  background: linear-gradient(135deg, #118ab2, #06d6a0);
+  color: white;
+}
+
+.badge.success {
+  background: linear-gradient(135deg, #06d6a0, #04a77c);
+  color: white;
+}
+
+.badge.primary {
+  background: linear-gradient(135deg, #7209b7, #4361ee);
+  color: white;
+}
+
+.badge.secondary {
+  background: linear-gradient(135deg, #6c757d, #495057);
+  color: white;
+}
+
+/* Sección de platos renovada */
+.sale-products {
+  padding: 20px;
+}
+
+.sale-products h4 {
+  margin: 0 0 15px 0;
+  font-size: 1rem;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sale-products h4::before {
+  content: "🍽";
+  font-size: 1.1rem;
+}
+
+/* Items de plato mejorados */
+.plato-item {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 12px;
+  border-left: 4px solid #4361ee;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+}
+
+.plato-item:hover {
+  background: #edf2ff;
+  transform: translateX(3px);
+}
+
+.product-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.product-name {
+  font-weight: 600;
+  color: #343a40;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.product-name strong {
+  color: #212529;
+}
+
+.observaciones {
+  color: #6c757d;
+  font-style: italic;
+  background: rgba(108, 117, 125, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+}
+
+.product-price {
+  font-weight: 700;
+  color: #28a745;
+  font-size: 1rem;
+  text-align: right;
+}
+
+/* Acciones de plato mejoradas */
+.plato-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.plato-estado-badge {
+  font-size: 0.7rem;
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+
+.plato-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+/* Botones de acción mejorados */
+.btn-plato {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.btn-preparacion {
+  background: linear-gradient(135deg, #118ab2, #06d6a0);
+  color: white;
+}
+
+.btn-listo {
+  background: linear-gradient(135deg, #06d6a0, #04a77c);
+  color: white;
+}
+
+.btn-entregado {
+  background: linear-gradient(135deg, #7209b7, #4361ee);
+  color: white;
+}
+
+.btn-plato:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-plato:disabled {
+  background: #adb5bd;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.plato-completado {
+  color: #28a745;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  background: rgba(40, 167, 69, 0.1);
+  border-radius: 8px;
+}
+
+/* Sección de observaciones generales */
+.observaciones-generales {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  padding: 12px 15px;
+  margin: 15px 0;
+  font-size: 0.9rem;
+}
+
+.observaciones-generales strong {
+  color: #856404;
+}
+
+/* Sección de total y estado de pago */
+.product-item.total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-top: 2px dashed #dee2e6;
+  font-size: 1.1rem;
+}
+
+.pago-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+}
+
+/* Botón de preparación de pedido completo */
+.pedido-actions {
+  padding: 15px 20px;
+  background: linear-gradient(to right, rgba(23, 162, 184, 0.1), rgba(102, 126, 234, 0.1));
+  text-align: center;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.btn-pedido-preparacion {
+  background: linear-gradient(135deg, #118ab2, #06d6a0);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 10px rgba(23, 162, 184, 0.3);
+}
+
+.btn-pedido-preparacion:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(23, 162, 184, 0.4);
+}
+
+/* Feedback de estado */
+.estado-feedback {
+  margin: 10px 20px;
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 0.85em;
+  font-weight: 500;
+  display: none;
+  animation: fadeIn 0.5s ease;
+}
+
+.estado-feedback.success {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+  display: block;
+}
+
+.estado-feedback.error {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+  display: block;
+}
+
+/* Estados vacío */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #6c757d;
+}
+
+.empty-state i {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  color: #dee2e6;
+}
+
+.empty-state h3 {
+  margin-bottom: 10px;
+  color: #495057;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .cards-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .plato-actions {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  
+  .plato-buttons {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
