@@ -26,10 +26,10 @@ exports.verifyToken = (req, res, next) => {
 exports.dashboard = async (req, res) => {
   try {
     const users = await Usuario.find();
-    res.render('dashboard', { user: req.user, users });
+    res.render('/dashboard', { user: req.user, users });
   } catch (err) {
     console.error(err);
-    res.render('dashboard', { user: req.user, users: [], error: 'Error al obtener usuarios' });
+    res.render('/dashboard', { user: req.user, users: [], error: 'Error al obtener usuarios' });
   }
 };
 

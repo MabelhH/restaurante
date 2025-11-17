@@ -161,7 +161,7 @@ class ReservaService {
     }
 
     // Verificar que esté en estado pendiente
-    if (reserva.estadoReserva !== 'pendiente') {
+    if (reserva.estadoReserva !== 'confirmada') {
       throw new Error('Solo se pueden confirmar reservas pendientes');
     }
 
@@ -335,7 +335,7 @@ class ReservaService {
     
     // Buscar reservas en curso que ya pasaron su hora + 2 horas
     const reservasParaLiberar = await Reserva.find({
-      estadoReserva: 'en_curso',
+      estadoReserva: 'finalizada',
       activo: true
     }).populate('mesas');
 

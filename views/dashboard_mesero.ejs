@@ -378,7 +378,7 @@
       try {
         console.log('🔄 Cargando datos del dashboard...');
         
-        const response = await fetch('/pedidos/dashboard/datos');
+        const response = await fetch('/api/pedidos/dashboard/datos');
         
         if (!response.ok) {
           throw new Error(`Error HTTP: ${response.status}`);

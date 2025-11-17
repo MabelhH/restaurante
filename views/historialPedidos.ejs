@@ -1,4 +1,3 @@
- <!-- historialPedidos.ejs -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -35,58 +34,80 @@
         <div class="welcome">
           <p>Bienvenido, <strong><%= usuario.nombre %></strong></p>
           <p>Rol: <strong><%= usuario.rol %></strong></p>
-         
         </div>
       </div>
     </header>
 
-    <!-- Filtros -->
+    <!-- Filtros CORREGIDOS -->
     <div class="filtros-historial">
       <form class="filtros-form" method="GET">
         <div class="form-group">
           <label for="fecha">
             <i class="fas fa-calendar-alt"></i> Filtrar por fecha:
           </label>
-          <input type="date" id="fecha" name="fecha" value="<%= fechaSeleccionada %>"
-                 max="<%= new Date().toISOString().split('T')[0] %>">
+          <% 
+            // ✅ FORZAR FECHA LOCAL - igual que tu backend
+            const hoy = new Date();
+            // Crear fecha local (sin horas, solo fecha)
+            const fechaLocal = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+            const fechaHoyInput = `${fechaLocal.getFullYear()}-${String(fechaLocal.getMonth() + 1).padStart(2, '0')}-${String(fechaLocal.getDate()).padStart(2, '0')}`;
+            
+            // Usar fecha seleccionada o hoy local
+            const fechaInputValue = fechaSeleccionada || fechaHoyInput;
+            const fechaMaxima = fechaHoyInput;
+          %>
+          <input type="date" id="fecha" name="fecha" value="<%= fechaInputValue %>"
+                max="<%= fechaMaxima %>">
         </div>
         <button type="submit" class="btn-filtrar">
           <i class="fas fa-filter"></i> Aplicar Filtro
         </button>
+        
+        <!-- Botones de navegación CORREGIDOS -->
         <% if (fechaSeleccionada) { %>
           <a href="/pedidos/historial/todos" class="btn-filtrar" style="background: #6c757d;">
             <i class="fas fa-calendar-day"></i> Ver Hoy
           </a>
         <% } else { %>
-          <a href="/pedidos/historial/todos?fecha=<%= new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0] %>" 
-             class="btn-filtrar" style="background: #17a2b8;">
+          <% 
+            // ✅ Ayer en fecha local
+            const ayer = new Date(fechaLocal);
+            ayer.setDate(ayer.getDate() - 1);
+            const fechaAyerInput = `${ayer.getFullYear()}-${String(ayer.getMonth() + 1).padStart(2, '0')}-${String(ayer.getDate()).padStart(2, '0')}`;
+          %>
+          <a href="/pedidos/historial/todos?fecha=<%= fechaAyerInput %>" 
+            class="btn-filtrar" style="background: #17a2b8;">
             <i class="fas fa-arrow-left"></i> Ver Ayer
           </a>
         <% } %>
       </form>
       
-      <% if (fechaSeleccionada) { %>
-        <div class="info-filtro">
-          <i class="fas fa-info-circle"></i>
-          Mostrando pedidos del <strong><%= new Date(fechaSeleccionada).toLocaleDateString('es-ES', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-          }) %></strong>
-        </div>
-      <% } else { %>
-        <div class="info-filtro" style="background: rgba(40, 167, 69, 0.1); border-color: rgba(40, 167, 69, 0.2); color: #28a745;">
-          <i class="fas fa-info-circle"></i>
-          Mostrando pedidos de <strong>hoy</strong> - 
-          <strong><%= new Date().toLocaleDateString('es-ES', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-          }) %></strong>
-        </div>
-      <% } %>
+      <% 
+        // ✅ Fecha para mostrar - LOCAL
+        let fechaParaMostrar;
+        let textoFecha;
+        
+        if (fechaSeleccionada) {
+          // Parsear YYYY-MM-DD a fecha local (igual que tu backend)
+          const [y, m, d] = fechaSeleccionada.split('-').map(Number);
+          fechaParaMostrar = new Date(y, m - 1, d);
+          textoFecha = 'del';
+        } else {
+          fechaParaMostrar = new Date(); // Hoy local
+          textoFecha = 'de hoy';
+        }
+      %>
+      
+      <div class="info-filtro <%= fechaSeleccionada ? '' : 'hoy' %>">
+        <i class="fas fa-info-circle"></i>
+        Mostrando pedidos <strong><%= textoFecha %></strong> - 
+        <strong><%= fechaParaMostrar.toLocaleDateString('es-ES', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        }) %></strong>
+      </div>
     </div>
 
     <!-- Resumen -->
@@ -99,7 +120,6 @@
         const pedidosPagados = pedidos.filter(p => p.estadoPago === 'pagado').length;
         const totalVentas = pedidos.reduce((sum, p) => sum + p.total, 0);
         
-        // Calcular porcentajes
         const porcentajeEntregados = totalPedidos > 0 ? ((pedidosEntregados / totalPedidos) * 100).toFixed(1) : 0;
         const porcentajePagados = totalPedidos > 0 ? ((pedidosPagados / totalPedidos) * 100).toFixed(1) : 0;
       %>
@@ -134,7 +154,7 @@
       </div>
     </div>
 
-    <!-- Lista de Pedidos -->
+    <!-- Lista de Pedidos CORREGIDA -->
     <div class="pedidos-container">
       <% if (pedidos.length === 0) { %>
         <div class="no-pedidos">
@@ -142,7 +162,7 @@
           <h3>No hay pedidos</h3>
           <p>
             <% if (fechaSeleccionada) { %>
-              No se encontraron pedidos para la fecha <strong><%= new Date(fechaSeleccionada).toLocaleDateString('es-ES') %></strong>.
+              No se encontraron pedidos para la fecha <strong><%= fechaParaMostrar.toLocaleDateString('es-ES') %></strong>.
             <% } else { %>
               No hay pedidos registrados para hoy.
             <% } %>
@@ -158,7 +178,7 @@
           <h4>
             <i class="fas fa-list"></i> 
             <% if (fechaSeleccionada) { %>
-              Pedidos del <%= new Date(fechaSeleccionada).toLocaleDateString('es-ES') %> (<%= pedidos.length %>)
+              Pedidos del <%= fechaParaMostrar.toLocaleDateString('es-ES') %> (<%= pedidos.length %>)
             <% } else { %>
               Pedidos de hoy (<%= pedidos.length %>)
             <% } %>
@@ -172,7 +192,7 @@
                 <h3>Pedido #<%= pedido.numeroPedido || pedido._id.toString().slice(-4) %></h3>
                 <div class="pedido-meta">
                   <span class="mesa-badge">
-                    <i class="fas fa-table"></i> Mesa <%= pedido.mesa.numeroMesa %>
+                    <i class="fas fa-table"></i> Mesa <%= pedido.mesa ? pedido.mesa.numeroMesa : 'Sin mesa' %>
                   </span>
                   <span class="fecha">
                     <i class="fas fa-clock"></i> 
@@ -248,29 +268,24 @@
   </main>
 
   <script>
-    // Auto-recargar la página cada 2 minutos para actualizar el historial
     setTimeout(() => {
       window.location.reload();
     }, 120000);
 
-    // Formatear números de manera más legible
     document.addEventListener('DOMContentLoaded', function() {
       const stats = document.querySelectorAll('.stat-number');
       stats.forEach(stat => {
         const text = stat.textContent;
-        // Solo formatear si es un número puro (no incluye "S/")
         if (!isNaN(text) && text.length > 3 && !text.includes('S/')) {
           stat.textContent = parseInt(text).toLocaleString('es-ES');
         }
       });
       
-      // Establecer fecha máxima como hoy
       const fechaInput = document.getElementById('fecha');
       if (fechaInput) {
         const today = new Date().toISOString().split('T')[0];
         fechaInput.setAttribute('max', today);
         
-        // Si no hay fecha seleccionada, establecer hoy por defecto
         if (!fechaInput.value) {
           fechaInput.value = today;
         }

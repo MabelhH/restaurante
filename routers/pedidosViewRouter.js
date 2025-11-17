@@ -354,62 +354,54 @@ router.get('/platos-listos', verifyToken, async (req, res) => {
   }
 });
 
-// ✅ Ruta para pedidos históricos - CORREGIDA PARA FILTRADO EXACTO
+// Ruta para pedidos históricos - SOLO HORA LOCAL
 router.get('/historial/todos', verifyToken, async (req, res) => {
   try {
     let filtroPedidos = { activo: true };
     
-    // Filtrar por mesero si no es admin
+    // Filtrar solo pedidos del mesero si el rol es mesero
     if (req.user.rol === 'mesero') {
       filtroPedidos.mesero = req.user._id;
-      console.log(`🔍 Historial filtrado para mesero: ${req.user._id}`);
     }
 
     const { fecha } = req.query;
-    
+
+    console.log('🔍 ========== FILTRO LOCAL ==========');
+    console.log('📅 Fecha recibida:', fecha || 'HOY');
+    console.log('🕐 Hora actual LOCAL:', new Date().toString());
+
+    let fechaInicio, fechaFin;
+
     if (fecha) {
-      // CORRECCIÓN: Crear el rango exacto para la fecha seleccionada
-      // Considerando la zona horaria de Perú (UTC-5)
-      const fechaSeleccionada = new Date(fecha);
-      
-      // Ajustar para zona horaria de Perú (UTC-5)
-      // Inicio del día en Perú: 00:00:00 UTC-5 = 05:00:00 UTC
-      const fechaInicio = new Date(fechaSeleccionada);
-      fechaInicio.setUTCHours(5, 0, 0, 0); // 00:00 hora Perú = 05:00 UTC
-      
-      // Fin del día en Perú: 23:59:59 UTC-5 = 04:59:59 UTC del día siguiente
-      const fechaFin = new Date(fechaSeleccionada);
-      fechaFin.setUTCHours(28, 59, 59, 999); // 23:59 hora Perú = 04:59 UTC del día siguiente
-      
-      console.log(`📅 Filtro de fechas - Seleccionada: ${fecha}`);
-      console.log(`📅 Rango UTC - Inicio: ${fechaInicio.toISOString()}`);
-      console.log(`📅 Rango UTC - Fin: ${fechaFin.toISOString()}`);
-      
-      filtroPedidos.fechaPedido = { 
-        $gte: fechaInicio, 
-        $lte: fechaFin
-      };
+      // Convertir string YYYY-MM-DD a Date local (sin desfase de zona horaria)
+      const [y, m, d] = fecha.split('-').map(Number);
+      fechaInicio = new Date(y, m - 1, d, 0, 0, 0);
+      fechaFin = new Date(y, m - 1, d, 23, 59, 59);
+
+      console.log('⏰ Rango LOCAL de fecha seleccionada:');
+      console.log('  Inicio:', fechaInicio.toString());
+      console.log('  Fin:', fechaFin.toString());
+
     } else {
-      // Si no hay fecha, mostrar solo los pedidos de hoy
+      // Si no hay fecha, usar hoy
       const hoy = new Date();
-      hoy.setUTCHours(5, 0, 0, 0); // Inicio del día en Perú
-      
-      const manana = new Date(hoy);
-      manana.setUTCHours(29, 59, 59, 999); // Fin del día en Perú
-      
-      filtroPedidos.fechaPedido = { 
-        $gte: hoy, 
-        $lte: manana
-      };
-      
-      console.log('📅 Mostrando pedidos de hoy (sin filtro)');
+      fechaInicio = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 0, 0, 0);
+      fechaFin = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 23, 59, 59);
+
+      console.log('📅 Filtro HOY - SOLO LOCAL:');
+      console.log('  Hoy inicio:', fechaInicio.toString());
+      console.log('  Hoy fin:', fechaFin.toString());
     }
+
+    filtroPedidos.fechaPedido = { $gte: fechaInicio, $lte: fechaFin };
 
     const pedidos = await Pedido.find(filtroPedidos)
       .populate('mesa', 'numeroMesa piso sector')
       .populate('mesero', 'nombre')
       .populate('platos.plato', 'nombre precio')
       .sort({ fechaPedido: -1 });
+
+    console.log(`📊 Pedidos encontrados: ${pedidos.length}`);
 
     const userData = {
       _id: req.user._id,
@@ -418,8 +410,6 @@ router.get('/historial/todos', verifyToken, async (req, res) => {
       rol: req.user.rol
     };
 
-    console.log(`📊 Historial cargado: ${pedidos.length} pedidos para ${userData.nombre}`);
-
     res.render('historialPedidos', {
       usuario: userData,
       pedidos,
@@ -427,12 +417,14 @@ router.get('/historial/todos', verifyToken, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error al cargar historial de pedidos:', error);
+    console.error('❌ Error al cargar historial:', error);
     res.status(500).render('error', { 
       mensaje: 'Error al cargar el historial',
       usuario: req.user 
     });
   }
 });
+
+
 
 module.exports = router;

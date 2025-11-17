@@ -295,7 +295,7 @@
     .empty-state i {
       font-size: 4em;
       margin-bottom: 20px;
-      color: #dee2e6;
+      color: #b0b0b0;
     }
 
     .empty-state h3 {
@@ -313,7 +313,7 @@
     }
 
     .main-header h2 {
-      color: #2c3e50;
+      color: #e4eaef;
       margin: 0;
     }
 
@@ -323,12 +323,13 @@
 
     .welcome p {
       margin: 0;
-      color: #6c757d;
+      color: #edf1f5;
     }
 
     .welcome strong {
-      color: #2c3e50;
+      color: #eaedf0;
     }
+
 
     /* Modal Styles */
     .modal {
@@ -442,7 +443,7 @@
   <main>
     <div class="dashboard-cajero">
       <header class="main-header">
-        <h2><i class="fas fa-tachometer-alt"></i> Dashboard - Cajero</h2>
+        <h2 class="icono"><i class="fas fa-tachometer-alt"></i> Dashboard - Cajero</h2>
         <div class="welcome">
           <p>Bienvenido, <strong><%= usuario.nombre %></strong></p>
           <p>Pedidos pendientes: <strong><%= pedidos.filter(p => p.estadoPago === 'pendiente').length %></strong></p>
@@ -487,7 +488,6 @@
           <button class="filter-btn active" data-filter="todos">Todos los Pedidos</button>
           <button class="filter-btn" data-filter="pendiente">Pendientes de Pago</button>
           <button class="filter-btn" data-filter="pagado">Pagados</button>
-          <button class="filter-btn" data-filter="preparacion">En Preparación</button>
         </div>
       </div>
 

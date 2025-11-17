@@ -100,7 +100,7 @@
       <section class="food-list">
         <% if (platos && platos.length > 0) { %>
           <% platos.forEach(plato => { %>
-            <% if (plato.estado === 'activo' && plato.disponible) { %>
+            <% if (plato.estado === 'activo') { %>
               <div class="food-card <%= plato.stock <= plato.stockMinimo ? 'stock-bajo' : '' %> <%= plato.stock <= 0 ? 'sin-stock' : '' %>"
                   data-categoria="<%= plato.categoria && plato.categoria.nombre ? plato.categoria.nombre : 'Sin categoría' %>"
                   data-plato-id="<%= plato._id %>">

@@ -95,8 +95,8 @@
         <div class="filter-buttons">
           <button class="filter-btn active" data-filter="todos">Todos</button>
           <button class="filter-btn" data-filter="pendiente">Pendientes</button>
-          <button class="filter-btn" data-filter="preparacion">En preparación</button>
-          <button class="filter-btn" data-filter="entregado">Entregados</button>
+          <button class="filter-btn" data-filter="en preparacion">En preparación</button>
+          <button class="filter-btn" data-filter="listo">Listo</button>
           <button class="filter-btn" data-filter="pagado">Pagados</button>
         </div>
       </div>
@@ -126,8 +126,9 @@
                       Mesa no asignada
                     <% } %>
                     <span class="badge <%= pedido.estadoPedido === 'pendiente' ? 'warning' : 
-                                          pedido.estadoPedido === 'preparacion' ? 'info' : 
-                                          pedido.estadoPedido === 'entregado' ? 'success' : 'secondary' %>">
+                                          pedido.estadoPedido === 'en preparacion' ? 'info' : 
+                                          pedido.estadoPedido === 'pendiente' ? 'warning' : 
+                                          pedido.estadoPedido === 'listo' ? 'success' : 'secondary' %>">
                       <%= pedido.estadoPedido %>
                     </span>
                   </div>
