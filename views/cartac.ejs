@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Carta - Mesero</title>
+  <title>Carta - cacinero</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="/cartac.css">
 </head>
@@ -98,46 +98,133 @@
   </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      const inputBusqueda = document.querySelector('.search-bar input');
-      const tarjetas = document.querySelectorAll('.food-card');
-      const botonesCategoria = document.querySelectorAll('.category');
-      let categoriaActiva = 'todas';
-
-      // 🔹 Filtrar por categoría
-      function filtrarPorCategoria(categoria) {
-        categoriaActiva = categoria;
-        tarjetas.forEach(card => {
-          const categoriaPlato = card.getAttribute('data-categoria');
-          card.style.display =
-            categoria === 'todas' || categoriaPlato === categoria ? 'block' : 'none';
+    // En el dashboard_cocinero.ejs, después del script existente
+    document.addEventListener('DOMContentLoaded', function() {
+        // Funcionalidad para las cards de pedidos
+        const orderCards = document.querySelectorAll('.order-card');
+        
+        orderCards.forEach(card => {
+            const startBtn = card.querySelector('[data-action="start"]');
+            const completeBtn = card.querySelector('[data-action="complete"]');
+            
+            if (startBtn) {
+                startBtn.addEventListener('click', function() {
+                    const orderId = this.getAttribute('data-order');
+                    iniciarPreparacion(orderId, card);
+                });
+            }
+            
+            if (completeBtn) {
+                completeBtn.addEventListener('click', function() {
+                    const orderId = this.getAttribute('data-order');
+                    completarPedido(orderId, card);
+                });
+            }
         });
-
-        botonesCategoria.forEach(btn => {
-          btn.classList.toggle('active', btn.getAttribute('data-categoria') === categoria);
+        
+        // Funciones para manejar pedidos
+        function iniciarPreparacion(orderId, card) {
+            // Actualizar UI
+            card.classList.remove('pending');
+            card.classList.add('in-progress');
+            card.setAttribute('data-status', 'in-progress');
+            
+            // Actualizar botones
+            const startBtn = card.querySelector('[data-action="start"]');
+            if (startBtn) {
+                startBtn.innerHTML = '<i class="fas fa-clock"></i> En preparación';
+                startBtn.classList.remove('btn-primary');
+                startBtn.classList.add('btn-warning');
+                startBtn.disabled = true;
+            }
+            
+            // Mostrar notificación
+            showNotification(`Preparación iniciada para el pedido ${orderId}`, 'info');
+            
+            // Aquí puedes agregar la llamada a tu API
+            actualizarEstadoPedido(orderId, 'en preparacion');
+            
+            // Actualizar contadores
+            updateOrderCounters();
+        }
+        
+        function completarPedido(orderId, card) {
+            // Mostrar notificación
+            showNotification(`Pedido ${orderId} completado`, 'success');
+            
+            // Actualizar UI
+            card.classList.remove('pending', 'in-progress');
+            card.classList.add('completed');
+            card.setAttribute('data-status', 'completed');
+            
+            // Ocultar botones y mostrar estado completado
+            const actionButtons = card.querySelector('.order-actions');
+            actionButtons.innerHTML = '<span class="completed-badge"><i class="fas fa-check-circle"></i> Completado</span>';
+            
+            // Animación de desaparición
+            setTimeout(() => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateX(100px)';
+                setTimeout(() => {
+                    card.remove();
+                    updateOrderCounters();
+                }, 500);
+            }, 2000);
+            
+            // Actualizar en backend
+            actualizarEstadoPedido(orderId, 'completado');
+        }
+        
+        function actualizarEstadoPedido(orderId, estado) {
+            // Aquí tu llamada a la API
+            fetch(`/api/pedidos/${orderId}/estado`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ estado: estado })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Estado actualizado:', data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Error al actualizar el pedido', 'error');
+            });
+        }
+        
+        function updateOrderCounters() {
+            const pendingOrders = document.querySelectorAll('.order-card[data-status="pending"]').length;
+            const inProgressOrders = document.querySelectorAll('.order-card[data-status="in-progress"]').length;
+            
+            // Actualizar contadores en el dashboard
+            const pendingCountElement = document.getElementById('pendingOrdersCount');
+            if (pendingCountElement) {
+                pendingCountElement.textContent = pendingOrders + inProgressOrders;
+            }
+        }
+        
+        // Funcionalidad para las cards de platos populares
+        const dishCards = document.querySelectorAll('.dish-card');
+        dishCards.forEach(card => {
+            card.addEventListener('click', function() {
+                const dishName = this.querySelector('.dish-name').textContent;
+                showNotification(`Ver detalles de: ${dishName}`, 'info');
+                // Aquí puedes redirigir a la página de detalles del plato
+            });
         });
-      }
-
-      // 🔹 Escuchar clics en botones
-      botonesCategoria.forEach(btn => {
-        btn.addEventListener('click', function () {
-          const categoria = this.getAttribute('data-categoria');
-          filtrarPorCategoria(categoria);
+        
+        // Funcionalidad para alertas de stock
+        const alertItems = document.querySelectorAll('.alert-item');
+        alertItems.forEach(alert => {
+            alert.addEventListener('click', function() {
+                const itemName = this.querySelector('.alert-name').textContent;
+                showNotification(`Revisar stock de: ${itemName}`, 'warning');
+                // Aquí puedes redirigir a la gestión de platos
+                window.location.href = '/platos';
+            });
         });
-      });
-
-      // 🔹 Búsqueda
-      inputBusqueda.addEventListener('input', function () {
-        const texto = inputBusqueda.value.toLowerCase();
-        tarjetas.forEach(card => {
-          const nombre = card.querySelector('h4').textContent.toLowerCase();
-          const descripcion = card.querySelector('p').textContent.toLowerCase();
-          const categoriaPlato = card.getAttribute('data-categoria');
-          const coincideBusqueda = nombre.includes(texto) || descripcion.includes(texto);
-          const coincideCategoria = categoriaActiva === 'todas' || categoriaPlato === categoriaActiva;
-          card.style.display = coincideBusqueda && coincideCategoria ? 'block' : 'none';
-        });
-      });
     });
   </script>
 

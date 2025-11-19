@@ -323,6 +323,7 @@ router.put('/:id/estado', verifyToken, async (req, res) => {
   }
 });
 
+
 // ✅ NUEVA RUTA: Actualizar estado de un plato específico
 router.put('/:pedidoId/platos/:platoIndex/estado', verifyToken, async (req, res) => {
   try {

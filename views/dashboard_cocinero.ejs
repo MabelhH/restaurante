@@ -6,34 +6,998 @@
   <title>Dashboard - Restaurante</title>
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="dashboard_cocinero.css">
+  <style>
+    /* Variables CSS */
+    :root {
+      --rojo-principal: #b22222;
+      --rojo-oscuro: #8b0000;
+      --rojo-claro: rgba(178, 34, 34, 0.1);
+      --verde: #28a745;
+      --verde-claro: rgba(40, 167, 69, 0.1);
+      --amarillo: #ffc107;
+      --amarillo-claro: rgba(255, 193, 7, 0.1);
+      --azul: #007bff;
+      --azul-claro: rgba(0, 123, 255, 0.1);
+      --gris-claro: #f5f5f5;
+      --gris-medio: #ddd;
+      --gris-oscuro: #666;
+      --blanco: #fff;
+      --negro: #000;
+      --transicion: all 0.3s ease;
+      --sombra: 0 4px 6px rgba(0, 0, 0, 0.1);
+      --sombra-hover: 0 8px 15px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Estilos generales */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--gris-claro);
+      color: #333;
+      overflow-x: hidden;
+    }
+
+    .dashboard-container {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 260px;
+      background: var(--negro);
+      color: var(--blanco);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+      position: fixed;
+      height: 100vh;
+      z-index: 100;
+      transition: var(--transicion);
+      overflow-y: auto;
+    }
+
+    .logo {
+      text-align: center;
+      padding: 20px 0;
+      color: var(--rojo-principal);
+      margin-bottom: 30px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      width: 100%;
+    }
+
+    .logo i {
+      font-size: 2.5rem;
+      color: var(--rojo-principal);
+      margin-bottom: 10px;
+    }
+
+    .sidebar h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem;
+      color: var(--rojo-principal);
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    .sidebar nav {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+    }
+
+    .sidebar nav a {
+      text-decoration: none;
+      color: var(--blanco);
+      font-size: 1rem;
+      padding: 0.8rem 1rem;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 5px 0;
+      transition: var(--transicion);
+    }
+
+    .sidebar nav a i {
+      margin-right: 10px;
+      width: 20px;
+      font-size: 1.2rem;
+      text-align: center;
+    }
+
+    .sidebar nav a:hover,
+    .sidebar nav a:focus {
+      background-color: rgba(255, 38, 38, 0.8);
+      transform: translateX(5px);
+      outline: none;
+    }
+
+    .sidebar nav a.active {
+      background-color: rgba(255, 38, 38, 0.8);
+      transform: translateX(5px);
+    }
+
+    /* Main content */
+    .main-content {
+      flex: 1;
+      padding: 20px;
+      margin-left: 260px;
+      overflow-y: auto;
+      transition: var(--transicion);
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid var(--gris-medio);
+    }
+
+    header h1 {
+      color: var(--rojo-principal);
+    }
+
+    .welcome-badge {
+      background-color: var(--rojo-principal);
+      color: var(--blanco);
+      padding: 8px 15px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+    }
+
+    /* Tarjetas de estadísticas */
+    .stats-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: var(--blanco);
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: var(--sombra);
+      display: flex;
+      align-items: center;
+      transition: var(--transicion);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--sombra-hover);
+    }
+
+    .stat-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 15px;
+      font-size: 1.5rem;
+    }
+
+    .stat-info h3 {
+      font-size: 1.8rem;
+      margin-bottom: 5px;
+    }
+
+    .stat-info p {
+      color: var(--gris-oscuro);
+    }
+
+    /* Sección de pedidos pendientes */
+    .section-title {
+      margin: 30px 0 15px;
+      color: var(--rojo-principal);
+      display: flex;
+      align-items: center;
+    }
+
+    .section-title i {
+      margin-right: 10px;
+    }
+
+    .orders-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .order-card {
+      background: var(--blanco);
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: var(--sombra);
+      border-left: 4px solid var(--rojo-principal);
+      transition: var(--transicion);
+    }
+
+    .order-card.pending {
+      border-left-color: var(--amarillo);
+    }
+
+    .order-card.in-progress {
+      border-left-color: var(--azul);
+    }
+
+    .order-card.completed {
+      border-left-color: var(--verde);
+    }
+
+    .order-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .order-number {
+      font-weight: bold;
+      color: var(--rojo-principal);
+    }
+
+    .order-time {
+      color: var(--gris-oscuro);
+      font-size: 0.9rem;
+    }
+
+    .order-mesa {
+      background: #f0f0f0;
+      padding: 5px 10px;
+      border-radius: 15px;
+      font-size: 0.8rem;
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+
+    .order-items {
+      margin-bottom: 15px;
+    }
+
+    .order-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px dashed #eee;
+    }
+
+    .order-item:last-child {
+      border-bottom: none;
+    }
+
+    .item-name {
+      flex: 1;
+    }
+
+    .item-quantity {
+      background: #f0f0f0;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+    }
+
+    .order-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      padding: 8px 15px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: var(--transicion);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .btn-primary {
+      background-color: var(--rojo-principal);
+      color: var(--blanco);
+    }
+
+    .btn-primary:hover {
+      background-color: var(--rojo-oscuro);
+    }
+
+    .btn-success {
+      background-color: var(--verde);
+      color: var(--blanco);
+    }
+
+    .btn-success:hover {
+      background-color: #218838;
+    }
+
+    .btn-warning {
+      background-color: var(--amarillo);
+      color: #212529;
+    }
+
+    .btn-warning:hover {
+      background-color: #e0a800;
+    }
+
+    /* Sección de platos populares */
+    .popular-dishes {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    .dish-card {
+      background: var(--blanco);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: var(--sombra);
+      transition: var(--transicion);
+    }
+
+    .dish-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--sombra-hover);
+    }
+
+    .dish-image {
+      height: 120px;
+      background-color: #f0f0f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #999;
+    }
+
+    .dish-info {
+      padding: 15px;
+    }
+
+    .dish-name {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .dish-orders {
+      color: var(--gris-oscuro);
+      font-size: 0.9rem;
+    }
+
+    /* Alertas de stock */
+    .alerts-container {
+      background: var(--blanco);
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: var(--sombra);
+      margin-bottom: 30px;
+    }
+
+    .alert-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .alert-item:last-child {
+      border-bottom: none;
+    }
+
+    .alert-name {
+      flex: 1;
+    }
+
+    .alert-stock {
+      background: var(--amarillo);
+      color: #212529;
+      padding: 3px 10px;
+      border-radius: 15px;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+
+    .alert-critical {
+      background: #dc3545;
+      color: var(--blanco);
+    }
+
+    /* Filtros de pedidos */
+    .order-filters {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 8px 15px;
+      border: 1px solid var(--gris-medio);
+      background: var(--blanco);
+      border-radius: 5px;
+      cursor: pointer;
+      transition: var(--transicion);
+    }
+
+    .filter-btn.active {
+      background: var(--rojo-principal);
+      color: var(--blanco);
+      border-color: var(--rojo-principal);
+    }
+
+    /* Notificaciones */
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px 20px;
+      border-radius: 5px;
+      color: var(--blanco);
+      box-shadow: var(--sombra);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transform: translateX(150%);
+      transition: transform 0.3s ease;
+    }
+
+    .notification.show {
+      transform: translateX(0);
+    }
+
+    .notification.success {
+      background: var(--verde);
+    }
+
+    .notification.error {
+      background: #dc3545;
+    }
+
+    .notification.info {
+      background: var(--azul);
+    }
+
+    /* Botón de menú móvil */
+    .menu-toggle {
+      display: none;
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 101;
+      background: var(--rojo-principal);
+      color: var(--blanco);
+      border: none;
+      border-radius: 5px;
+      padding: 10px;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .stats-container {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .menu-toggle {
+        display: block;
+      }
+
+      .sidebar {
+        width: 70px;
+        padding: 1rem 0.5rem;
+      }
+
+      .sidebar h2 span {
+        display: none;
+      }
+
+      .sidebar nav a span {
+        display: none;
+      }
+
+      .main-content {
+        margin-left: 70px;
+        padding: 1rem;
+      }
+
+      .stats-container {
+        grid-template-columns: 1fr;
+      }
+
+      .orders-container {
+        grid-template-columns: 1fr;
+      }
+
+      .popular-dishes {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .sidebar.mobile-open {
+        width: 260px;
+      }
+
+      .sidebar.mobile-open h2 span {
+        display: inline;
+      }
+
+      .sidebar.mobile-open nav a span {
+        display: inline;
+      }
+
+      .main-content.mobile-shift {
+        margin-left: 260px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .popular-dishes {
+        grid-template-columns: 1fr;
+      }
+
+      .order-actions {
+        flex-direction: column;
+      }
+      
+      .order-filters {
+        justify-content: center;
+      }
+    }
+  </style>
 </head>
 <body>
+  <!-- Botón de menú móvil -->
+  <button class="menu-toggle" id="menuToggle" aria-label="Abrir menú">
+    <i class="fas fa-bars"></i>
+  </button>
+
   <div class="dashboard-container">
     <!-- Sidebar -->
-    <aside class="sidebar">
-      <h2 class="logo">
-      <i class="fas fa-utensils"></i><br>
-      Restaurante
-    </h2>
+    <aside class="sidebar" id="sidebar">
+      <div class="logo">
+        <i class="fas fa-utensils"></i><br>
+        <h2><span>Restaurante</span></h2>
+      </div>
 
       <nav>
-        <a href="/dashboard_cocinero" class="active"><i class="fas fa-home"></i> <span>Dashboard</span></a>
-        <a href="/platos"><i class="fas fa-bowl-food"></i> <span>Platos</span></a>
-        <a href="/carta"><i class="fas fa-book-open"></i> <span>Carta</span></a>
-        <a href="/pedidos"><i class="fas fa-receipt"></i> <span>Pedidos</span></a>
-        <a href="/logout"><i class="fas fa-sign-out-alt"></i> <span>Cerrar sesión</span></a>
+        <a href="/dashboard_cocinero" class="active" aria-current="page">
+          <i class="fas fa-home"></i> <span>Dashboard</span>
+        </a>
+        <a href="/platos">
+          <i class="fas fa-bowl-food"></i> <span>Platos</span>
+        </a>
+        <a href="/carta">
+          <i class="fas fa-book-open"></i> <span>Carta</span>
+        </a>
+        <a href="/pedidos">
+          <i class="fas fa-receipt"></i> <span>Pedidos</span>
+        </a>
+        <a href="/logout">
+          <i class="fas fa-sign-out-alt"></i> <span>Cerrar sesión</span>
+        </a>
       </nav>
     </aside>
 
     <!-- Main content -->
-    <main class="main-content">
+    <main class="main-content" id="mainContent">
       <header>
-        <h1>Bienvenido, <%= usuario.nombre %> </h1>
+        <h1>Bienvenido, julio</h1>
         <div class="welcome-badge">Panel de cocinero</div>
       </header>
 
-      
+      <!-- Tarjetas de estadísticas -->
+      <div class="stats-container">
+        <div class="stat-card">
+          <div class="stat-icon" style="background-color: var(--rojo-claro); color: var(--rojo-principal);">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div class="stat-info">
+            <h3 id="pendingOrdersCount">8</h3>
+            <p>Pedidos pendientes</p>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon" style="background-color: var(--verde-claro); color: var(--verde);">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <div class="stat-info">
+            <h3 id="todayOrdersCount">12</h3>
+            <p>Pedidos hoy</p>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon" style="background-color: var(--amarillo-claro); color: var(--amarillo);">
+            <i class="fas fa-exclamation-triangle"></i>
+          </div>
+          <div class="stat-info">
+            <h3 id="stockAlertsCount">3</h3>
+            <p>Alertas de stock</p>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon" style="background-color: var(--azul-claro); color: var(--azul);">
+            <i class="fas fa-utensils"></i>
+          </div>
+          <div class="stat-info">
+            <h3>24</h3>
+            <p>Platos activos</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtros de pedidos -->
+      <h2 class="section-title"><i class="fas fa-list"></i> Pedidos Pendientes</h2>
+      <div class="order-filters">
+        <button class="filter-btn active" data-filter="all">Todos</button>
+        <button class="filter-btn" data-filter="pending">Pendientes</button>
+        <button class="filter-btn" data-filter="in-progress">En preparación</button>
+        <button class="filter-btn" data-filter="completed">Completados</button>
+      </div>
+
+      <!-- Pedidos pendientes -->
+      <div class="orders-container" id="ordersContainer">
+        <!-- Pedido 1 -->
+        <div class="order-card pending" data-status="pending">
+          <div class="order-header">
+            <div class="order-number">#ORD-001</div>
+            <div class="order-time">Hace 5 min</div>
+          </div>
+          <div class="order-mesa">Mesa 4</div>
+          <div class="order-items">
+            <div class="order-item">
+              <div class="item-name">Lomo Saltado</div>
+              <div class="item-quantity">x2</div>
+            </div>
+            <div class="order-item">
+              <div class="item-name">Ceviche</div>
+              <div class="item-quantity">x1</div>
+            </div>
+            <div class="order-item">
+              <div class="item-name">Jugo de Maracuyá</div>
+              <div class="item-quantity">x3</div>
+            </div>
+          </div>
+          <div class="order-actions">
+            <button class="btn btn-primary" data-action="start" data-order="ORD-001">
+              <i class="fas fa-play"></i> Iniciar
+            </button>
+            <button class="btn btn-success" data-action="complete" data-order="ORD-001">
+              <i class="fas fa-check"></i> Completar
+            </button>
+          </div>
+        </div>
+
+        <!-- Pedido 2 -->
+        <div class="order-card in-progress" data-status="in-progress">
+          <div class="order-header">
+            <div class="order-number">#ORD-002</div>
+            <div class="order-time">Hace 12 min</div>
+          </div>
+          <div class="order-mesa">Mesa 7</div>
+          <div class="order-items">
+            <div class="order-item">
+              <div class="item-name">Pizza Margarita</div>
+              <div class="item-quantity">x1</div>
+            </div>
+            <div class="order-item">
+              <div class="item-name">Ensalada César</div>
+              <div class="item-quantity">x2</div>
+            </div>
+          </div>
+          <div class="order-actions">
+            <button class="btn btn-warning" data-action="complete" data-order="ORD-002">
+              <i class="fas fa-check"></i> Completar
+            </button>
+          </div>
+        </div>
+
+        <!-- Pedido 3 -->
+        <div class="order-card pending" data-status="pending">
+          <div class="order-header">
+            <div class="order-number">#ORD-003</div>
+            <div class="order-time">Hace 8 min</div>
+          </div>
+          <div class="order-mesa">Mesa 2</div>
+          <div class="order-items">
+            <div class="order-item">
+              <div class="item-name">Pasta Alfredo</div>
+              <div class="item-quantity">x1</div>
+            </div>
+            <div class="order-item">
+              <div class="item-name">Sopa de Tomate</div>
+              <div class="item-quantity">x1</div>
+            </div>
+          </div>
+          <div class="order-actions">
+            <button class="btn btn-primary" data-action="start" data-order="ORD-003">
+              <i class="fas fa-play"></i> Iniciar
+            </button>
+            <button class="btn btn-success" data-action="complete" data-order="ORD-003">
+              <i class="fas fa-check"></i> Completar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alertas de stock bajo -->
+      <h2 class="section-title"><i class="fas fa-exclamation-triangle"></i> Alertas de Stock</h2>
+      <div class="alerts-container">
+        <div class="alert-item">
+          <div class="alert-name">Filete de Res</div>
+          <div class="alert-stock alert-critical">Stock: 2</div>
+        </div>
+        <div class="alert-item">
+          <div class="alert-name">Salmón a la Plancha</div>
+          <div class="alert-stock">Stock: 5</div>
+        </div>
+        <div class="alert-item">
+          <div class="alert-name">Pasta Carbonara</div>
+          <div class="alert-stock">Stock: 3</div>
+        </div>
+      </div>
+
+      <!-- Platos populares -->
+      <h2 class="section-title"><i class="fas fa-fire"></i> Platos Más Pedidos</h2>
+      <div class="popular-dishes">
+        <div class="dish-card">
+          <div class="dish-image">
+            <i class="fas fa-utensils"></i>
+          </div>
+          <div class="dish-info">
+            <div class="dish-name">Lomo Saltado</div>
+            <div class="dish-orders">15 pedidos hoy</div>
+          </div>
+        </div>
+
+        <div class="dish-card">
+          <div class="dish-image">
+            <i class="fas fa-utensils"></i>
+          </div>
+          <div class="dish-info">
+            <div class="dish-name">Ceviche</div>
+            <div class="dish-orders">12 pedidos hoy</div>
+          </div>
+        </div>
+
+        <div class="dish-card">
+          <div class="dish-image">
+            <i class="fas fa-utensils"></i>
+          </div>
+          <div class="dish-info">
+            <div class="dish-name">Pizza Margarita</div>
+            <div class="dish-orders">10 pedidos hoy</div>
+          </div>
+        </div>
+
+        <div class="dish-card">
+          <div class="dish-image">
+            <i class="fas fa-utensils"></i>
+          </div>
+          <div class="dish-info">
+            <div class="dish-name">Pasta Alfredo</div>
+            <div class="dish-orders">8 pedidos hoy</div>
+          </div>
+        </div>
+      </div>
+    </main>
   </div>
+
+  <!-- Notificaciones -->
+  <div class="notification" id="notification">
+    <i class="fas fa-info-circle"></i>
+    <span id="notificationText">Mensaje de notificación</span>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Elementos del DOM
+      const menuToggle = document.getElementById('menuToggle');
+      const sidebar = document.getElementById('sidebar');
+      const mainContent = document.getElementById('mainContent');
+      const notification = document.getElementById('notification');
+      const notificationText = document.getElementById('notificationText');
+      const ordersContainer = document.getElementById('ordersContainer');
+      const filterButtons = document.querySelectorAll('.filter-btn');
+      const pendingOrdersCount = document.getElementById('pendingOrdersCount');
+      const todayOrdersCount = document.getElementById('todayOrdersCount');
+      const stockAlertsCount = document.getElementById('stockAlertsCount');
+
+      // Estado de la aplicación
+      let orders = Array.from(document.querySelectorAll('.order-card'));
+      let isMobileMenuOpen = false;
+
+      // Funcionalidad del menú móvil
+      menuToggle.addEventListener('click', function() {
+        isMobileMenuOpen = !isMobileMenuOpen;
+        sidebar.classList.toggle('mobile-open', isMobileMenuOpen);
+        mainContent.classList.toggle('mobile-shift', isMobileMenuOpen);
+        
+        // Cambiar icono del botón
+        const icon = menuToggle.querySelector('i');
+        icon.className = isMobileMenuOpen ? 'fas fa-times' : 'fas fa-bars';
+      });
+
+      // Funcionalidad de filtros de pedidos
+      filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          // Actualizar botones activos
+          filterButtons.forEach(btn => btn.classList.remove('active'));
+          this.classList.add('active');
+          
+          // Filtrar pedidos
+          const filter = this.getAttribute('data-filter');
+          filterOrders(filter);
+        });
+      });
+
+      function filterOrders(filter) {
+        orders.forEach(order => {
+          if (filter === 'all') {
+            order.style.display = 'block';
+          } else {
+            const status = order.getAttribute('data-status');
+            order.style.display = status === filter ? 'block' : 'none';
+          }
+        });
+      }
+
+      // Funcionalidad para los botones de pedidos
+      document.addEventListener('click', function(e) {
+        if (e.target.closest('[data-action]')) {
+          const button = e.target.closest('[data-action]');
+          const action = button.getAttribute('data-action');
+          const orderId = button.getAttribute('data-order');
+          const orderCard = button.closest('.order-card');
+          
+          switch(action) {
+            case 'start':
+              startOrder(orderCard, orderId);
+              break;
+            case 'complete':
+              completeOrder(orderCard, orderId);
+              break;
+          }
+        }
+      });
+
+      function startOrder(orderCard, orderId) {
+        // Cambiar estado visual
+        orderCard.classList.remove('pending');
+        orderCard.classList.add('in-progress');
+        orderCard.setAttribute('data-status', 'in-progress');
+        
+        // Cambiar botones
+        const startButton = orderCard.querySelector('[data-action="start"]');
+        startButton.innerHTML = '<i class="fas fa-clock"></i> En preparación';
+        startButton.classList.remove('btn-primary');
+        startButton.classList.add('btn-warning');
+        
+        // Mostrar notificación
+        showNotification(`Preparación iniciada para el pedido ${orderId}`, 'info');
+        
+        // Actualizar contadores
+        updateOrderCounters();
+      }
+
+      function completeOrder(orderCard, orderId) {
+        // Mostrar notificación
+        showNotification(`Pedido ${orderId} completado`, 'success');
+        
+        // Cambiar estado visual
+        orderCard.classList.remove('pending', 'in-progress');
+        orderCard.classList.add('completed');
+        orderCard.setAttribute('data-status', 'completed');
+        
+        // Ocultar botones
+        const actionButtons = orderCard.querySelector('.order-actions');
+        actionButtons.innerHTML = '<span class="completed-badge">Completado</span>';
+        
+        // Animación de desaparición después de un tiempo
+        setTimeout(() => {
+          orderCard.style.opacity = '0';
+          orderCard.style.transform = 'translateX(100px)';
+          setTimeout(() => {
+            orderCard.remove();
+            orders = Array.from(document.querySelectorAll('.order-card'));
+            updateOrderCounters();
+          }, 500);
+        }, 2000);
+      }
+
+      function updateOrderCounters() {
+        const pendingOrders = document.querySelectorAll('.order-card[data-status="pending"]').length;
+        const inProgressOrders = document.querySelectorAll('.order-card[data-status="in-progress"]').length;
+        
+        pendingOrdersCount.textContent = pendingOrders + inProgressOrders;
+        todayOrdersCount.textContent = parseInt(todayOrdersCount.textContent) + 1;
+      }
+
+      function showNotification(message, type) {
+        notificationText.textContent = message;
+        notification.className = `notification ${type}`;
+        notification.classList.add('show');
+        
+        setTimeout(() => {
+          notification.classList.remove('show');
+        }, 3000);
+      }
+
+      // Simulación de nuevos pedidos (para demostración)
+      setInterval(() => {
+        // Solo agregar nuevo pedido si hay menos de 10
+        if (orders.length < 10 && Math.random() > 0.7) {
+          const newOrderNumber = `ORD-${String(orders.length + 1).padStart(3, '0')}`;
+          const newOrder = createNewOrder(newOrderNumber);
+          ordersContainer.prepend(newOrder);
+          orders = Array.from(document.querySelectorAll('.order-card'));
+          updateOrderCounters();
+          showNotification(`Nuevo pedido: ${newOrderNumber}`, 'info');
+        }
+      }, 15000);
+
+      function createNewOrder(orderNumber) {
+        const orderCard = document.createElement('div');
+        orderCard.className = 'order-card pending';
+        orderCard.setAttribute('data-status', 'pending');
+        
+        const dishes = [
+          ['Lomo Saltado', 1],
+          ['Ceviche', 2],
+          ['Pizza Margarita', 1],
+          ['Pasta Alfredo', 1],
+          ['Ensalada César', 2]
+        ];
+        
+        const randomDishes = dishes.sort(() => 0.5 - Math.random()).slice(0, 2);
+        
+        orderCard.innerHTML = `
+          <div class="order-header">
+            <div class="order-number">#${orderNumber}</div>
+            <div class="order-time">Ahora</div>
+          </div>
+          <div class="order-mesa">Mesa ${Math.floor(Math.random() * 10) + 1}</div>
+          <div class="order-items">
+            ${randomDishes.map(dish => `
+              <div class="order-item">
+                <div class="item-name">${dish[0]}</div>
+                <div class="item-quantity">x${dish[1]}</div>
+              </div>
+            `).join('')}
+          </div>
+          <div class="order-actions">
+            <button class="btn btn-primary" data-action="start" data-order="${orderNumber}">
+              <i class="fas fa-play"></i> Iniciar
+            </button>
+            <button class="btn btn-success" data-action="complete" data-order="${orderNumber}">
+              <i class="fas fa-check"></i> Completar
+            </button>
+          </div>
+        `;
+        
+        return orderCard;
+      }
+    });
+  </script>
 </body>
 </html>
