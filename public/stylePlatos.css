@@ -386,7 +386,8 @@ header h1 {
     border-radius: 16px;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
     width: 100%;
-    max-width: 320px;
+    padding: 1.5rem;
+    max-width: 350px;
     padding: 20px;
     text-align: center;
     transition: all 0.3s ease;
@@ -472,7 +473,7 @@ header h1 {
 /* ======= BOTONES DE ACCIÓN ======= */
 
 .card-actions {
-    margin-top: 15px;
+    margin-top: 20px;
     display: flex;
     justify-content: center;
     gap: 10px;

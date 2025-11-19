@@ -1,12 +1,155 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gestión de Pedidos - Cocina</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="/pedidosc.css">
+  <style>
+    /* Estilos específicos para las cards de bienvenida que se integran con tu CSS */
+    .welcome-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 25px;
+      margin-bottom: 35px;
+    }
+
+    .welcome-card {
+      background: linear-gradient(
+        135deg,
+        rgba(255, 245, 240, 0.95) 0%,
+        rgba(255, 235, 230, 0.98) 100%
+      );
+      border: 2px solid rgba(178, 34, 34, 0.15);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      display: flex;
+      align-items: center;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .welcome-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--rojo), #ff6347);
+      border-radius: 20px 20px 0 0;
+    }
+
+    .welcome-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 15px 35px rgba(178, 34, 34, 0.25);
+      border-color: rgba(178, 34, 34, 0.3);
+    }
+
+    .welcome-card-icon {
+      font-size: 2.8rem;
+      margin-right: 22px;
+      z-index: 1;
+      position: relative;
+      color: var(--rojo);
+    }
+
+    .welcome-card:nth-child(2) .welcome-card-icon {
+      color: #ff6b35;
+    }
+
+    .welcome-card-content {
+      flex: 1;
+      z-index: 1;
+      position: relative;
+    }
+
+    .welcome-card-title {
+      font-size: 0.95rem;
+      color: var(--rojo);
+      margin-bottom: 8px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .welcome-card-value {
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+      color: var(--negro);
+      line-height: 1;
+      font-family: 'Playfair Display', serif;
+      background: linear-gradient(135deg, var(--rojo), #ff4500);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .welcome-card-description {
+      font-size: 0.85rem;
+      color: #666;
+      font-weight: 500;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    /* Ajustes para el header principal */
+    .main-header {
+      margin-bottom: 20px;
+    }
+
+    .main-header h2 {
+      font-family: 'Playfair Display', serif;
+      color: var(--rojo);
+      text-align: center;
+      margin-bottom: 2rem;
+      font-size: 2rem;
+      text-shadow: 2px 2px 6px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .welcome-cards {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+      
+      .welcome-card {
+        padding: 22px;
+      }
+      
+      .welcome-card-icon {
+        font-size: 2.2rem;
+        margin-right: 18px;
+      }
+      
+      .welcome-card-value {
+        font-size: 1.8rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .welcome-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 20px;
+      }
+      
+      .welcome-card-icon {
+        margin-right: 0;
+        margin-bottom: 15px;
+      }
+    }
+  </style>
 </head>
 
 <body>
@@ -19,7 +162,7 @@
     </h2>
 
     <nav>
-      <a href="/dashboard_cocinero" ><i class="fas fa-home"></i> <span>Dashboard</span></a>
+      <a href="/dashboard_cocinero"><i class="fas fa-home"></i> <span>Dashboard</span></a>
       <a href="/platos"><i class="fas fa-bowl-food"></i> <span>Platos</span></a>
       <a href="/carta"><i class="fas fa-book-open"></i> <span>Carta</span></a>
       <a href="/pedidos" class="active"><i class="fas fa-receipt"></i> <span>Pedidos</span></a>
@@ -30,14 +173,33 @@
   <!-- Main -->
   <main>
     <header class="main-header">
-      <h2>Gestión de Pedidos - Cocina</h2>
-      <div class="welcome">
-        <p>Bienvenido, <strong>
-            <%= usuario.nombre %>
-          </strong></p>
-        <p>Total de pedidos: <strong>
-            <%= pedidos.length %>
-          </strong></p>
+      <h2><i class="fas fa-utensils"></i> Gestión de Pedidos - Cocina</h2>
+      
+      <!-- Cards de Bienvenida y Estadísticas -->
+      <div class="welcome-cards">
+        <!-- Card de Bienvenida -->
+        <div class="welcome-card">
+          <div class="welcome-card-icon">
+            <i class="fas fa-user-chef"></i>
+          </div>
+          <div class="welcome-card-content">
+            <div class="welcome-card-title">Bienvenido</div>
+            <div class="welcome-card-value"><%= usuario.nombre %></div>
+            <div class="welcome-card-description">Cocinero activo en el sistema</div>
+          </div>
+        </div>
+        
+        <!-- Card de Total de Pedidos -->
+        <div class="welcome-card">
+          <div class="welcome-card-icon">
+            <i class="fas fa-clipboard-list"></i>
+          </div>
+          <div class="welcome-card-content">
+            <div class="welcome-card-title">Total de Pedidos</div>
+            <div class="welcome-card-value"><%= pedidos.length %></div>
+            <div class="welcome-card-description">Pedidos para preparar</div>
+          </div>
+        </div>
       </div>
     </header>
 
@@ -329,9 +491,5 @@
       }
     });
   </script>
-
-
-
 </body>
-
 </html>

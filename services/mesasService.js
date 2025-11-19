@@ -1,7 +1,11 @@
 const Mesa = require('../models/mesasModel');
+const cron = require('node-cron');
 
 class MesasService {
   // Traer todas las mesas
+  constructor() {
+    this.iniciarLiberacionAutomatica();
+  }
   async getAll() {
     return await Mesa.find().sort({ numeroMesa: 1 });
   }
@@ -88,6 +92,127 @@ class MesasService {
   // NUEVO: Obtener mesas por estado
   async getByEstado(estado) {
     return await Mesa.find({ estado }).sort({ numeroMesa: 1 });
+  }
+
+  async liberarTodasLasMesas() {
+    try {
+      const resultado = await Mesa.updateMany(
+        { 
+          estado: { $in: ['ocupada', 'atendida', 'reservada', 'liberada'] } 
+        },
+        { 
+          $set: { 
+            estado: 'disponible',
+            pedidoActual: null,
+            ultimaLiberacion: new Date()
+          } 
+        }
+      );
+
+      console.log(`🔄 [${new Date().toLocaleString()}] ${resultado.modifiedCount} mesas liberadas automáticamente`);
+      return resultado;
+    } catch (error) {
+      console.error('❌ Error liberando mesas:', error);
+      throw error;
+    }
+  }
+
+  // NUEVO: Obtener estadísticas de mesas
+  async obtenerEstadisticas() {
+    const totalMesas = await Mesa.countDocuments();
+    const mesasDisponibles = await Mesa.countDocuments({ estado: 'disponible' });
+    const mesasOcupadas = await Mesa.countDocuments({ estado: 'ocupada' });
+    const mesasAtendidas = await Mesa.countDocuments({ estado: 'atendida' });
+    const mesasReservadas = await Mesa.countDocuments({ estado: 'reservada' });
+    const mesasLiberadas = await Mesa.countDocuments({ estado: 'liberada' });
+    
+    return {
+      totalMesas,
+      mesasDisponibles,
+      mesasOcupadas,
+      mesasAtendidas,
+      mesasReservadas,
+      mesasLiberadas,
+      mesasPorLiberar: mesasOcupadas + mesasAtendidas + mesasReservadas + mesasLiberadas
+    };
+  }
+
+  iniciarLiberacionAutomatica() {
+    console.log('⏰ Iniciando liberación automática de mesas...');
+
+    // 🔹 LIBERACIÓN NOCTURNA: 9:30 PM (21:30)
+    cron.schedule('30 21 * * *', async () => {
+      await this.ejecutarLiberacionAutomatica('9:30 PM');
+    });
+
+    // 🔹 LIBERACIÓN MATUTINA: 6:00 AM 
+    cron.schedule('0 6 * * *', async () => {
+      await this.ejecutarLiberacionAutomatica('6:00 AM');
+    });
+    // 🔹 MODO DESARROLLO: Cada 5 minutos para pruebas
+    if (process.env.NODE_ENV === 'development') {
+      cron.schedule('*/5 * * * *', async () => {
+        console.log('🧪 [DESARROLLO] Verificación de liberación automática');
+        // Opcional: ejecutar en desarrollo
+        // await this.ejecutarLiberacionAutomatica('Prueba Desarrollo');
+      });
+    }
+
+    console.log('✅ Liberación automática programada: 9:30 PM y 6:00 AM ');
+  }
+
+  // NUEVO: Ejecutar liberación automática
+  async ejecutarLiberacionAutomatica(hora = 'Manual') {
+    try {
+      console.log(`🕒 Iniciando liberación automática (${hora})...`);
+      
+      const statsAntes = await this.obtenerEstadisticas();
+      const resultado = await this.liberarTodasLasMesas();
+      const statsDespues = await this.obtenerEstadisticas();
+
+      console.log(`✅ Liberación completada: ${resultado.modifiedCount} mesas liberadas`);
+      console.log(`📊 Estadísticas - Antes: ${statsAntes.mesasPorLiberar} por liberar, Después: ${statsDespues.mesasPorLiberar} por liberar`);
+
+      return {
+        success: true,
+        horaEjecucion: hora,
+        mesasLiberadas: resultado.modifiedCount,
+        estadisticas: {
+          antes: statsAntes,
+          despues: statsDespues
+        }
+      };
+    } catch (error) {
+      console.error(`❌ Error en liberación automática (${hora}):`, error.message);
+      return {
+        success: false,
+        horaEjecucion: hora,
+        error: error.message
+      };
+    }
+  }
+
+  // NUEVO: Liberación manual desde API
+  async liberacionManual() {
+    return await this.ejecutarLiberacionAutomatica('Manual');
+  }
+
+  // NUEVO: Obtener estado del servicio de liberación
+  getEstadoLiberacion() {
+    return {
+      servicioActivo: true,
+      horariosProgramados: [
+        '30 21 * * *',  // 9:30 PM
+        '0 6 * * *'   // 6:00 AM  
+      ],
+      horariosLegibles: [
+        '9:30 PM - Liberación nocturna',
+        '6:00 AM - Liberación matutina'
+      ],
+      descripcion: 'Liberación automática de mesas 3 veces al día',
+      ultimaEjecucion: new Date(),
+      proximaEjecucion: this.calcularProximaLiberacion()
+    };
   }
 }
 

@@ -19,8 +19,8 @@
             </h2>
 
       <nav>
-        <a href="/dashboard_cocinero" ><i class="fas fa-home"></i> <span>Dashboard</span></a>
-        <a href="/platos" class="active"><i class="fas fa-bowl-food"></i> <span>Platos</span></a>
+        <a href="/dashboard_cocinero" class="active"><i class="fas fa-home"></i> <span>Dashboard</span></a>
+        <a href="/platos"><i class="fas fa-bowl-food"></i> <span>Platos</span></a>
         <a href="/carta"><i class="fas fa-book-open"></i> <span>Carta</span></a>
         <a href="/pedidos"><i class="fas fa-receipt"></i> <span>Pedidos</span></a>
         <a href="/logout"><i class="fas fa-sign-out-alt"></i> <span>Cerrar sesión</span></a>
@@ -188,15 +188,10 @@
                             </div>
                         </div>
                         
-                        <!-- FILTRO POR CATEGORÍA -->
+                        <!-- FILTRO POR CATEGORÍA (se cargan dinámicamente) -->
                         <div class="filtro-categoria">
-                            <span class="filtro-categoria-label">Categoría:</span>
-                            <div class="categoria-filtros">
-                                <button class="categoria-filtro-btn active" data-categoria="todas">Todas</button>
-                                <button class="categoria-filtro-btn" data-categoria="Platos principales">Platos principales</button>
-                                <button class="categoria-filtro-btn" data-categoria="Postres">Postres</button>
-                                <button class="categoria-filtro-btn" data-categoria="Bebidas">Bebidas</button>
-                                <button class="categoria-filtro-btn" data-categoria="Entrada">Entrada</button>
+                            <div class="categoria-filtros" aria-label="Filtros de categoría">
+                                <!-- Botones de categoría se insertan aquí por JS -->
                             </div>
                         </div>
                         
@@ -216,7 +211,7 @@
         // ========== VARIABLES PARA FILTROS ==========
         const buscadorNombre = document.getElementById('buscadorNombre');
         const filtroEstado = document.getElementById('filtroEstado');
-        const filtroCategoriaBtns = document.querySelectorAll('.categoria-filtro-btn');
+        const categoriaFiltrosContainer = document.querySelector('.categoria-filtros');
 
         // ========== FUNCIONALIDAD PARA EL BOTÓN DE ARCHIVO ==========
         const fileInput = document.getElementById('imagenFile');
@@ -306,7 +301,8 @@
         function aplicarFiltros() {
             const textoBusqueda = buscadorNombre.value.toLowerCase();
             const estadoSeleccionado = filtroEstado.value;
-            const categoriaSeleccionada = document.querySelector('.categoria-filtro-btn.active').dataset.categoria;
+            const activeBtn = categoriaFiltrosContainer.querySelector('.categoria-filtro-btn.active');
+            const categoriaSeleccionada = activeBtn ? activeBtn.dataset.categoria : 'todas';
             
             const productosFiltrados = todosLosProductos.filter(producto => {
                 // Filtro por nombre
@@ -315,9 +311,9 @@
                 // Filtro por estado
                 const coincideEstado = estadoSeleccionado === 'todos' || producto.estado === estadoSeleccionado;
                 
-                // Filtro por categoría
-                const coincideCategoria = categoriaSeleccionada === 'todas' || 
-                                         (producto.categoria && producto.categoria.nombre === categoriaSeleccionada);
+                // Filtro por categoría (producto.categoria puede ser objeto o id)
+                const productoCatId = producto.categoria?._id || producto.categoria || '';
+                const coincideCategoria = categoriaSeleccionada === 'todas' || productoCatId === categoriaSeleccionada;
                 
                 return coincideNombre && coincideEstado && coincideCategoria;
             });
@@ -400,16 +396,16 @@
         buscadorNombre.addEventListener('input', aplicarFiltros);
         filtroEstado.addEventListener('change', aplicarFiltros);
         
-        // Event listeners para filtros de categoría
-        filtroCategoriaBtns.forEach(btn => {
-            btn.addEventListener('click', function() {
-                // Remover clase active de todos los botones
-                filtroCategoriaBtns.forEach(b => b.classList.remove('active'));
-                // Agregar clase active al botón clickeado
-                this.classList.add('active');
-                // Aplicar filtros
-                aplicarFiltros();
-            });
+        // Event delegation para filtros de categoría (se generan dinámicamente)
+        categoriaFiltrosContainer.addEventListener('click', function(e) {
+            const btn = e.target.closest('.categoria-filtro-btn');
+            if (!btn) return;
+
+            // Remover clase active de todos los botones
+            categoriaFiltrosContainer.querySelectorAll('.categoria-filtro-btn').forEach(b => b.classList.remove('active'));
+            // Agregar clase active al botón clickeado
+            btn.classList.add('active');
+            aplicarFiltros();
         });
 
         // Event listeners para las notificaciones
@@ -436,11 +432,58 @@
         async function enviarProducto(e) {
             e.preventDefault();
 
-            // ... (código existente para enviar producto)
+            // Obtener datos del formulario
+            const formData = new FormData();
+            formData.append('nombre', document.getElementById('nombre').value);
+            formData.append('categoria', document.getElementById('categoria').value);
+            formData.append('descripcion', document.getElementById('descripcion').value);
+            formData.append('precio', document.getElementById('precio').value);
+            formData.append('stock', document.getElementById('stock').value);
+            formData.append('stockMinimo', document.getElementById('stockMinimo').value);
+            formData.append('estado', document.getElementById('estado').value);
+            
+            // Manejar imagen (URL o archivo)
+            const imagenUrl = document.querySelector('input[name="imagenUrl"]').value;
+            const imagenFile = document.getElementById('imagenFile').files[0];
+            
+            if (imagenFile) {
+                formData.append('imagen', imagenFile);
+            } else if (imagenUrl) {
+                formData.append('imagenUrl', imagenUrl);
+            }
 
-            // Después de guardar, actualizar notificaciones
-            await cargarProductos();
-            await actualizarNotificaciones();
+            try {
+                let response;
+                if (editarId) {
+                    // Editar producto existente
+                    response = await fetch(`/api/platos/${editarId}`, {
+                        method: 'PUT',
+                        body: formData
+                    });
+                } else {
+                    // Crear nuevo producto
+                    response = await fetch('/api/platos', {
+                        method: 'POST',
+                        body: formData
+                    });
+                }
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Error al guardar el producto');
+                }
+
+                const resultado = await response.json();
+                
+                mostrarExito(editarId ? 'Producto actualizado correctamente' : 'Producto agregado correctamente');
+                resetearFormulario();
+                await cargarProductos();
+                await actualizarNotificaciones();
+
+            } catch (error) {
+                console.error('Error:', error);
+                mostrarError(error.message || 'Error al guardar el producto');
+            }
         }
 
         // En la función de eliminar producto, también actualizar notificaciones
@@ -518,6 +561,27 @@
                     option.value = cat._id;
                     option.textContent = cat.nombre;
                     selectCategoria.appendChild(option);
+                });
+
+                // Construir botones de filtro por categoría (centrados)
+                const filtros = document.querySelector('.categoria-filtros');
+                filtros.innerHTML = '';
+
+                // Botón 'Todas'
+                const todasBtn = document.createElement('button');
+                todasBtn.className = 'categoria-filtro-btn active';
+                todasBtn.dataset.categoria = 'todas';
+                todasBtn.type = 'button';
+                todasBtn.textContent = 'Todas';
+                filtros.appendChild(todasBtn);
+
+                categorias.forEach(cat => {
+                    const btn = document.createElement('button');
+                    btn.className = 'categoria-filtro-btn';
+                    btn.type = 'button';
+                    btn.dataset.categoria = cat._id;
+                    btn.textContent = cat.nombre;
+                    filtros.appendChild(btn);
                 });
                 
             } catch (error) {
@@ -1160,22 +1224,19 @@
     min-width: 180px;
   }
   
-  .filtro-categoria {
-    display: flex;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    gap: 1rem;
-  }
-  
-  .filtro-categoria-label {
-    font-weight: 600;
-    color: #333;
-  }
+    .filtro-categoria {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        gap: 1rem;
+    }
   
   .categoria-filtros {
     display: flex;
     gap: 0.5rem;
     flex-wrap: wrap;
+        justify-content: center;
   }
   
   .categoria-filtro-btn {

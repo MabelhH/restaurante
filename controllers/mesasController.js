@@ -1,5 +1,8 @@
 const Mesa = require('../models/mesasModel');
 const Pedido = require('../models/pedidosModel');
+const MesasService = require('../services/mesasService');
+
+const mesasService = new MesasService();
 
 class MesasController {
   // 1️⃣ Listar todas las mesas
@@ -248,6 +251,66 @@ class MesasController {
       });
     } catch (error) {
       res.status(500).json({ error: error.message });
+    }
+  }
+   
+
+  async liberarTodasLasMesas(req, res) {
+      try {
+        const resultado = await mesasService.liberacionManual();
+        
+        res.json({
+          success: resultado.success,
+          message: `✅ ${resultado.mesasLiberadas} mesas liberadas exitosamente`,
+          data: resultado
+        });
+      } catch (error) {
+        res.status(500).json({
+          success: false,
+          message: '❌ Error liberando mesas',
+          error: error.message
+        });
+      }
+    }  
+  async obtenerEstadisticas(req, res) {
+    try {
+      const estadisticas = await mesasService.obtenerEstadisticas();
+      const estadoServicio = mesasService.getEstadoLiberacion();
+      
+      res.json({ 
+        success: true, 
+        data: {
+          estadisticas,
+          servicioLiberacion: estadoServicio
+        },
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: '❌ Error obteniendo estadísticas',
+        error: error.message
+      });
+    }
+  }
+
+  async ejecutarLiberacionManual(req, res) {
+    try {
+      const resultado = await mesasService.liberacionManual();
+      
+      res.json({
+        success: resultado.success,
+        message: resultado.success 
+          ? `✅ ${resultado.mesasLiberadas} mesas liberadas manualmente`
+          : `❌ Error en liberación manual: ${resultado.error}`,
+        data: resultado
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: '❌ Error ejecutando liberación manual',
+        error: error.message
+      });
     }
   }
 }

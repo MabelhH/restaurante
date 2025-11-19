@@ -4,7 +4,10 @@ const Mesa = require('../models/mesasModel');
 const Pedido = require('../models/pedidosModel');
 const Platos = require('../models/platosModel');
 const mongoose = require('mongoose');
+const MesasService = require('../services/mesasService'); 
 
+// ✅ INSTANCIAR EL SERVICIO (ACTIVA LA LIBERACIÓN AUTOMÁTICA)
+const mesasService = new MesasService();
 
 // Filtrar mesas por estado
 router.get('/filtrar/estado', async (req, res) => {
@@ -166,6 +169,56 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+// ✅ RUTAS DEL SERVICIO DE LIBERACIÓN AUTOMÁTICA
+router.post('/liberacion/manual', async (req, res) => {
+  try {
+    const resultado = await mesasService.liberacionManual();
+    res.json({
+      success: true,
+      message: `✅ ${resultado.mesasLiberadas} mesas liberadas manualmente`,
+      data: resultado
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+router.get('/liberacion/estado', (req, res) => {
+  try {
+    const estado = mesasService.getEstadoLiberacion();
+    res.json({
+      success: true,
+      data: estado
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+router.get('/estadisticas', async (req, res) => {
+  try {
+    const stats = await mesasService.obtenerEstadisticas();
+    res.json({
+      success: true,
+      data: stats
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// router.post('/liberar-todas', (req, res) => mesasController.liberarTodasLasMesas(req, res));
+// router.get('/estadisticas', (req, res) => mesasController.obtenerEstadisticas(req, res));
+
 // Eliminar mesa
 router.delete('/:id', async (req, res) => {
   try {
@@ -247,10 +300,6 @@ router.patch('/:id/estado', async (req, res) => {
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
-
-
-
-
 
 
 // ✅ NUEVA RUTA: Liberar mesa (usada en el botón "Liberar Mesa")

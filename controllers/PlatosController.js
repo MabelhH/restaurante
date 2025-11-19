@@ -139,6 +139,24 @@ class PlatoController {
             res.status(500).json({ message: 'Error al aumentar stock', error });
         }
     }
+
+    async desactivarTodos(req, res) {
+        try {
+            const resultado = await platoService.desactivarTodosLosPlatos();
+            res.json({
+                success: true,
+                message: `${resultado.modifiedCount} platos desactivados y stock puesto en 0`,
+                platosDesactivados: resultado.modifiedCount
+            });
+        } catch (error) {
+            res.status(500).json({ 
+                success: false,
+                message: 'Error al desactivar platos', 
+                error: error.message 
+            });
+        }
+    }
+
 }
 
 module.exports = new PlatoController();
