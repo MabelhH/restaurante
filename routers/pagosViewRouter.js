@@ -21,11 +21,23 @@ function verifyToken(req, res, next) {
   }
 }
 
-// Ruta principal de pagos (según rol)
+// Ruta principal de pagos - MODIFICADA PARA MOSTRAR TODOS LOS ESTADOS
 router.get('/', verifyToken, async (req, res) => {
   try {
+    // Fechas para el día actual
+    const hoy = new Date();
+    hoy.setHours(0,0,0,0);
+    const manana = new Date(hoy);
+    manana.setDate(manana.getDate() + 1);
+
+    console.log('📅 Filtro de fecha para pagos:', {
+      hoy: hoy.toISOString(),
+      manana: manana.toISOString()
+    });
+
+    // OBTENER TODOS LOS PEDIDOS DEL DÍA - NO FILTRAR POR ESTADO DE PAGO
     const pedidos = await Pedido.find({ 
-      estadoPago: { $in: ['pendiente', 'parcial'] },
+      fechaPedido: { $gte: hoy, $lt: manana },
       activo: true 
     })
     .populate('mesa', 'numeroMesa piso sector')
@@ -33,10 +45,20 @@ router.get('/', verifyToken, async (req, res) => {
     .populate('platos.plato', 'nombre precio imagen')
     .sort({ fechaPedido: 1 });
 
+    console.log(`📊 Pedidos encontrados en /pagos: ${pedidos.length}`);
+    
+    // Debug: mostrar estados de pago
+    const estadosPago = {};
+    pedidos.forEach(pedido => {
+      const estado = pedido.estadoPago;
+      estadosPago[estado] = (estadosPago[estado] || 0) + 1;
+    });
+    console.log('🔍 Distribución de estados de pago:', estadosPago);
+
     // CORREGIDO: Pasar el usuario con _id
     const userData = {
       ...req.user,
-      _id: req.user._id || req.user.id // Compatibilidad con ambos
+      _id: req.user._id || req.user.id
     };
 
     if (req.user.rol === 'admin') {
@@ -53,6 +75,7 @@ router.get('/', verifyToken, async (req, res) => {
     res.status(500).send('Error al cargar pagos');
   }
 });
+
 
 // Ruta para procesar pago (vista de formulario)
 router.get('/procesar/:id', verifyToken, async (req, res) => {
@@ -140,5 +163,7 @@ router.get('/historial/:id', verifyToken, async (req, res) => {
     res.status(500).send('Error al cargar historial de pago');
   }
 });
+
+
 
 module.exports = router;

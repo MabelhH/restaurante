@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reportes - Cajero</title>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="/reportesC.css">
+</head>
+<body>
+  <div class="dashboard-container">
+    <!-- Sidebar -->
+  <aside class="sidebar">
+    <h2 class="logo">
+      <i class="fas fa-cash-register"></i><br>
+      Cajero
+    </h2>
+
+    <nav>
+      <a href="/dashboard_cajero" ><i class="fas fa-home"></i> <span>Dashboard</span></a>
+      <a href="/pagos"><i class="fas fa-credit-card"></i> <span>Procesar Pagos</span></a>
+      <a href="/cajero/reportes"  class="active"><i class="fas fa-chart-bar"></i> <span>Reportes</span></a>
+      <a href="/logout"><i class="fas fa-sign-out-alt"></i> <span>Cerrar sesión</span></a>
+    </nav>
+  </aside>
+
+    <!-- Main content -->
+    <main class="main-content">
+      <!-- Header -->
+      <header class="dashboard-header">
+        <div class="header-content">
+          <h1>Reportes <span class="user-name">Cajero</span></h1>
+          <p class="welcome-text">Estadísticas de ventas y transacciones</p>
+        </div>
+        <div class="header-info">
+          <div class="date-time">
+            <div class="current-date" id="current-date"></div>
+            <div class="current-time" id="current-time"></div>
+          </div>
+          <div class="user-badge">
+            <i class="fas fa-cash-register"></i>
+            <span>Cajero</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Filtros -->
+      <section class="filters-section">
+        <div class="filter-card">
+          <h3><i class="fas fa-filter"></i> Filtros de Reporte</h3>
+          <div class="filter-options">
+            <div class="filter-group">
+              <label>Período:</label>
+              <div class="period-buttons">
+                <button class="period-btn active" data-period="hoy">Hoy</button>
+                <button class="period-btn" data-period="ayer">Ayer</button>
+                <button class="period-btn" data-period="semana">Última Semana</button>
+                <button class="period-btn" data-period="mes">Este Mes</button>
+              </div>
+            </div>
+          </div>
+          <div class="filter-actions">
+            <button class="btn-refresh" id="actualizar-reportes">
+              <i class="fas fa-sync-alt"></i> Actualizar
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Resumen General -->
+      <section class="summary-section">
+        <div class="summary-grid">
+          <div class="summary-card total">
+            <div class="summary-icon">
+              <i class="fas fa-money-bill-wave"></i>
+            </div>
+            <div class="summary-content">
+              <h3>Total Ventas</h3>
+              <div class="summary-value" id="total-ventas">S/ 0.00</div>
+              <div class="summary-subtitle" id="cantidad-ventas">0 ventas</div>
+            </div>
+          </div>
+
+          <div class="summary-card average">
+            <div class="summary-icon">
+              <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="summary-content">
+              <h3>Ticket Promedio</h3>
+              <div class="summary-value" id="ticket-promedio">S/ 0.00</div>
+              <div class="summary-subtitle">Por transacción</div>
+            </div>
+          </div>
+
+          <div class="summary-card methods">
+            <div class="summary-icon">
+              <i class="fas fa-credit-card"></i>
+            </div>
+            <div class="summary-content">
+              <h3>Método Principal</h3>
+              <div class="summary-value" id="metodo-principal">-</div>
+              <div class="summary-subtitle" id="metodo-porcentaje">0%</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Gráficos Principales -->
+      <section class="charts-section">
+        <div class="charts-grid">
+          <!-- Gráfico de Ventas por Día -->
+          <div class="chart-card main-chart">
+            <div class="chart-header">
+              <h3><i class="fas fa-chart-bar"></i> Ventas por Día</h3>
+            </div>
+            <div class="chart-container">
+              <canvas id="salesChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Métodos de Pago -->
+          <div class="chart-card pie-chart">
+            <div class="chart-header">
+              <h3><i class="fas fa-pie-chart"></i> Métodos de Pago</h3>
+            </div>
+            <div class="chart-container">
+              <canvas id="paymentChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Ventas Recientes -->
+      <section class="tables-section">
+        <div class="table-card">
+          <div class="section-header">
+            <h3><i class="fas fa-receipt"></i> Ventas Recientes</h3>
+          </div>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>N° Venta</th>
+                  <th>Mesa</th>
+                  <th>Método Pago</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody id="ventas-table-body">
+                <tr>
+                  <td colspan="5" class="no-data">Cargando datos...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    // Variables globales
+    let salesChart, paymentChart;
+    let currentPeriod = 'hoy';
+
+    // Tiempo real - Fecha y Hora
+    function updateDateTime() {
+      const now = new Date();
+      
+      // Formatear fecha
+      const options = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      };
+      document.getElementById('current-date').textContent = 
+        now.toLocaleDateString('es-ES', options);
+      
+      // Formatear hora
+      document.getElementById('current-time').textContent = 
+        now.toLocaleTimeString('es-ES', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          second: '2-digit'
+        });
+    }
+
+    // Actualizar cada segundo
+    setInterval(updateDateTime, 1000);
+    updateDateTime();
+
+    // Función para cargar reportes del cajero
+    async function loadReportes(periodo = 'hoy') {
+      try {
+        console.log('📊 Cajero - Cargando reportes para período:', periodo);
+        
+        const response = await fetch(`/cajero/reportes/datos?periodo=${periodo}`);
+        const result = await response.json();
+
+        if (result.success) {
+          const datos = result.datos;
+          console.log('📈 Datos de reportes cajero:', datos);
+          
+          // Actualizar resumen
+          updateResumen(datos);
+          
+          // Actualizar gráficos
+          updateCharts(datos);
+          
+          // Actualizar tabla
+          updateVentasTable(datos.ventasDetalladas);
+
+          console.log('✅ Reportes cajero actualizados correctamente');
+        } else {
+          console.error('❌ Error en reportes cajero:', result.error);
+          showError('Error al cargar reportes: ' + result.error);
+        }
+      } catch (error) {
+        console.error('❌ Error al cargar reportes cajero:', error);
+        showError('Error de conexión: ' + error.message);
+      }
+    }
+
+    // Actualizar resumen
+    function updateResumen(datos) {
+      const resumen = datos.resumen;
+      
+      // Total ventas
+      document.getElementById('total-ventas').textContent = 
+        `S/ ${resumen.totalVentas.toFixed(2)}`;
+      document.getElementById('cantidad-ventas').textContent = 
+        `${resumen.cantidadVentas} ventas`;
+      
+      // Ticket promedio
+      document.getElementById('ticket-promedio').textContent = 
+        `S/ ${resumen.promedioVenta.toFixed(2)}`;
+      
+      // Método principal
+      if (datos.metodosPago.length > 0) {
+        const metodoPrincipal = datos.metodosPago[0];
+        const porcentaje = (metodoPrincipal.total / resumen.totalVentas * 100).toFixed(1);
+        
+        document.getElementById('metodo-principal').textContent = 
+          formatMetodoPago(metodoPrincipal._id);
+        document.getElementById('metodo-porcentaje').textContent = 
+          `${porcentaje}%`;
+      }
+    }
+
+    // Formatear método de pago
+    function formatMetodoPago(metodo) {
+      const metodos = {
+        'efectivo': 'Efectivo',
+        'tarjeta': 'Tarjeta',
+        'yape': 'Yape',
+        'plin': 'Plin'
+      };
+      return metodos[metodo] || metodo;
+    }
+
+    // Actualizar gráficos
+    function updateCharts(datos) {
+      updateSalesChart(datos.ventasPorDia);
+      updatePaymentChart(datos.metodosPago);
+    }
+
+    // Gráfico de ventas por día
+    function updateSalesChart(ventasData) {
+      const ctx = document.getElementById('salesChart').getContext('2d');
+      
+      if (salesChart) {
+        salesChart.destroy();
+      }
+
+      const labels = ventasData.map(v => {
+        const date = new Date(v._id);
+        return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+      });
+      
+      const data = ventasData.map(v => v.total);
+
+      salesChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Ventas (S/.)',
+            data: data,
+            backgroundColor: 'rgba(178, 34, 34, 0.8)',
+            borderColor: 'rgba(178, 34, 34, 1)',
+            borderWidth: 1,
+            borderRadius: 6,
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: {
+                color: 'rgba(0,0,0,0.1)'
+              },
+              ticks: {
+                callback: function(value) {
+                  return 'S/ ' + value;
+                }
+              }
+            },
+            x: {
+              grid: {
+                display: false
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Gráfico de métodos de pago
+    function updatePaymentChart(metodosData) {
+      const ctx = document.getElementById('paymentChart').getContext('2d');
+      
+      if (paymentChart) {
+        paymentChart.destroy();
+      }
+
+      const colors = ['#b22222', '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4'];
+
+      paymentChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: metodosData.map(m => formatMetodoPago(m._id)),
+          datasets: [{
+            data: metodosData.map(m => m.total),
+            backgroundColor: colors,
+            borderWidth: 2,
+            borderColor: '#fff'
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'bottom'
+            }
+          }
+        }
+      });
+    }
+
+    // Actualizar tabla de ventas
+    function updateVentasTable(ventas) {
+      const tbody = document.getElementById('ventas-table-body');
+      
+      if (ventas.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="no-data">No hay ventas en este período</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = ventas.map(venta => `
+        <tr>
+          <td>${new Date(venta.fechaVenta).toLocaleDateString()}</td>
+          <td>#${venta._id.toString().slice(-6)}</td>
+          <td>${venta.mesa?.numeroMesa || 'N/A'}</td>
+          <td><span class="badge ${venta.metodoPago}">${formatMetodoPago(venta.metodoPago)}</span></td>
+          <td class="amount">S/ ${venta.total.toFixed(2)}</td>
+        </tr>
+      `).join('');
+    }
+
+    // Mostrar error
+    function showError(message) {
+      console.error('🚨 Error:', message);
+      alert('Error: ' + message);
+    }
+
+    // Inicializar
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('🚀 Inicializando reportes cajero...');
+      
+      // Cargar reportes iniciales
+      loadReportes('hoy');
+
+      // Event listeners para botones de período
+      document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const periodo = this.dataset.period;
+          
+          // Actualizar botones activos
+          document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          
+          currentPeriod = periodo;
+          loadReportes(periodo);
+        });
+      });
+
+      // Botón actualizar
+      document.getElementById('actualizar-reportes').addEventListener('click', function() {
+        loadReportes(currentPeriod);
+      });
+    });
+  </script>
+</body>
+</html>

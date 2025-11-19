@@ -67,6 +67,8 @@ const pagosRouter = require('./routers/pagosRouter');    // ✅ Agregado
 const clientesRouter = require('./routers/clientesRouters');
 const reservasRouter = require('./routers/reservaRoute');
 const cajeroRouter = require('./routers/cajeroReuter');
+// Agregar después de las otras rutas
+const dashboardCajeroRoutes = require('./routers/dashboardCajero');
 // ===== Routers de VISTAS =====
 const platosViewRouter = require('./routers/platosViewRouter');
 const ventaViewRouter = require('./routers/ventaViewRouter');
@@ -79,7 +81,8 @@ const clientesViewRouter = require('./routers/clienteViewRouter');   // ✅ Nuev
 const reportesRouter = require('./routers/reportesRouter');
 const adminChatRouter = require('./routers/adminChat');
 const meseroChat = require('./routers/meseroChat');
-
+// AGREGAR ESTA NUEVA RUTA PARA EL CAJERO
+const reportesCajeroRouter = require('./routers/reportesCajeroRouter');
 // ===== USAR ROUTERS API =====
 
 app.use('/api/platos', platosRouter);
@@ -109,9 +112,10 @@ app.use('/cajero', cajeroRouter);
 app.use('/clientes', clientesViewRouter);
 app.use('/', userViewRouter); // rutas de usuario (login, register, dashboard)
 app.use('/reportes', reportesRouter);
+app.use('/cajero/reportes', reportesCajeroRouter);  // NUEVO: Reportes del cajero
 app.use('/admin', adminChatRouter);
 app.use('/mesero', meseroChat);
-
+app.use('/dashboard_cajero', dashboardCajeroRoutes);
 
 
 // ===== Rutas de vistas principales =====

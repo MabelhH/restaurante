@@ -6,7 +6,219 @@
   <title>Dashboard - Cajero</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="/styleVentas.css">
+  <style>
+    /* Estilos para notificaciones */
+    .notificacion {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      padding: 15px 20px;
+      border-radius: 5px;
+      color: white;
+      font-weight: bold;
+      max-width: 400px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .notificacion-success { background-color: #28a745; }
+    .notificacion-error { background-color: #dc3545; }
+    .notificacion-info { background-color: #17a2b8; }
+    .notificacion-contenido {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .notificacion-contenido button {
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+      margin-left: 10px;
+    }
 
+    /* Estilos para el bloque de debug */
+    .debug-info {
+      background: #f8f9fa;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border-left: 4px solid #007bff;
+      font-size: 12px;
+    }
+    .debug-info h4 {
+      margin: 0 0 8px 0;
+      color: #007bff;
+    }
+    .debug-stats {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+    .debug-stat {
+      background: white;
+      padding: 5px 10px;
+      border-radius: 3px;
+      border: 1px solid #dee2e6;
+    }
+
+    /* Estilos para el contador de tiempo */
+    .tiempo-restante {
+      font-size: 0.8em;
+      background: #ffc107;
+      color: #000;
+      padding: 2px 6px;
+      border-radius: 3px;
+      margin-left: 5px;
+      font-weight: bold;
+    }
+
+    /* Estilos para el modal de historial */
+    .historial-modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+
+    .historial-modal-content {
+      background-color: white;
+      margin: 5% auto;
+      padding: 0;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 800px;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      position: relative;
+    }
+
+    .historial-modal-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 10px 10px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .historial-modal-header h3 {
+      margin: 0;
+      font-size: 1.5em;
+    }
+
+    .close-historial {
+      color: white;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      background: none;
+      border: none;
+    }
+
+    .close-historial:hover {
+      color: #ffeb3b;
+    }
+
+    .historial-modal-body {
+      padding: 20px;
+    }
+
+    /* Estilos para la tabla de historial */
+    .historial-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 14px;
+    }
+
+    .historial-table th {
+      background-color: #f8f9fa;
+      padding: 12px;
+      text-align: left;
+      font-weight: bold;
+      border-bottom: 2px solid #dee2e6;
+    }
+
+    .historial-table td {
+      padding: 12px;
+      border-bottom: 1px solid #dee2e6;
+    }
+
+    .historial-table tr:hover {
+      background-color: #f8f9fa;
+    }
+
+    .metodo-pago {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .metodo-efectivo { background-color: #28a745; color: white; }
+    .metodo-tarjeta { background-color: #007bff; color: white; }
+    .metodo-yape { background-color: #17a2b8; color: white; }
+    .metodo-plin { background-color: #6f42c1; color: white; }
+    .metodo-reversion { background-color: #dc3545; color: white; }
+
+    .resumen-pagos {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+      border-left: 4px solid #007bff;
+    }
+
+    .resumen-pagos h4 {
+      margin: 0 0 10px 0;
+      color: #007bff;
+    }
+
+    .resumen-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+    }
+
+    .resumen-stat {
+      background: white;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #dee2e6;
+    }
+
+    .resumen-stat strong {
+      display: block;
+      margin-bottom: 5px;
+      color: #495057;
+    }
+
+    .resumen-stat .valor {
+      font-size: 1.2em;
+      font-weight: bold;
+      color: #007bff;
+    }
+
+    .sin-historial {
+      text-align: center;
+      padding: 40px;
+      color: #6c757d;
+    }
+
+    .sin-historial i {
+      font-size: 3em;
+      margin-bottom: 15px;
+      color: #dee2e6;
+    }
+  </style>
 </head>
 <body>
 
@@ -20,6 +232,7 @@
     <nav>
       <a href="/dashboard_cajero" ><i class="fas fa-home"></i> <span>Dashboard</span></a>
       <a href="/pagos" class="active"><i class="fas fa-credit-card"></i> <span>Procesar Pagos</span></a>
+      <a href="/cajero/reportes"><i class="fas fa-chart-bar"></i> <span>Reportes</span></a>
       <a href="/logout"><i class="fas fa-sign-out-alt"></i> <span>Cerrar sesión</span></a>
     </nav>
   </aside>
@@ -35,6 +248,28 @@
         </div>
       </header>
 
+      <!-- Bloque de Debug -->
+      <div class="debug-info">
+        <h4>🔍 Debug Info - Pedidos Recibidos del Backend:</h4>
+        <div class="debug-stats">
+          <div class="debug-stat">
+            <strong>Total:</strong> <%= pedidos.length %>
+          </div>
+          <div class="debug-stat">
+            <strong>Pendientes:</strong> <%= pedidos.filter(p => p.estadoPago === 'pendiente').length %>
+          </div>
+          <div class="debug-stat">
+            <strong>Pagados:</strong> <%= pedidos.filter(p => p.estadoPago === 'pagado').length %>
+          </div>
+          <div class="debug-stat">
+            <strong>Cancelados:</strong> <%= pedidos.filter(p => p.estadoPago === 'cancelado').length %>
+          </div>
+          <div class="debug-stat">
+            <strong>Parciales:</strong> <%= pedidos.filter(p => p.estadoPago === 'parcial').length %>
+          </div>
+        </div>
+      </div>
+
       <!-- Estadísticas -->
       <div class="stats-overview">
         <div class="stat-card pendientes">
@@ -49,15 +284,10 @@
           </div>
           <div class="stat-label">Pagados Hoy</div>
         </div>
-        <div class="stat-card preparacion">
-          <div class="stat-value" id="pedidosPreparacion">
-            <%= pedidos.filter(p => p.estadoPedido === 'preparacion').length %>
-          </div>
-          <div class="stat-label">En Preparación</div>
-        </div>
+        
         <div class="stat-card cancelados">
           <div class="stat-value" id="pedidosCancelados">
-            <%= pedidos.filter(p => p.estadoPedido === 'cancelado').length %>
+            <%= pedidos.filter(p => p.estadoPago === 'cancelado').length %>
           </div>
           <div class="stat-label">Cancelados Hoy</div>
         </div>
@@ -73,6 +303,7 @@
           <button class="filter-btn active" data-filter="todos">Todos los Pedidos</button>
           <button class="filter-btn" data-filter="pendiente">Pendientes de Pago</button>
           <button class="filter-btn" data-filter="pagado">Pagados</button>
+          <button class="filter-btn" data-filter="cancelado">Cancelados</button>
         </div>
       </div>
 
@@ -86,19 +317,15 @@
           </div>
         <% } else { %>
           <% 
-          // Filtrar solo pedidos pendientes y pagados recientes (para cancelación)
-          const pedidosFiltrados = pedidos.filter(pedido => 
-            pedido.estadoPago === 'pendiente' || 
-            (pedido.estadoPago === 'pagado' && pedido.fechaPago && 
-             (new Date() - new Date(pedido.fechaPago)) <= 5 * 60 * 1000)
-          );
+          // Mostrar TODOS los pedidos para que los filtros funcionen
+          const pedidosFiltrados = pedidos;
           %>
           
           <% if (pedidosFiltrados.length === 0) { %>
             <div class="empty-state">
               <i class="fas fa-check-circle fa-3x"></i>
-              <h3>No hay pedidos pendientes</h3>
-              <p>Todos los pedidos han sido procesados.</p>
+              <h3>No hay pedidos</h3>
+              <p>No se encontraron pedidos con los filtros aplicados.</p>
             </div>
           <% } else { %>
             <% pedidosFiltrados.forEach(pedido => { %>
@@ -106,7 +333,8 @@
                    data-estado-pedido="<%= pedido.estadoPedido %>" 
                    data-estado-pago="<%= pedido.estadoPago %>"
                    data-mesa="<%= pedido.mesa.numeroMesa %>"
-                   data-pedido="<%= pedido.numeroPedido || pedido._id.toString().slice(-4) %>">
+                   data-pedido="<%= pedido.numeroPedido || pedido._id.toString().slice(-4) %>"
+                   data-fecha-pago="<%= pedido.fechaPago ? new Date(pedido.fechaPago).getTime() : '' %>">
                 
                 <!-- Header del Pedido -->
                 <div class="sale-header">
@@ -118,7 +346,8 @@
                       Mesa <%= pedido.mesa.numeroMesa %>
                       <span class="badge <%= pedido.estadoPedido === 'pendiente' ? 'warning' : 
                                             pedido.estadoPedido === 'preparacion' ? 'info' : 
-                                            pedido.estadoPedido === 'entregado' ? 'success' : 'secondary' %>">
+                                            pedido.estadoPedido === 'entregado' ? 'success' : 
+                                            pedido.estadoPedido === 'cancelado' ? 'danger' : 'secondary' %>">
                         <%= pedido.estadoPedido %>
                       </span>
                     </div>
@@ -136,6 +365,11 @@
                       <% if (pedido.fechaPago) { %>
                         <small>
                           <i class="fas fa-money-bill-wave"></i> Pagado: <%= new Date(pedido.fechaPago).toLocaleString('es-ES') %>
+                        </small>
+                      <% } %>
+                      <% if (pedido.fechaCancelacion) { %>
+                        <small>
+                          <i class="fas fa-times-circle"></i> Cancelado: <%= new Date(pedido.fechaCancelacion).toLocaleString('es-ES') %>
                         </small>
                       <% } %>
                     </div>
@@ -193,44 +427,85 @@
                   
                   <div class="pago-status">
                     <strong>Estado de pago:</strong>
-                    <span class="badge <%= pedido.estadoPago === 'pagado' ? 'success' : 'warning' %>">
+                    <span class="badge <%= pedido.estadoPago === 'pagado' ? 'success' : 
+                                          pedido.estadoPago === 'cancelado' ? 'danger' : 
+                                          pedido.estadoPago === 'parcial' ? 'info' : 'warning' %>">
                       <%= pedido.estadoPago %>
                     </span>
+                    <% if (pedido.estadoPago === 'parcial') { %>
+                      <br><small>
+                        <% 
+                        const totalPagado = pedido.historialPagos ? 
+                          pedido.historialPagos.reduce((sum, pago) => sum + pago.monto, 0) : 0;
+                        const pendiente = pedido.total - totalPagado;
+                        %>
+                        Pagado: S/ <%= totalPagado.toFixed(2) %> | Pendiente: S/ <%= pendiente.toFixed(2) %>
+                      </small>
+                    <% } %>
                   </div>
                 </div>
 
-                <!-- Acciones del CAJERO - SOLO PAGAR Y CANCELAR -->
+                <!-- Acciones del CAJERO -->
                 <div class="sale-actions">
-                  <!-- BOTÓN PROCESAR PAGO - Solo para pedidos pendientes -->
-                  <% if (pedido.estadoPago === 'pendiente') { %>
+                  <!-- BOTÓN PROCESAR PAGO - Solo para pedidos pendientes y parciales -->
+                  <% if (pedido.estadoPago === 'pendiente' || pedido.estadoPago === 'parcial') { %>
                     <a href="/pagos/procesar/<%= pedido._id %>" class="btn-action primary" title="Procesar pago del pedido">
-                      <i class="fas fa-credit-card"></i> Procesar Pago
+                      <i class="fas fa-credit-card"></i> 
+                      <% if (pedido.estadoPago === 'parcial') { %>
+                        Continuar Pago
+                      <% } else { %>
+                        Procesar Pago
+                      <% } %>
                     </a>
                   <% } %>
 
-                  <!-- BOTÓN CANCELAR - Solo para pedidos PAGADOS dentro de 5 minutos -->
+                  <!-- BOTÓN CANCELAR PAGO - Solo para pedidos PAGADOS dentro de 5 minutos -->
                   <% 
-                    let puedeCancelar = false;
-                    let tiempoRestante = '';
+                    let puedeCancelarPago = false;
+                    let tiempoRestanteCancelarPago = '';
                     
                     if (pedido.estadoPago === 'pagado' && pedido.fechaPago) {
                       const fechaPago = new Date(pedido.fechaPago);
                       const ahora = new Date();
                       const diferenciaMinutos = (ahora - fechaPago) / (1000 * 60);
-                      const minutosRestantes = 5 - diferenciaMinutos;
                       
                       if (diferenciaMinutos <= 5) {
-                        puedeCancelar = true;
-                        tiempoRestante = `${Math.floor(minutosRestantes)}:${Math.floor((minutosRestantes % 1) * 60).toString().padStart(2, '0')}`;
+                        puedeCancelarPago = true;
+                        const minutosRestantes = 5 - diferenciaMinutos;
+                        const minutos = Math.floor(minutosRestantes);
+                        const segundos = Math.floor((minutosRestantes % 1) * 60);
+                        tiempoRestanteCancelarPago = `${minutos}:${segundos.toString().padStart(2, '0')}`;
                       }
                     }
                   %>
 
-                  <% if (puedeCancelar) { %>
-                    <button type="button" class="btn-action danger" 
-                            onclick="cancelarPedido('<%= pedido._id %>', '<%= tiempoRestante %>')" 
-                            title="Cancelar pedido - Tiempo restante: <%= tiempoRestante %> minutos">
-                      <i class="fas fa-times"></i> Cancelar (<%= tiempoRestante %>)
+                  <% if (puedeCancelarPago) { %>
+                    <button type="button" class="btn-action danger cancelar-pago-btn" 
+                            data-pedido-id="<%= pedido._id %>"
+                            data-tiempo-restante="<%= tiempoRestanteCancelarPago %>"
+                            title="Cancelar pago - Tiempo restante: <%= tiempoRestanteCancelarPago %> minutos">
+                      <i class="fas fa-undo"></i> Cancelar Pago 
+                      <span class="tiempo-restante" id="tiempo-<%= pedido._id %>">
+                        (<%= tiempoRestanteCancelarPago %>)
+                      </span>
+                    </button>
+                  <% } %>
+
+                  <!-- Mostrar mensaje si está cancelado -->
+                  <% if (pedido.estadoPago === 'cancelado') { %>
+                    <span class="btn-action disabled" style="background-color: #6c757d; color: white;">
+                      <i class="fas fa-ban"></i> Pedido Cancelado
+                    </span>
+                  <% } %>
+
+                  <!-- Botón para ver historial de pagos -->
+                  <% if (pedido.historialPagos && pedido.historialPagos.length > 0) { %>
+                    <button type="button" class="btn-action info ver-historial-btn" 
+                            data-pedido-id="<%= pedido._id %>"
+                            data-numero-pedido="<%= pedido.numeroPedido || pedido._id.toString().slice(-4) %>"
+                            data-mesa="<%= pedido.mesa.numeroMesa %>"
+                            title="Ver historial de pagos">
+                      <i class="fas fa-history"></i> Historial
                     </button>
                   <% } %>
                 </div>
@@ -242,104 +517,392 @@
     </div>
   </main>
 
-  <!-- Modal de Confirmación para Cancelar -->
-  <div id="cancelModal" class="modal">
+  <!-- Modal de Confirmación para Cancelar Pago -->
+  <div id="cancelPagoModal" class="modal">
     <div class="modal-content">
-      <h3>Confirmar Cancelación</h3>
-      <p id="cancelMessage">¿Estás seguro de que quieres cancelar este pedido?</p>
-      <p><strong>Se devolverá el stock de todos los platos y se liberará la mesa.</strong></p>
+      <h3>Confirmar Cancelación de Pago</h3>
+      <p id="cancelPagoMessage">¿Estás seguro de que quieres cancelar este pago?</p>
+      <p><strong>Esta acción no se puede deshacer:</strong></p>
+      <ul>
+        <li>✅ La venta se eliminará del sistema</li>
+        <li>✅ El pedido volverá a estado "Pendiente de Pago"</li>
+        <li>✅ El stock de productos NO se devolverá (el pedido sigue activo)</li>
+        <li>✅ La mesa permanecerá ocupada</li>
+      </ul>
       <div class="modal-actions">
-        <button type="button" class="btn-action secondary" onclick="closeModal('cancelModal')">No, Mantener</button>
-        <button type="button" class="btn-action danger" id="confirmCancelBtn">Sí, Cancelar Pedido</button>
+        <button type="button" class="btn-action secondary" onclick="closeModal('cancelPagoModal')">No, Mantener Pago</button>
+        <button type="button" class="btn-action danger" id="confirmCancelPagoBtn">Sí, Cancelar Pago</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para Historial de Pagos -->
+  <div id="historialPagosModal" class="historial-modal">
+    <div class="historial-modal-content">
+      <div class="historial-modal-header">
+        <h3>
+          <i class="fas fa-history"></i> 
+          Historial de Pagos - Pedido #<span id="modalPedidoNumero"></span>
+        </h3>
+        <button class="close-historial">&times;</button>
+      </div>
+      <div class="historial-modal-body">
+        <div class="resumen-pagos">
+          <h4>Resumen del Pedido</h4>
+          <div class="resumen-stats">
+            <div class="resumen-stat">
+              <strong>Mesa</strong>
+              <span class="valor" id="modalMesaNumero"></span>
+            </div>
+            <div class="resumen-stat">
+              <strong>Total del Pedido</strong>
+              <span class="valor" id="modalTotalPedido"></span>
+            </div>
+            <div class="resumen-stat">
+              <strong>Total Pagado</strong>
+              <span class="valor" id="modalTotalPagado"></span>
+            </div>
+            <div class="resumen-stat">
+              <strong>Saldo Pendiente</strong>
+              <span class="valor" id="modalSaldoPendiente"></span>
+            </div>
+          </div>
+        </div>
+
+        <div id="historialPagosContent">
+          <!-- Aquí se cargará el historial dinámicamente -->
+        </div>
       </div>
     </div>
   </div>
 
   <script>
-    let pedidoACancelar = null;
+    let pedidoACancelarPago = null;
+    let intervalosTiempo = {};
 
     document.addEventListener('DOMContentLoaded', function() {
+      console.log('✅ Dashboard del cajero cargado - CON HISTORIAL MODAL');
+      
       const searchInput = document.getElementById('searchInput');
       const filterBtns = document.querySelectorAll('.filter-btn[data-filter]');
       const cards = document.querySelectorAll('.sale-card');
 
-      console.log('✅ Dashboard del cajero cargado');
+      console.log(`🎯 Total de tarjetas encontradas: ${cards.length}`);
+
+      // Debug: mostrar estados de las tarjetas
+      const estadosPago = {};
+      cards.forEach((card, index) => {
+        const estadoPago = card.getAttribute('data-estado-pago');
+        estadosPago[estadoPago] = (estadosPago[estadoPago] || 0) + 1;
+      });
+      console.log('📊 Distribución de estados de pago:', estadosPago);
+
+      // Iniciar contadores de tiempo para cancelar pago
+      iniciarContadoresCancelarPago();
 
       // 🔍 Filtro de búsqueda
       if (searchInput) {
-        searchInput.addEventListener('input', e => {
+        searchInput.addEventListener('input', function(e) {
           const term = e.target.value.toLowerCase().trim();
+          console.log('🔍 Buscando:', term);
+          
+          let encontrados = 0;
           cards.forEach(card => {
             const mesa = card.getAttribute('data-mesa').toLowerCase();
             const pedido = card.getAttribute('data-pedido').toLowerCase();
             const textoCompleto = card.textContent.toLowerCase();
             
-            const coincide = mesa.includes(term) || pedido.includes(term) || textoCompleto.includes(term);
-            card.style.display = coincide ? 'block' : 'none';
+            const coincide = mesa.includes(term) || 
+                           pedido.includes(term) || 
+                           textoCompleto.includes(term);
+            
+            if (coincide) {
+              card.style.display = 'block';
+              encontrados++;
+            } else {
+              card.style.display = 'none';
+            }
           });
+          console.log(`📊 Búsqueda: ${encontrados} resultados encontrados`);
+          actualizarEstadoVacio();
         });
       }
 
       // 🎛 Filtro por estado
       if (filterBtns.length > 0) {
         filterBtns.forEach(btn => {
-          btn.addEventListener('click', () => {
-            const filtro = btn.getAttribute('data-filter');
+          btn.addEventListener('click', function() {
+            const filtro = this.getAttribute('data-filter');
+            console.log('🎛️ Filtrando por:', filtro);
             
-            // Actualizar botones activos
             filterBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+            this.classList.add('active');
             
-            // Filtrar tarjetas
+            let mostrados = 0;
             cards.forEach(card => {
-              if (filtro === 'todos') {
+              const estadoPago = card.getAttribute('data-estado-pago');
+              
+              let mostrar = false;
+              
+              switch(filtro) {
+                case 'todos':
+                  mostrar = true;
+                  break;
+                case 'pendiente':
+                  mostrar = estadoPago === 'pendiente';
+                  break;
+                case 'pagado':
+                  mostrar = estadoPago === 'pagado';
+                  break;
+                case 'cancelado':
+                  mostrar = estadoPago === 'cancelado';
+                  break;
+                default:
+                  mostrar = true;
+              }
+              
+              if (mostrar) {
                 card.style.display = 'block';
-              } else if (filtro === 'pendiente') {
-                const estadoPago = card.getAttribute('data-estado-pago');
-                card.style.display = estadoPago === 'pendiente' ? 'block' : 'none';
-              } else if (filtro === 'pagado') {
-                const estadoPago = card.getAttribute('data-estado-pago');
-                card.style.display = estadoPago === 'pagado' ? 'block' : 'none';
+                mostrados++;
               } else {
-                const estadoPedido = card.getAttribute('data-estado-pedido');
-                card.style.display = estadoPedido === filtro ? 'block' : 'none';
+                card.style.display = 'none';
               }
             });
+            
+            console.log(`📊 Filtro "${filtro}": ${mostrados} pedidos mostrados`);
+            actualizarEstadoVacio();
           });
         });
       }
 
-      // Configurar botones de confirmación
-      document.getElementById('confirmCancelBtn')?.addEventListener('click', function() {
-        if (pedidoACancelar) {
-          cancelarPedidoConfirmado(pedidoACancelar);
+      // Configurar botones de cancelar pago
+      document.querySelectorAll('.cancelar-pago-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const pedidoId = this.getAttribute('data-pedido-id');
+          const tiempoRestante = this.getAttribute('data-tiempo-restante');
+          cancelarPago(pedidoId, tiempoRestante);
+        });
+      });
+
+      // Configurar botones de historial
+      document.querySelectorAll('.ver-historial-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const pedidoId = this.getAttribute('data-pedido-id');
+          const numeroPedido = this.getAttribute('data-numero-pedido');
+          const mesa = this.getAttribute('data-mesa');
+          mostrarHistorialPagos(pedidoId, numeroPedido, mesa);
+        });
+      });
+
+      // Configurar botón de confirmación para cancelar pago
+      document.getElementById('confirmCancelPagoBtn')?.addEventListener('click', function() {
+        if (pedidoACancelarPago) {
+          cancelarPagoConfirmado(pedidoACancelarPago);
         }
       });
 
-      // Actualizar contador de tiempo para cancelación cada minuto
+      // Configurar cierre del modal de historial
+      document.querySelector('.close-historial').addEventListener('click', function() {
+        closeModal('historialPagosModal');
+      });
+
+      // Cerrar modal de historial al hacer clic fuera
+      document.getElementById('historialPagosModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+          closeModal('historialPagosModal');
+        }
+      });
+
+      // Actualizar cada 30 segundos para verificar tiempos
       setInterval(() => {
-        cards.forEach(card => {
-          const estadoPago = card.getAttribute('data-estado-pago');
-          if (estadoPago === 'pagado') {
-            // Recargar la página si hay pedidos que pueden necesitar actualización
-            location.reload();
-          }
-        });
-      }, 60000); // Cada minuto
+        const hayPedidosPagados = Array.from(cards).some(card => 
+          card.getAttribute('data-estado-pago') === 'pagado' && 
+          card.style.display !== 'none'
+        );
+        
+        if (hayPedidosPagados) {
+          console.log('🔄 Verificando estados de pedidos pagados...');
+          // Recargar solo si hay pedidos pagados que pueden necesitar actualización
+          location.reload();
+        }
+      }, 30000);
     });
 
-    // Función para cancelar pedido
-    function cancelarPedido(pedidoId, tiempoRestante) {
-      pedidoACancelar = pedidoId;
-      const mensaje = `¿Estás seguro de que quieres cancelar este pedido?<br><small>Tiempo restante: ${tiempoRestante} minutos</small>`;
-      document.getElementById('cancelMessage').innerHTML = mensaje;
-      openModal('cancelModal');
+    // Función para mostrar historial de pagos
+    async function mostrarHistorialPagos(pedidoId, numeroPedido, mesa) {
+      try {
+        console.log(`📋 Cargando historial para pedido: ${pedidoId}`);
+        
+        // Mostrar modal de carga
+        document.getElementById('modalPedidoNumero').textContent = numeroPedido;
+        document.getElementById('modalMesaNumero').textContent = `Mesa ${mesa}`;
+        document.getElementById('historialPagosContent').innerHTML = `
+          <div style="text-align: center; padding: 40px;">
+            <i class="fas fa-spinner fa-spin fa-2x"></i>
+            <p>Cargando historial de pagos...</p>
+          </div>
+        `;
+        
+        openModal('historialPagosModal');
+
+        // Hacer petición al servidor
+        const response = await fetch(`/api/pagos/historial/${pedidoId}`);
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+          mostrarHistorialEnModal(result, numeroPedido, mesa);
+        } else {
+          throw new Error(result.error || 'Error al cargar el historial');
+        }
+      } catch (error) {
+        console.error('Error al cargar historial:', error);
+        document.getElementById('historialPagosContent').innerHTML = `
+          <div class="sin-historial">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h3>Error al cargar el historial</h3>
+            <p>${error.message}</p>
+          </div>
+        `;
+      }
     }
 
-    // Cancelar pedido confirmado
-    async function cancelarPedidoConfirmado(pedidoId) {
+    // Función para mostrar el historial en el modal
+    function mostrarHistorialEnModal(data, numeroPedido, mesa) {
+      const historial = data.historial || [];
+      const totalPedido = data.total || 0;
+      const totalPagado = data.totalPagado || 0;
+      const pendiente = data.pendiente || 0;
+
+      // Actualizar resumen
+      document.getElementById('modalTotalPedido').textContent = `S/ ${totalPedido.toFixed(2)}`;
+      document.getElementById('modalTotalPagado').textContent = `S/ ${totalPagado.toFixed(2)}`;
+      document.getElementById('modalSaldoPendiente').textContent = `S/ ${pendiente.toFixed(2)}`;
+
+      let html = '';
+
+      if (historial.length > 0) {
+        html = `
+          <h4 style="margin-bottom: 15px;">
+            <i class="fas fa-list"></i> Detalle de Pagos
+          </h4>
+          <table class="historial-table">
+            <thead>
+              <tr>
+                <th>Fecha y Hora</th>
+                <th>Método de Pago</th>
+                <th>Monto</th>
+                <th>Observaciones</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        historial.forEach((pago, index) => {
+          const fecha = new Date(pago.fecha).toLocaleString('es-ES');
+          const metodoClass = `metodo-${pago.metodo}`;
+          const montoClass = pago.monto < 0 ? 'text-danger' : 'text-success';
+          const montoSign = pago.monto < 0 ? '' : '+';
+          
+          html += `
+            <tr>
+              <td>${fecha}</td>
+              <td>
+                <span class="metodo-pago ${metodoClass}">
+                  ${pago.metodo}
+                </span>
+              </td>
+              <td class="${montoClass}" style="font-weight: bold;">
+                ${montoSign}S/ ${Math.abs(pago.monto).toFixed(2)}
+              </td>
+              <td>${pago.observaciones || '-'}</td>
+            </tr>
+          `;
+        });
+
+        html += `
+            </tbody>
+          </table>
+        `;
+      } else {
+        html = `
+          <div class="sin-historial">
+            <i class="fas fa-history"></i>
+            <h3>No hay registros de pago</h3>
+            <p>Este pedido no tiene historial de pagos registrado.</p>
+          </div>
+        `;
+      }
+
+      document.getElementById('historialPagosContent').innerHTML = html;
+    }
+
+    // Función para iniciar contadores de tiempo para cancelar pago
+    function iniciarContadoresCancelarPago() {
+      document.querySelectorAll('.sale-card[data-estado-pago="pagado"]').forEach(card => {
+        const pedidoId = card.getAttribute('data-pedido');
+        const fechaPago = card.getAttribute('data-fecha-pago');
+        
+        if (!fechaPago) return;
+        
+        const fechaPagoTime = parseInt(fechaPago);
+        const ahora = new Date().getTime();
+        const diferencia = ahora - fechaPagoTime;
+        const cincoMinutos = 5 * 60 * 1000; // 5 minutos en milisegundos
+        
+        // Si han pasado menos de 5 minutos, iniciar contador
+        if (diferencia < cincoMinutos) {
+          const tiempoRestante = cincoMinutos - diferencia;
+          iniciarContador(pedidoId, tiempoRestante);
+        }
+      });
+    }
+
+    // Función para iniciar contador regresivo
+    function iniciarContador(pedidoId, tiempoRestanteMs) {
+      // Limpiar intervalo anterior si existe
+      if (intervalosTiempo[pedidoId]) {
+        clearInterval(intervalosTiempo[pedidoId]);
+      }
+      
+      const elemento = document.getElementById(`tiempo-${pedidoId}`);
+      if (!elemento) return;
+      
+      let tiempoRestante = Math.floor(tiempoRestanteMs / 1000); // Convertir a segundos
+      
+      intervalosTiempo[pedidoId] = setInterval(() => {
+        if (tiempoRestante <= 0) {
+          clearInterval(intervalosTiempo[pedidoId]);
+          elemento.textContent = '(0:00)';
+          // Ocultar botón cuando se acabe el tiempo
+          const boton = document.querySelector(`[data-pedido-id="${pedidoId}"]`);
+          if (boton) {
+            boton.style.display = 'none';
+          }
+          return;
+        }
+        
+        const minutos = Math.floor(tiempoRestante / 60);
+        const segundos = tiempoRestante % 60;
+        elemento.textContent = `(${minutos}:${segundos.toString().padStart(2, '0')})`;
+        
+        tiempoRestante--;
+      }, 1000);
+    }
+
+    // Función para cancelar pago
+    function cancelarPago(pedidoId, tiempoRestante) {
+      pedidoACancelarPago = pedidoId;
+      const mensaje = `¿Estás seguro de que quieres cancelar el pago de este pedido?<br>
+                      <small>Tiempo restante para cancelar: ${tiempoRestante} minutos</small>`;
+      document.getElementById('cancelPagoMessage').innerHTML = mensaje;
+      openModal('cancelPagoModal');
+    }
+
+    // Cancelar pago confirmado
+    async function cancelarPagoConfirmado(pedidoId) {
       try {
-        const response = await fetch(`/api/pedidos/${pedidoId}/cancelar`, {
+        console.log(`🗑️ Cancelando pago del pedido: ${pedidoId}`);
+        const response = await fetch(`/api/pagos/cancelar-pago/${pedidoId}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -349,19 +912,20 @@
         const result = await response.json();
 
         if (response.ok) {
-          mostrarNotificacion('✅ Pedido cancelado correctamente. Stock devuelto y mesa liberada.', 'success');
-          closeModal('cancelModal');
+          mostrarNotificacion('✅ Pago cancelado correctamente. El pedido volvió a estado pendiente.', 'success');
+          closeModal('cancelPagoModal');
+          
           // Recargar después de 1.5 segundos
           setTimeout(() => {
             location.reload();
           }, 1500);
         } else {
-          throw new Error(result.error || 'Error al cancelar el pedido');
+          throw new Error(result.error || 'Error al cancelar el pago');
         }
       } catch (error) {
-        console.error('Error al cancelar pedido:', error);
+        console.error('Error al cancelar pago:', error);
         mostrarNotificacion('❌ Error: ' + error.message, 'error');
-        closeModal('cancelModal');
+        closeModal('cancelPagoModal');
       }
     }
 
@@ -372,22 +936,13 @@
 
     function closeModal(modalId) {
       document.getElementById(modalId).style.display = 'none';
-      pedidoACancelar = null;
-    }
-
-    // Cerrar modal al hacer clic fuera
-    window.onclick = function(event) {
-      const modals = document.querySelectorAll('.modal');
-      modals.forEach(modal => {
-        if (event.target === modal) {
-          closeModal(modal.id);
-        }
-      });
+      if (modalId === 'cancelPagoModal') {
+        pedidoACancelarPago = null;
+      }
     }
 
     // Función para mostrar notificaciones
     function mostrarNotificacion(mensaje, tipo = 'info') {
-      // Remover notificaciones existentes
       const notificacionesExistentes = document.querySelectorAll('.notificacion');
       notificacionesExistentes.forEach(notif => notif.remove());
 
@@ -410,6 +965,55 @@
         }
       }, 5000);
     }
+
+    // Función para actualizar estado vacío
+    function actualizarEstadoVacio() {
+      const cardsContainer = document.getElementById('cardsContainer');
+      const emptyStateExistente = cardsContainer.querySelector('.empty-state');
+      const cardsVisibles = cardsContainer.querySelectorAll('.sale-card[style="display: block"]').length;
+      
+      if (cardsVisibles === 0 && !emptyStateExistente) {
+        const noResults = document.createElement('div');
+        noResults.className = 'empty-state';
+        noResults.innerHTML = `
+          <i class="fas fa-search fa-3x"></i>
+          <h3>No hay pedidos con este filtro</h3>
+          <p>Intenta con otro filtro o busca por número de pedido o mesa.</p>
+        `;
+        cardsContainer.appendChild(noResults);
+      } else if (cardsVisibles > 0 && emptyStateExistente) {
+        emptyStateExistente.remove();
+      }
+    }
+
+    // Función para debug manual
+    function debugFiltros() {
+      console.log('=== DEBUG COMPLETO DE FILTROS ===');
+      const cards = document.querySelectorAll('.sale-card');
+      const estados = {};
+      const estadosPedido = {};
+      
+      cards.forEach(card => {
+        const estadoPago = card.getAttribute('data-estado-pago');
+        const estadoPedido = card.getAttribute('data-estado-pedido');
+        estados[estadoPago] = (estados[estadoPago] || 0) + 1;
+        estadosPedido[estadoPedido] = (estadosPedido[estadoPedido] || 0) + 1;
+      });
+      
+      console.log('📊 Distribución de estados de pago:', estados);
+      console.log('📋 Distribución de estados de pedido:', estadosPedido);
+      console.log('🎛️ Botón activo:', document.querySelector('.filter-btn.active')?.getAttribute('data-filter'));
+    }
+
+    // Ejecutar debug al cargar
+    setTimeout(debugFiltros, 1000);
+
+    // Limpiar intervalos al salir
+    window.addEventListener('beforeunload', function() {
+      Object.values(intervalosTiempo).forEach(intervalo => {
+        clearInterval(intervalo);
+      });
+    });
   </script>
 
 </body>

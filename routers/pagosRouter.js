@@ -225,5 +225,69 @@ router.get('/historial/:id', async (req, res) => {
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
+// Ruta para cancelar pago (dentro de 5 minutos)
+router.post('/cancelar-pago/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log(`🔄 Intentando cancelar pago del pedido: ${id}`);
 
+    const pedido = await Pedido.findById(id);
+    if (!pedido) {
+      return res.status(404).json({ error: 'Pedido no encontrado' });
+    }
+
+    // Verificar que el pedido esté pagado
+    if (pedido.estadoPago !== 'pagado') {
+      return res.status(400).json({ error: 'El pedido no está pagado' });
+    }
+
+    // Verificar que no hayan pasado más de 5 minutos desde el pago
+    if (!pedido.fechaPago) {
+      return res.status(400).json({ error: 'No se encontró fecha de pago' });
+    }
+
+    const fechaPago = new Date(pedido.fechaPago);
+    const ahora = new Date();
+    const diferenciaMinutos = (ahora - fechaPago) / (1000 * 60);
+
+    if (diferenciaMinutos > 5) {
+      return res.status(400).json({ 
+        error: 'No se puede cancelar el pago después de 5 minutos' 
+      });
+    }
+
+    // Buscar y eliminar la venta asociada
+    const ventaEliminada = await Venta.findOneAndDelete({ pedido: id });
+    console.log('📊 Venta eliminada:', ventaEliminada ? 'Sí' : 'No');
+
+    // Revertir el estado del pedido a pendiente
+    pedido.estadoPago = 'pendiente';
+    pedido.fechaPago = null;
+    
+    // Agregar al historial
+    pedido.historialPagos.push({
+      monto: -pedido.total, // Monto negativo para indicar reversión
+      fecha: new Date(),
+      metodo: 'reversion',
+      observaciones: 'Pago cancelado dentro del período de 5 minutos'
+    });
+
+    await pedido.save();
+
+    console.log('✅ Pago cancelado exitosamente, pedido revertido a pendiente');
+
+    res.json({
+      success: true,
+      message: 'Pago cancelado exitosamente. El pedido volvió a estado pendiente.',
+      pedido: pedido,
+      ventaEliminada: ventaEliminada ? true : false
+    });
+
+  } catch (error) {
+    console.error('❌ Error al cancelar pago:', error);
+    res.status(500).json({ 
+      error: 'Error interno del servidor al cancelar el pago: ' + error.message 
+    });
+  }
+});
 module.exports = router;

@@ -3,136 +3,591 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard Cajero - Restaurante</title>
+  <title>Dashboard - Cajero</title>
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="dashboard_cajero.css">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="/dashboard_cajero.css">
 </head>
 <body>
   <div class="dashboard-container">
     <!-- Sidebar -->
-    <aside class="sidebar">
-      <h2 class="logo">
-        <i class="fas fa-utensils"></i><br>
-        Restaurante
-      </h2>
+  <aside class="sidebar">
+    <h2 class="logo">
+      <i class="fas fa-cash-register"></i><br>
+      Cajero
+    </h2>
 
-      <nav>
-        <a href="/dashboard_cajero" class="active"><i class="fas fa-home"></i> <span>Dashboard</span></a>
-        <a href="/pagos"><i class="fas fa-receipt"></i> <span>Procesar pagos</span></a>
-        <a href="/logout"><i class="fas fa-sign-out-alt"></i> <span>Cerrar sesión</span></a>
-      </nav>
-    </aside>
+    <nav>
+      <a href="/dashboard_cajero"  class="active"><i class="fas fa-home"></i> <span>Dashboard</span></a>
+      <a href="/pagos" ><i class="fas fa-credit-card"></i> <span>Procesar Pagos</span></a>
+      <a href="/cajero/reportes"><i class="fas fa-chart-bar"></i> <span>Reportes</span></a>
+      <a href="/logout"><i class="fas fa-sign-out-alt"></i> <span>Cerrar sesión</span></a>
+    </nav>
+  </aside>>
 
     <!-- Main content -->
     <main class="main-content">
-      <header>
-        <h1>Bienvenido, <%= usuario.nombre %></h1>
-        <div class="welcome-badge">Panel del Cajero</div>
+      <!-- Header -->
+      <header class="dashboard-header">
+        <div class="header-content">
+          <h1>Bienvenido, <span class="user-name"><%= usuario.nombre %></span></h1>
+          <p class="welcome-text">Panel de Control - Área de Caja</p>
+        </div>
+        <div class="header-info">
+          <div class="date-time">
+            <div class="current-date" id="current-date"></div>
+            <div class="current-time" id="current-time"></div>
+          </div>
+          <div class="user-badge">
+            <i class="fas fa-cash-register"></i>
+            <span>Cajero</span>
+          </div>
+        </div>
       </header>
 
-      <!-- Dashboard Stats -->
-      <section class="dashboard-stats">
-        <div class="stat-card">
-          <div class="stat-header">
-            <h3>Ventas del Día</h3>
-            <div class="stat-badge">Actualizado</div>
+      <!-- Estadísticas Rápidas -->
+      <section class="quick-stats">
+        <div class="stat-card revenue-card">
+          <div class="stat-content">
+            <div class="stat-icon">
+              <i class="fas fa-money-bill-wave"></i>
+            </div>
+            <div class="stat-info">
+              <h3>Ventas Hoy</h3>
+              <div class="stat-value" id="ventas-hoy">S/ 0.00</div>
+              <div class="stat-badge" id="pedidos-hoy">0 pedidos</div>
+            </div>
           </div>
-          <div class="stat-value">S/. 2,350.00</div>
+          <div class="stat-trend positive">
+            <i class="fas fa-chart-line"></i>
+          </div>
         </div>
 
-        <div class="stat-card">
-          <div class="stat-header">
-            <h3>Pedidos Pagados</h3>
-            <div class="stat-badge">+15 Hoy</div>
+        <div class="stat-card monthly-card">
+          <div class="stat-content">
+            <div class="stat-icon">
+              <i class="fas fa-chart-bar"></i>
+            </div>
+            <div class="stat-info">
+              <h3>Ventas del Mes</h3>
+              <div class="stat-value" id="ventas-mes">S/ 0.00</div>
+              <div class="stat-badge" id="pedidos-mes">0 pedidos</div>
+            </div>
           </div>
-          <div class="stat-value">120</div>
+          <div class="stat-trend positive">
+            <i class="fas fa-trend-up"></i>
+          </div>
         </div>
 
-        <div class="stat-card">
-          <div class="stat-header">
-            <h3>Pedidos Pendientes</h3>
-            <div class="stat-badge">2 en espera</div>
-          </div>
-          <div class="stat-value">8</div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-header">
-            <h3>Clientes Atendidos</h3>
-            <div class="stat-badge">+12 Nuevos</div>
-          </div>
-          <div class="stat-value">425</div>
-        </div>
-      </section>
-
-      <!-- Recent Sales -->
-      <section class="recent-orders-section">
-        <h3>Ventas Recientes</h3>
-        <div class="orders-list">
-          <div class="order-item">
-            <div class="order-details">
-              <h4>Pedido #0458</h4>
-              <span class="order-price">S/. 75.00</span>
+        <div class="stat-card pending-card">
+          <div class="stat-content">
+            <div class="stat-icon">
+              <i class="fas fa-clock"></i>
             </div>
-            <div class="order-date-status">
-              <span class="order-date">31 Oct 2025</span>
-              <span class="order-status complete">Pagado</span>
+            <div class="stat-info">
+              <h3>Pendientes de Pago</h3>
+              <div class="stat-value" id="pedidos-pendientes">0</div>
+              <div class="stat-badge warning" id="estado-pendientes">Al día</div>
             </div>
           </div>
-
-          <div class="order-item">
-            <div class="order-details">
-              <h4>Pedido #0457</h4>
-              <span class="order-price">S/. 50.00</span>
-            </div>
-            <div class="order-date-status">
-              <span class="order-date">31 Oct 2025</span>
-              <span class="order-status pending">Pendiente</span>
-            </div>
-          </div>
-
-          <div class="order-item">
-            <div class="order-details">
-              <h4>Pedido #0456</h4>
-              <span class="order-price">S/. 130.00</span>
-            </div>
-            <div class="order-date-status">
-              <span class="order-date">30 Oct 2025</span>
-              <span class="order-status complete">Pagado</span>
-            </div>
+          <div class="stat-trend warning">
+            <i class="fas fa-exclamation"></i>
           </div>
         </div>
       </section>
 
-      <!-- Customers -->
-      <section class="customers-section">
-        <h3>Clientes Recientes</h3>
-        <div class="customer-stats">
-          <div class="customer-stat">
-            <div class="customer-value">150</div>
-            <div class="customer-label">Clientes Hoy</div>
+      <!-- Gráficos Principales -->
+      <section class="charts-grid">
+        <!-- Gráfico de Ventas Mensuales -->
+        <div class="chart-card main-chart">
+          <div class="chart-header">
+            <h3>Ingresos Totales</h3>
+            <div class="chart-actions">
+              <button class="chart-btn active">Mensual</button>
+              <button class="chart-btn">Anual</button>
+            </div>
           </div>
-          <div class="customer-stat">
-            <div class="customer-value">3800</div>
-            <div class="customer-label">Totales</div>
+          <div class="chart-container">
+            <canvas id="revenueChart"></canvas>
           </div>
         </div>
-        <a href="/clientes" class="view-more">Ver todos los clientes</a>
+
+        <!-- Métodos de Pago -->
+        <div class="chart-card pie-chart">
+          <div class="chart-header">
+            <h3>Métodos de Pago</h3>
+            <span class="chart-subtitle">Este Mes</span>
+          </div>
+          <div class="chart-container">
+            <canvas id="paymentChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Estado de Pedidos -->
+        <div class="chart-card small-chart">
+          <div class="chart-header">
+            <h3>Estado de Pedidos</h3>
+          </div>
+          <div class="chart-container">
+            <canvas id="ordersChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Eficiencia -->
+        <div class="chart-card gauge-chart">
+          <div class="chart-header">
+            <h3>Eficiencia</h3>
+            <div class="efficiency-score">85%</div>
+          </div>
+          <div class="chart-container">
+            <canvas id="efficiencyChart"></canvas>
+          </div>
+        </div>
       </section>
 
-      <!-- Reports -->
-      <section class="reports-section">
-        <h3>Reportes Financieros</h3>
-        <div class="report-item">
-          <div class="report-name">Cierre Diario - Octubre</div>
-          <div class="report-actions">
-            <a href="#" class="action-link">Ver</a>
-            <a href="#" class="action-link">Exportar PDF</a>
+      <!-- Sección de Actividad -->
+      <section class="activity-section">
+        <div class="recent-activity">
+          <div class="section-header">
+            <h3><i class="fas fa-receipt"></i> Ventas Recientes</h3>
+            <a href="/ventas" class="view-all">Ver Todo</a>
+          </div>
+          <div class="activity-list" id="recent-sales-list">
+            <div class="empty-state">
+              <i class="fas fa-receipt"></i>
+              <p>No hay ventas recientes</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="pending-alerts">
+          <div class="section-header">
+            <h3><i class="fas fa-clock"></i> Alertas de Pago</h3>
+            <span class="badge" id="pending-count">0</span>
+          </div>
+          <div class="alerts-list" id="pending-payments-list">
+            <div class="empty-state">
+              <i class="fas fa-check-circle"></i>
+              <p>No hay pagos pendientes</p>
+            </div>
           </div>
         </div>
       </section>
     </main>
   </div>
+
+  <script>
+    // Tiempo real - Fecha y Hora
+    function updateDateTime() {
+      const now = new Date();
+      
+      // Formatear fecha
+      const options = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      };
+      document.getElementById('current-date').textContent = 
+        now.toLocaleDateString('es-ES', options);
+      
+      // Formatear hora
+      document.getElementById('current-time').textContent = 
+        now.toLocaleTimeString('es-ES', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          second: '2-digit'
+        });
+    }
+
+    // Actualizar cada segundo
+    setInterval(updateDateTime, 1000);
+    updateDateTime();
+
+    // Variables globales para los gráficos
+    let revenueChart, paymentChart, ordersChart, efficiencyChart;
+
+    // Función para cargar datos del dashboard
+    async function loadDashboardData() {
+      try {
+        console.log('🔄 Cargando datos del dashboard cajero...');
+        
+        const response = await fetch('/dashboard_cajero/datos');
+        
+        if (!response.ok) {
+          throw new Error(`Error HTTP: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('📊 Respuesta completa del servidor:', result);
+
+        if (result.success) {
+          const datos = result.datos;
+          console.log('📈 Datos recibidos:', datos);
+          console.log('💰 Estadísticas:', datos.estadisticas);
+          
+          // Actualizar estadísticas
+          const ventasHoy = datos.estadisticas.ventasHoy;
+          const ventasMes = datos.estadisticas.ventasMes;
+          
+          document.getElementById('ventas-hoy').textContent = 
+            `S/ ${(ventasHoy.total || 0).toFixed(2)}`;
+          document.getElementById('pedidos-hoy').textContent = 
+            `${ventasHoy.count || 0} pedidos`;
+          
+          document.getElementById('ventas-mes').textContent = 
+            `S/ ${(ventasMes.total || 0).toFixed(2)}`;
+          document.getElementById('pedidos-mes').textContent = 
+            `${ventasMes.count || 0} pedidos`;
+          
+          document.getElementById('pedidos-pendientes').textContent = 
+            datos.estadisticas.pedidosPendientes || 0;
+          document.getElementById('estado-pendientes').textContent = 
+            datos.estadisticas.pedidosPendientes > 0 ? 'Por atender' : 'Al día';
+
+          // Actualizar gráficos
+          updateRevenueChart(datos.ventasPorDia);
+          updatePaymentChart(datos.metodosPago);
+          updateOrdersChart(datos.estadoPedidos);
+          updateEfficiencyChart();
+
+          // Actualizar ventas recientes
+          updateRecentSales(datos.ventasRecientes || []);
+
+          // Actualizar alertas de pago
+          updatePendingPayments(datos.estadisticas.pedidosPendientes || 0);
+
+          console.log('✅ Dashboard cajero actualizado correctamente');
+
+        } else {
+          console.error('❌ Error en la respuesta:', result.error);
+          showErrorState('Error al cargar datos: ' + (result.error || 'Desconocido'));
+        }
+      } catch (error) {
+        console.error('❌ Error al cargar datos:', error);
+        showErrorState('Error de conexión: ' + error.message);
+      }
+    }
+
+    // Función para mostrar estado de error
+    function showErrorState(message) {
+      console.error('🚨 Error:', message);
+      
+      // Mostrar valores por defecto
+      document.getElementById('ventas-hoy').textContent = 'S/ 0.00';
+      document.getElementById('pedidos-hoy').textContent = '0 pedidos';
+      document.getElementById('ventas-mes').textContent = 'S/ 0.00';
+      document.getElementById('pedidos-mes').textContent = '0 pedidos';
+      document.getElementById('pedidos-pendientes').textContent = '0';
+    }
+
+    // Gráfico de ingresos (como en la imagen)
+    function updateRevenueChart(ventasData) {
+      const ctx = document.getElementById('revenueChart').getContext('2d');
+      
+      if (revenueChart) {
+        revenueChart.destroy();
+      }
+
+      const labels = ventasData.map(v => v.fecha);
+      const data = ventasData.map(v => v.total);
+
+      revenueChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Ventas (S/.)',
+            data: data,
+            backgroundColor: 'rgba(178, 34, 34, 0.8)',
+            borderColor: 'rgba(178, 34, 34, 1)',
+            borderWidth: 1,
+            borderRadius: 6,
+            borderSkipped: false,
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return `S/ ${context.parsed.y.toFixed(2)}`;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: {
+                color: 'rgba(0,0,0,0.1)'
+              },
+              ticks: {
+                callback: function(value) {
+                  return 'S/ ' + value;
+                }
+              }
+            },
+            x: {
+              grid: {
+                display: false
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Gráfico de métodos de pago
+    function updatePaymentChart(metodosData) {
+      const ctx = document.getElementById('paymentChart').getContext('2d');
+      
+      if (paymentChart) {
+        paymentChart.destroy();
+      }
+
+      // Si no hay datos, mostrar gráfico vacío
+      if (!metodosData || metodosData.length === 0) {
+        paymentChart = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Sin datos'],
+            datasets: [{
+              data: [1],
+              backgroundColor: ['#e9ecef']
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: 'bottom'
+              },
+              tooltip: {
+                enabled: false
+              }
+            }
+          }
+        });
+        return;
+      }
+
+      const colors = ['#b22222', '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4'];
+
+      paymentChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: metodosData.map(m => {
+            const metodo = m._id;
+            if (metodo === 'efectivo') return 'Efectivo';
+            if (metodo === 'tarjeta') return 'Tarjeta';
+            if (metodo === 'yape') return 'Yape';
+            if (metodo === 'plin') return 'Plin';
+            return metodo;
+          }),
+          datasets: [{
+            data: metodosData.map(m => m.count),
+            backgroundColor: colors,
+            borderWidth: 2,
+            borderColor: '#fff'
+          }]
+        },
+        options: {
+          responsive: true,
+          cutout: '70%',
+          plugins: {
+            legend: {
+              position: 'bottom'
+            }
+          }
+        }
+      });
+    }
+
+    // Gráfico de estado de pedidos (más pequeño)
+    function updateOrdersChart(estadosData) {
+      const ctx = document.getElementById('ordersChart').getContext('2d');
+      
+      if (ordersChart) {
+        ordersChart.destroy();
+      }
+
+      // Si no hay datos, mostrar gráfico vacío
+      if (!estadosData || estadosData.length === 0) {
+        ordersChart = new Chart(ctx, {
+          type: 'pie',
+          data: {
+            labels: ['Sin datos'],
+            datasets: [{
+              data: [1],
+              backgroundColor: ['#e9ecef']
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: 'bottom'
+              }
+            }
+          }
+        });
+        return;
+      }
+
+      const statusColors = {
+        'pagado': '#4ecdc4',
+        'pendiente': '#ff6b6b',
+        'parcial': '#ffe66d',
+        'cancelado': '#95a5a6'
+      };
+
+      ordersChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: estadosData.map(e => {
+            const estado = e._id;
+            if (estado === 'pagado') return 'Pagado';
+            if (estado === 'pendiente') return 'Pendiente';
+            if (estado === 'parcial') return 'Parcial';
+            if (estado === 'cancelado') return 'Cancelado';
+            return estado;
+          }),
+          datasets: [{
+            data: estadosData.map(e => e.count),
+            backgroundColor: estadosData.map(e => statusColors[e._id] || '#96ceb4'),
+            borderWidth: 2,
+            borderColor: '#fff'
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'bottom'
+            }
+          }
+        }
+      });
+    }
+
+    // Gráfico de eficiencia (medidor)
+    function updateEfficiencyChart() {
+      const ctx = document.getElementById('efficiencyChart').getContext('2d');
+      
+      if (efficiencyChart) {
+        efficiencyChart.destroy();
+      }
+
+      efficiencyChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          datasets: [{
+            data: [85, 15],
+            backgroundColor: ['#b22222', '#e9ecef'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          cutout: '80%',
+          rotation: -90,
+          circumference: 180,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              enabled: false
+            }
+          }
+        }
+      });
+    }
+
+    // Actualizar ventas recientes
+    function updateRecentSales(ventasRecientes) {
+      const salesList = document.getElementById('recent-sales-list');
+
+      if (ventasRecientes.length === 0) {
+        salesList.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-receipt"></i>
+            <p>No hay ventas recientes</p>
+          </div>
+        `;
+        return;
+      }
+
+      salesList.innerHTML = ventasRecientes.map(venta => `
+        <div class="activity-item">
+          <div class="activity-icon success">
+            <i class="fas fa-check"></i>
+          </div>
+          <div class="activity-content">
+            <div class="activity-title">Venta #${venta._id.toString().slice(-6)}</div>
+            <div class="activity-details">
+              <span class="activity-amount">S/ ${(venta.total || 0).toFixed(2)}</span>
+              <span class="activity-meta">Mesa ${venta.mesa?.numeroMesa || 'N/A'} • ${venta.metodoPago}</span>
+            </div>
+            <div class="activity-time">${new Date(venta.fechaVenta).toLocaleTimeString('es-ES', { 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            })}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Actualizar alertas de pago
+    function updatePendingPayments(pendientesCount) {
+      const pendingList = document.getElementById('pending-payments-list');
+      const pendingCount = document.getElementById('pending-count');
+
+      pendingCount.textContent = pendientesCount;
+
+      if (pendientesCount === 0) {
+        pendingList.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-check-circle"></i>
+            <p>No hay pagos pendientes</p>
+          </div>
+        `;
+        return;
+      }
+
+      pendingList.innerHTML = `
+        <div class="alert-item warning">
+          <div class="alert-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+          </div>
+          <div class="alert-content">
+            <h4>${pendientesCount} pagos pendientes</h4>
+            <p>Hay pedidos esperando procesar pago</p>
+            <a href="/pagos" class="alert-action">
+              <i class="fas fa-arrow-right"></i>
+              Ir a procesar pagos
+            </a>
+          </div>
+        </div>
+      `;
+    }
+
+    // Cargar datos al iniciar
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('🚀 Inicializando dashboard cajero...');
+      
+      loadDashboardData();
+      
+      // Actualizar cada 30 segundos
+      setInterval(loadDashboardData, 30000);
+    });
+  </script>
 </body>
 </html>
