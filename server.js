@@ -129,7 +129,7 @@ app.get('/', async (req, res) => {
     const usuario = jwt.verify(token, SECRET_KEY); // usuario logueado
     const users = await Usuario.find(); // lista de todos los usuarios
 
-    res.render('dashboard', { usuario, users }); // pasar ambos
+    res.render('/dashboard', { usuario, users }); // pasar ambos
   } catch (err) {
     res.clearCookie('token');
     res.redirect('/login');
