@@ -1,19 +1,16 @@
 const express = require('express');
-const multer = require('multer');
 const router = express.Router();
 const platosController = require('../controllers/PlatosController');
 const upload = require('../middlewares/upload');
 
-// Usamos .single('imagenFile') para recibir el archivo
-router.post('/', upload.single('imagenFile'), platosController.crear);
-router.put('/:id', upload.single('imagenFile'), platosController.actualizar);
+// Usar el middleware upload para el campo 'imagen'
+router.post('/', upload, platosController.crear);
+router.put('/:id', upload, platosController.actualizar);
 
-// Rutas públicas para productos
+// El resto de las rutas permanecen igual
 router.get('/', platosController.listar);
 router.get('/:id', platosController.obtener);
 router.delete('/:id', platosController.eliminar);
-
-// Stock bajo
 router.get('/verificar/stock', platosController.verificarStock);
 router.put('/:id/toggle-estado', platosController.cambiarEstado);
 

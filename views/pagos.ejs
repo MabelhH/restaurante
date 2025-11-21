@@ -249,27 +249,7 @@
         </div>
       </header>
 
-      <!-- Bloque de Debug -->
-      <div class="debug-info">
-        <h4>🔍 Debug Info - Pedidos Recibidos del Backend:</h4>
-        <div class="debug-stats">
-          <div class="debug-stat">
-            <strong>Total:</strong> <%= pedidos.length %>
-          </div>
-          <div class="debug-stat">
-            <strong>Pendientes:</strong> <%= pedidos.filter(p => p.estadoPago === 'pendiente').length %>
-          </div>
-          <div class="debug-stat">
-            <strong>Pagados:</strong> <%= pedidos.filter(p => p.estadoPago === 'pagado').length %>
-          </div>
-          <div class="debug-stat">
-            <strong>Cancelados:</strong> <%= pedidos.filter(p => p.estadoPago === 'cancelado').length %>
-          </div>
-          <div class="debug-stat">
-            <strong>Parciales:</strong> <%= pedidos.filter(p => p.estadoPago === 'parcial').length %>
-          </div>
-        </div>
-      </div>
+
 
       <!-- Estadísticas -->
       <div class="stats-overview">
@@ -286,12 +266,7 @@
           <div class="stat-label">Pagados Hoy</div>
         </div>
         
-        <div class="stat-card cancelados">
-          <div class="stat-value" id="pedidosCancelados">
-            <%= pedidos.filter(p => p.estadoPago === 'cancelado').length %>
-          </div>
-          <div class="stat-label">Cancelados Hoy</div>
-        </div>
+        
       </div>
 
       <!-- Búsqueda y Filtros -->
@@ -304,7 +279,6 @@
           <button class="filter-btn active" data-filter="todos">Todos los Pedidos</button>
           <button class="filter-btn" data-filter="pendiente">Pendientes de Pago</button>
           <button class="filter-btn" data-filter="pagado">Pagados</button>
-          <button class="filter-btn" data-filter="cancelado">Cancelados</button>
         </div>
       </div>
 
@@ -388,12 +362,7 @@
                   );
                   %>
                   
-                  <% if (tienePlatosNuevos) { %>
-                    <div class="nuevos-platos">
-                      <h5><i class="fas fa-plus-circle"></i> Nuevos platos agregados</h5>
-                      <small>Estos platos se cobrarán adicionalmente</small>
-                    </div>
-                  <% } %>
+                 
                   
                   <% pedido.platos.forEach((plato, index) => { %>
                     <div class="product-item">

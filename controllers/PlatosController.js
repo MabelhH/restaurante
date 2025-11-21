@@ -28,12 +28,11 @@ class PlatoController {
 
             const data = req.body;
 
-            if (data.imagenUrl && data.imagenUrl.trim() !== '') {
-                data.imagen = data.imagenUrl;
-            } else if (req.file) {
+            // Solo manejar archivo subido, no URL
+            if (req.file) {
                 data.imagen = '/uploads/' + req.file.filename;
             } else {
-                data.imagen = '';
+                data.imagen = ''; // O un valor por defecto
             }
 
             const nuevo = await platoService.create(data);
@@ -41,6 +40,30 @@ class PlatoController {
         } catch (error) {
             console.error(error);
             res.status(500).json({ message: 'Error al crear plato', error });
+        }
+    }
+
+    async actualizar(req, res) {
+        try {
+            const data = req.body;
+
+            const platoExistente = await platoService.getById(req.params.id);
+            if (!platoExistente) return res.status(404).json({ message: 'Plato no encontrado' });
+
+            // Solo manejar archivo subido
+            if (req.file) {
+                data.imagen = '/uploads/' + req.file.filename;
+            } else {
+                // Mantener la imagen existente si no se sube nueva
+                data.imagen = platoExistente.imagen;
+            }
+
+            const actualizado = await platoService.update(req.params.id, data);
+            res.json(actualizado);
+
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: 'Error al actualizar plato', error });
         }
     }
 

@@ -4,7 +4,7 @@ const fs = require('fs');
 // Crear carpeta uploads si no existe
 const uploadDir = 'uploads';
 if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir);
+  fs.mkdirSync(uploadDir);
 }
 
 const storage = multer.diskStorage({
@@ -16,4 +16,21 @@ const storage = multer.diskStorage({
   }
 });
 
-module.exports = multer({ storage });
+// Configuración corregida - solo aceptar archivos de imagen
+const upload = multer({
+  storage: storage,
+  fileFilter: function (req, file, cb) {
+    // Solo aceptar archivos de imagen
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Solo se permiten archivos de imagen'), false);
+    }
+  },
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB máximo
+  }
+});
+
+// Exportar como middleware para un solo archivo con el campo 'imagen'
+module.exports = upload.single('imagen');
