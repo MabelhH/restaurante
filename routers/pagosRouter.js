@@ -68,7 +68,7 @@ router.post('/pagar/:id', async (req, res) => {
       pedido: pedido._id,
       platos: pedido.platos,
       subtotal: pedido.total,
-      total: pedido.total * 1.18, // con IGV
+      total: pedido, // con IGV
       metodoPago: metodoPago || 'efectivo',
       mesero: pedido.mesero,
       observaciones: observaciones || ''

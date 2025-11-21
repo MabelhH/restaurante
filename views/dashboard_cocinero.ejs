@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -556,13 +557,14 @@
       .order-actions {
         flex-direction: column;
       }
-      
+
       .order-filters {
         justify-content: center;
       }
     }
   </style>
 </head>
+
 <body>
   <!-- Botón de menú móvil -->
   <button class="menu-toggle" id="menuToggle" aria-label="Abrir menú">
@@ -599,8 +601,10 @@
     <!-- Main content -->
     <main class="main-content" id="mainContent">
       <header>
-        <h1>Bienvenido, julio</h1>
-        <div class="welcome-badge">Panel de cocinero</div>
+        <h1>Bienvenido, <span class="user-name">
+            <%= usuario.nombre %>
+          </span></h1>
+        <p class="welcome-text">Panel de Control - Área de cocinero</p>
       </header>
 
       <!-- Tarjetas de estadísticas -->
@@ -614,7 +618,7 @@
             <p>Pedidos pendientes</p>
           </div>
         </div>
-        
+
         <div class="stat-card">
           <div class="stat-icon" style="background-color: var(--verde-claro); color: var(--verde);">
             <i class="fas fa-check-circle"></i>
@@ -624,7 +628,7 @@
             <p>Pedidos hoy</p>
           </div>
         </div>
-        
+
         <div class="stat-card">
           <div class="stat-icon" style="background-color: var(--amarillo-claro); color: var(--amarillo);">
             <i class="fas fa-exclamation-triangle"></i>
@@ -634,7 +638,7 @@
             <p>Alertas de stock</p>
           </div>
         </div>
-        
+
         <div class="stat-card">
           <div class="stat-icon" style="background-color: var(--azul-claro); color: var(--azul);">
             <i class="fas fa-utensils"></i>
@@ -648,7 +652,7 @@
 
 
 
-      
+
 
       <!-- Alertas de stock bajo -->
       <h2 class="section-title"><i class="fas fa-exclamation-triangle"></i> Alertas de Stock</h2>
@@ -720,7 +724,7 @@
   </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       // Elementos del DOM
       const menuToggle = document.getElementById('menuToggle');
       const sidebar = document.getElementById('sidebar');
@@ -738,11 +742,11 @@
       let isMobileMenuOpen = false;
 
       // Funcionalidad del menú móvil
-      menuToggle.addEventListener('click', function() {
+      menuToggle.addEventListener('click', function () {
         isMobileMenuOpen = !isMobileMenuOpen;
         sidebar.classList.toggle('mobile-open', isMobileMenuOpen);
         mainContent.classList.toggle('mobile-shift', isMobileMenuOpen);
-        
+
         // Cambiar icono del botón
         const icon = menuToggle.querySelector('i');
         icon.className = isMobileMenuOpen ? 'fas fa-times' : 'fas fa-bars';
@@ -750,11 +754,11 @@
 
       // Funcionalidad de filtros de pedidos
       filterButtons.forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function () {
           // Actualizar botones activos
           filterButtons.forEach(btn => btn.classList.remove('active'));
           this.classList.add('active');
-          
+
           // Filtrar pedidos
           const filter = this.getAttribute('data-filter');
           filterOrders(filter);
@@ -773,14 +777,14 @@
       }
 
       // Funcionalidad para los botones de pedidos
-      document.addEventListener('click', function(e) {
+      document.addEventListener('click', function (e) {
         if (e.target.closest('[data-action]')) {
           const button = e.target.closest('[data-action]');
           const action = button.getAttribute('data-action');
           const orderId = button.getAttribute('data-order');
           const orderCard = button.closest('.order-card');
-          
-          switch(action) {
+
+          switch (action) {
             case 'start':
               startOrder(orderCard, orderId);
               break;
@@ -796,16 +800,16 @@
         orderCard.classList.remove('pending');
         orderCard.classList.add('in-progress');
         orderCard.setAttribute('data-status', 'in-progress');
-        
+
         // Cambiar botones
         const startButton = orderCard.querySelector('[data-action="start"]');
         startButton.innerHTML = '<i class="fas fa-clock"></i> En preparación';
         startButton.classList.remove('btn-primary');
         startButton.classList.add('btn-warning');
-        
+
         // Mostrar notificación
         showNotification(`Preparación iniciada para el pedido ${orderId}`, 'info');
-        
+
         // Actualizar contadores
         updateOrderCounters();
       }
@@ -813,16 +817,16 @@
       function completeOrder(orderCard, orderId) {
         // Mostrar notificación
         showNotification(`Pedido ${orderId} completado`, 'success');
-        
+
         // Cambiar estado visual
         orderCard.classList.remove('pending', 'in-progress');
         orderCard.classList.add('completed');
         orderCard.setAttribute('data-status', 'completed');
-        
+
         // Ocultar botones
         const actionButtons = orderCard.querySelector('.order-actions');
         actionButtons.innerHTML = '<span class="completed-badge">Completado</span>';
-        
+
         // Animación de desaparición después de un tiempo
         setTimeout(() => {
           orderCard.style.opacity = '0';
@@ -838,7 +842,7 @@
       function updateOrderCounters() {
         const pendingOrders = document.querySelectorAll('.order-card[data-status="pending"]').length;
         const inProgressOrders = document.querySelectorAll('.order-card[data-status="in-progress"]').length;
-        
+
         pendingOrdersCount.textContent = pendingOrders + inProgressOrders;
         todayOrdersCount.textContent = parseInt(todayOrdersCount.textContent) + 1;
       }
@@ -847,7 +851,7 @@
         notificationText.textContent = message;
         notification.className = `notification ${type}`;
         notification.classList.add('show');
-        
+
         setTimeout(() => {
           notification.classList.remove('show');
         }, 3000);
@@ -870,7 +874,7 @@
         const orderCard = document.createElement('div');
         orderCard.className = 'order-card pending';
         orderCard.setAttribute('data-status', 'pending');
-        
+
         const dishes = [
           ['Lomo Saltado', 1],
           ['Ceviche', 2],
@@ -878,9 +882,9 @@
           ['Pasta Alfredo', 1],
           ['Ensalada César', 2]
         ];
-        
+
         const randomDishes = dishes.sort(() => 0.5 - Math.random()).slice(0, 2);
-        
+
         orderCard.innerHTML = `
           <div class="order-header">
             <div class="order-number">#${orderNumber}</div>
@@ -904,10 +908,11 @@
             </button>
           </div>
         `;
-        
+
         return orderCard;
       }
     });
   </script>
 </body>
+
 </html>

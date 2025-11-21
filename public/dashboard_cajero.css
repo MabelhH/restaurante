@@ -916,3 +916,26 @@ body::before {
     left: 100%;
   }
 }
+
+/* Estabilizar contenedores de gráficos */
+.chart-container {
+  position: relative;
+  height: 250px;
+  min-height: 250px;
+  max-height: 250px;
+  width: 100%;
+}
+
+/* Específico para gráficos pequeños */
+.small-chart .chart-container {
+  height: 200px;
+  min-height: 200px;
+  max-height: 200px;
+}
+
+/* Forzar dimensiones en todos los canvas */
+.chart-card canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
