@@ -209,10 +209,31 @@ class MesasService {
         '9:30 PM - Liberación nocturna',
         '6:00 AM - Liberación matutina'
       ],
-      descripcion: 'Liberación automática de mesas 3 veces al día',
+      descripcion: 'Liberación automática de mesas 2 veces al día',
       ultimaEjecucion: new Date(),
       proximaEjecucion: this.calcularProximaLiberacion()
     };
+  }
+
+  // Calcular próxima liberación
+  calcularProximaLiberacion() {
+    const ahora = new Date();
+    const hoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
+    
+    // 6:00 AM
+    const manana6am = new Date(hoy);
+    manana6am.setDate(manana6am.getDate() + 1);
+    manana6am.setHours(6, 0, 0, 0);
+    
+    // 9:30 PM
+    const hoy930pm = new Date(hoy);
+    hoy930pm.setHours(21, 30, 0, 0);
+    
+    if (ahora < hoy930pm) {
+      return hoy930pm;
+    } else {
+      return manana6am;
+    }
   }
 }
 

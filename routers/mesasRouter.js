@@ -127,6 +127,90 @@ router.post('/', async (req, res) => {
   }
 });
 
+// ✅ RUTAS ESPECÍFICAS (ANTES DE /:id)
+// Liberar todas las mesas
+router.put('/liberar-todas', async (req, res) => {
+  try {
+    const resultado = await mesasService.liberacionManual();
+    
+    res.json({
+      success: resultado.success,
+      message: resultado.success 
+        ? `✅ ${resultado.mesasLiberadas} mesas liberadas exitosamente`
+        : `❌ Error: ${resultado.error}`,
+      data: resultado
+    });
+  } catch (error) {
+    console.error('Error liberando todas las mesas:', error);
+    res.status(500).json({
+      success: false,
+      message: '❌ Error liberando todas las mesas',
+      error: error.message
+    });
+  }
+});
+
+// Liberar mesa individual
+router.post('/:id/liberar', async (req, res) => {
+  try {
+    const { pedidoId } = req.body;
+    const mesa = await Mesa.findById(req.params.id);
+    
+    if (!mesa) {
+      return res.status(404).json({ error: 'Mesa no encontrada' });
+    }
+
+    // Verificar que el pedido esté pagado si se proporciona pedidoId
+    if (pedidoId) {
+      const pedido = await Pedido.findById(pedidoId);
+      if (pedido && pedido.estadoPago !== 'pagado') {
+        return res.status(400).json({ 
+          error: 'No se puede liberar la mesa si el pedido no está pagado' 
+        });
+      }
+    }
+
+    // Liberar mesa
+    mesa.estado = 'liberada';
+    mesa.pedidoActual = null;
+    await mesa.save();
+
+    res.json({ 
+      success: true, 
+      message: 'Mesa liberada correctamente',
+      mesa: mesa
+    });
+
+  } catch (error) {
+    console.error('Error al liberar mesa:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// Marcar mesa como atendida
+router.post('/:id/marcar-atendida', async (req, res) => {
+  try {
+    const mesa = await Mesa.findById(req.params.id);
+    
+    if (!mesa) {
+      return res.status(404).json({ error: 'Mesa no encontrada' });
+    }
+
+    mesa.estado = 'atendida';
+    await mesa.save();
+
+    res.json({ 
+      success: true, 
+      message: 'Mesa marcada como atendida',
+      mesa: mesa
+    });
+
+  } catch (error) {
+    console.error('Error al marcar mesa como atendida:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
 // Actualizar mesa
 router.put('/:id', async (req, res) => {
   try {
@@ -168,56 +252,6 @@ router.put('/:id', async (req, res) => {
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
-
-// ✅ RUTAS DEL SERVICIO DE LIBERACIÓN AUTOMÁTICA
-router.post('/liberacion/manual', async (req, res) => {
-  try {
-    const resultado = await mesasService.liberacionManual();
-    res.json({
-      success: true,
-      message: `✅ ${resultado.mesasLiberadas} mesas liberadas manualmente`,
-      data: resultado
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
-
-router.get('/liberacion/estado', (req, res) => {
-  try {
-    const estado = mesasService.getEstadoLiberacion();
-    res.json({
-      success: true,
-      data: estado
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
-
-router.get('/estadisticas', async (req, res) => {
-  try {
-    const stats = await mesasService.obtenerEstadisticas();
-    res.json({
-      success: true,
-      data: stats
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
-
-// router.post('/liberar-todas', (req, res) => mesasController.liberarTodasLasMesas(req, res));
-// router.get('/estadisticas', (req, res) => mesasController.obtenerEstadisticas(req, res));
 
 // Eliminar mesa
 router.delete('/:id', async (req, res) => {
@@ -276,7 +310,6 @@ router.get('/:id/historial', async (req, res) => {
   }
 });
 
-
 // Cambiar estado de mesa
 router.patch('/:id/estado', async (req, res) => {
   try {
@@ -300,68 +333,5 @@ router.patch('/:id/estado', async (req, res) => {
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
-
-
-// ✅ NUEVA RUTA: Liberar mesa (usada en el botón "Liberar Mesa")
-router.post('/:id/liberar', async (req, res) => {
-  try {
-    const { pedidoId } = req.body;
-    const mesa = await Mesa.findById(req.params.id);
-    
-    if (!mesa) {
-      return res.status(404).json({ error: 'Mesa no encontrada' });
-    }
-
-    // Verificar que el pedido esté pagado si se proporciona pedidoId
-    if (pedidoId) {
-      const pedido = await Pedido.findById(pedidoId);
-      if (pedido && pedido.estadoPago !== 'pagado') {
-        return res.status(400).json({ 
-          error: 'No se puede liberar la mesa si el pedido no está pagado' 
-        });
-      }
-    }
-
-    // Liberar mesa
-    mesa.estado = 'liberada';
-    mesa.pedidoActual = null;
-    await mesa.save();
-
-    res.json({ 
-      success: true, 
-      message: 'Mesa liberada correctamente',
-      mesa: mesa
-    });
-
-  } catch (error) {
-    console.error('Error al liberar mesa:', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
-  }
-});
-
-// ✅ NUEVA RUTA: Marcar mesa como atendida
-router.post('/:id/marcar-atendida', async (req, res) => {
-  try {
-    const mesa = await Mesa.findById(req.params.id);
-    
-    if (!mesa) {
-      return res.status(404).json({ error: 'Mesa no encontrada' });
-    }
-
-    mesa.estado = 'atendida';
-    await mesa.save();
-
-    res.json({ 
-      success: true, 
-      message: 'Mesa marcada como atendida',
-      mesa: mesa
-    });
-
-  } catch (error) {
-    console.error('Error al marcar mesa como atendida:', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
-  }
-});
-
 
 module.exports = router;
