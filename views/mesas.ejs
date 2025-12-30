@@ -70,7 +70,13 @@
         </form>
       </section>
       <section class="list-section">
-        <h3>Lista de Mesas</h3>
+        <!-- <h3>Lista de Mesas</h3> -->
+         <div class="list-header">
+          <h3>Lista de Mesas</h3>
+          <button id="liberarTodas" class="liberar-todas-btn">
+            <i class="fas fa-door-open"></i> Liberar Todas las Mesas
+          </button>
+        </div>
         <div id="mesasContainer" class="cards-container"></div>
       </section>
     </div>
@@ -86,6 +92,7 @@ const form = document.getElementById('formMesa');
 const container = document.getElementById('mesasContainer');
 const notification = document.getElementById('notification');
 const notificationText = document.getElementById('notificationText');
+const liberarTodasBtn = document.getElementById('liberarTodas');
 let editarId = null;
 
 function showNotification(message, type = 'success') {
@@ -147,7 +154,7 @@ async function cargarMesas() {
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   const numeroMesa = parseInt(form.numeroMesa.value);
-  
+  const capacidad = parseInt(form.capacidad.value);
   // ✅ VALIDACIÓN EN FRONTEND
   if (numeroMesa < 1) {
     showNotification('El número de mesa debe ser mayor a 0', 'error');
@@ -175,7 +182,6 @@ form.addEventListener('submit', async (e) => {
     successMessage = 'Mesa actualizada correctamente';
   }
   
-  
  try {
     const response = await fetch(url, {
     method,
@@ -198,6 +204,28 @@ form.addEventListener('submit', async (e) => {
   }
 });
 
+// Liberar todas las mesas
+liberarTodasBtn.addEventListener('click', async () => {
+  if (confirm('¿Estás seguro de que deseas liberar todas las mesas? Esta acción cambiará el estado de todas las mesas a "liberada".')) {
+    try {
+      const response = await fetch('/api/mesas/liberar-todas', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (response.ok) {
+        showNotification('Todas las mesas han sido liberadas correctamente', 'success');
+        cargarMesas();
+      } else {
+        throw new Error('Error al liberar todas las mesas');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      showNotification('Error al liberar todas las mesas', 'error');
+    }
+  }
+});
+ 
 // Editar o eliminar
 container.addEventListener('click', async (e) => {
   const id = e.target.closest('button')?.dataset.id;
@@ -301,7 +329,35 @@ document.addEventListener('DOMContentLoaded', cargarMesas);
 .notification i {
     font-size: 1.2rem;
 }
+/* Estilos para el botón de liberar todas las mesas */
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
 
+.liberar-todas-btn {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.3s;
+}
+
+.liberar-todas-btn:hover {
+  background-color: #218838;
+}
+
+.liberar-todas-btn:active {
+  transform: translateY(1px);
+}
 </style>
 
 <!-- Chat flotante -->
